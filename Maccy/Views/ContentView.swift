@@ -7,6 +7,7 @@ struct ContentView: View {
   @State private var scenePhase: ScenePhase = .background
 
   @FocusState private var searchFocused: Bool
+  @FocusState private var promptFocused: Bool
 
   var body: some View {
     ZStack {
@@ -14,10 +15,17 @@ struct ContentView: View {
 
       VStack(alignment: .leading, spacing: 0) {
         KeyHandlingView(searchQuery: $appState.history.searchQuery, searchFocused: $searchFocused) {
-          HeaderView(
-            searchFocused: $searchFocused,
-            searchQuery: $appState.history.searchQuery
-          )
+          if !appState.isPromptMode {
+            HeaderView(
+              searchFocused: $searchFocused,
+              searchQuery: $appState.history.searchQuery
+            )
+          } else {
+            PromptHeaderView(
+              promptFocused: $promptFocused,
+              promptText: $appState.promptText
+            )
+          }
 
           HistoryListView(
             searchQuery: $appState.history.searchQuery,
@@ -32,7 +40,11 @@ struct ContentView: View {
       .padding(.horizontal, 5)
       .padding(.vertical, appState.popup.verticalPadding)
       .onAppear {
-        searchFocused = true
+        if appState.isPromptMode {
+          promptFocused = true
+        } else {
+          searchFocused = true
+        }
         // Ensure first item is selected on appear
         Task {
           try? await Task.sleep(for: .milliseconds(100))
@@ -41,7 +53,20 @@ struct ContentView: View {
             appState.selection = firstItem.id
             appState.isKeyboardNavigating = true
           }
+          appState.updateFooterItemVisibility()
         }
+      }
+      .onChange(of: appState.isPromptMode) { _, newValue in
+        if newValue {
+          searchFocused = false
+          promptFocused = true
+        } else {
+          promptFocused = false
+          searchFocused = true
+        }
+      }
+      .onChange(of: appState.promptText) { _, _ in
+        appState.updateFooterItemVisibility()
       }
       .onMouseMove {
         appState.isKeyboardNavigating = false

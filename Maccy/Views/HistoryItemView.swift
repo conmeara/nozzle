@@ -18,6 +18,11 @@ struct HistoryItemView: View {
     ) {
       Text(verbatim: item.title)
     }
+    .onMouseMove {
+      // Update focus to this item on hover
+      appState.isKeyboardNavigating = false
+      appState.selection = item.id
+    }
     .onTapGesture {
       if NSEvent.modifierFlags.contains(.command) {
         // Command-click: immediate paste
@@ -26,6 +31,7 @@ struct HistoryItemView: View {
         // Regular click: toggle selection
         item.isSelected.toggle()
         appState.selection = item.id  // Move focus to this item
+        appState.updateFooterItemVisibility()
       }
     }
     .popover(isPresented: $item.showPreview, arrowEdge: .trailing) {

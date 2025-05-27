@@ -20,35 +20,27 @@ class Footer {
   init() { // swiftlint:disable:this function_body_length
     items = [
       FooterItem(
-        title: "clear",
-        shortcuts: [KeyShortcut(key: .delete, modifierFlags: [.command, .option])],
-        help: "clear_tooltip",
-        confirmation: .init(
-          message: "clear_alert_message",
-          comment: "clear_alert_comment",
-          confirm: "clear_alert_confirm",
-          cancel: "clear_alert_cancel"
-        ),
-        suppressConfirmation: suppressClearAlert
+        title: "clear_selection",
+        shortcuts: [KeyShortcut(key: .delete, modifierFlags: [.command, .option])]
       ) {
         Task { @MainActor in
-          AppState.shared.history.clear()
+          AppState.shared.clearSelectionAndPrompt()
         }
       },
       FooterItem(
-        title: "clear_all",
-        shortcuts: [KeyShortcut(key: .delete, modifierFlags: [.command, .option, .shift])],
-        help: "clear_all_tooltip",
-        confirmation: .init(
-          message: "clear_alert_message",
-          comment: "clear_alert_comment",
-          confirm: "clear_alert_confirm",
-          cancel: "clear_alert_cancel"
-        ),
-        suppressConfirmation: suppressClearAlert
+        title: "paste_combined",
+        shortcuts: [KeyShortcut(key: .v)]
       ) {
         Task { @MainActor in
-          AppState.shared.history.clearAll()
+          AppState.shared.performCombinedPaste()
+        }
+      },
+      FooterItem(
+        title: "copy_combined",
+        shortcuts: [KeyShortcut(key: .return)]
+      ) {
+        Task { @MainActor in
+          AppState.shared.performCombinedCopy()
         }
       },
       FooterItem(

@@ -69,6 +69,11 @@ class Clipboard {
     sync()
     checkForChangesInPasteboard()
   }
+  
+  @MainActor
+  func copyString(_ string: String) {
+    copy(string)
+  }
 
   @MainActor
   func copy(_ item: HistoryItem?, removeFormatting: Bool = false) {

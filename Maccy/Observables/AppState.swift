@@ -233,4 +233,80 @@ class AppState: Sendable {
   func quit() {
     NSApp.terminate(self)
   }
+  
+  func updateFooterItemVisibility() {
+    // Find paste and copy footer items
+    if let pasteItem = footer.items.first(where: { $0.title == "paste_combined" }),
+       let copyItem = footer.items.first(where: { $0.title == "copy_combined" }) {
+      // Show these items only if we have selected items or prompt text
+      let hasContent = !history.selectedItems.isEmpty || !promptText.isEmpty
+      pasteItem.isVisible = hasContent
+      copyItem.isVisible = hasContent
+    }
+  }
+  
+  func clearSelectionAndPrompt() {
+    // Clear all selected items
+    history.items.forEach { $0.isSelected = false }
+    
+    // Clear prompt text
+    promptText = ""
+    
+    // Update footer visibility
+    updateFooterItemVisibility()
+  }
+  
+  @MainActor
+  func performCombinedPaste() {
+    let combinedText = formatCombinedContent()
+    guard !combinedText.isEmpty else { return }
+    
+    // Copy combined text to clipboard
+    Clipboard.shared.copyString(combinedText)
+    
+    // Paste to active application
+    Clipboard.shared.paste()
+    
+    // Close the popup
+    popup.close()
+  }
+  
+  @MainActor
+  func performCombinedCopy() {
+    let combinedText = formatCombinedContent()
+    guard !combinedText.isEmpty else { return }
+    
+    // Copy combined text to clipboard
+    Clipboard.shared.copyString(combinedText)
+    
+    // Close the popup
+    popup.close()
+  }
+  
+  private func formatCombinedContent() -> String {
+    // Get selected items
+    let selectedItems = history.selectedItems
+    
+    // Check if we have content to combine
+    guard !promptText.isEmpty || !selectedItems.isEmpty else { return "" }
+    
+    // Get the template from user defaults
+    let template = Defaults[.pasteTemplate]
+    
+    // Get text content from selected items
+    let itemTexts = selectedItems.map { $0.title }
+    let itemsString = itemTexts.joined(separator: "\n")
+    
+    // Replace placeholders in template
+    var output = template
+      .replacingOccurrences(of: "{prompt}", with: promptText)
+      .replacingOccurrences(of: "{items}", with: itemsString)
+    
+    // Clean up if prompt is empty
+    if promptText.isEmpty {
+      output = output.replacingOccurrences(of: "\nContext:\n", with: "")
+    }
+    
+    return output.trimmingCharacters(in: .whitespacesAndNewlines)
+  }
 }

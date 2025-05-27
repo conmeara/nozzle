@@ -15,33 +15,35 @@ struct KeyHandlingView<Content: View>: View {
         // key code and don't properly work with multiple inputs,
         // so pressing ⌘, on non-English layout doesn't open
         // preferences. Stick to NSEvent to fix this behavior.
+        // Check for Command-V (combined paste) before standard key chord handling
+        if let event = NSApp.currentEvent,
+           event.keyCode == UInt16(KeyChord.pasteKey.QWERTYKeyCode),
+           event.modifierFlags.contains(.command) {
+          // Only handle if we have multiple selections or prompt text
+          if !appState.history.selectedItems.isEmpty || !appState.promptText.isEmpty {
+            appState.performCombinedPaste()
+            return .handled
+          }
+        }
+        
+        // Check for Command-Enter (combined copy)
+        if let event = NSApp.currentEvent,
+           (event.keyCode == UInt16(Key.return.QWERTYKeyCode) || event.keyCode == UInt16(Key.keypadEnter.QWERTYKeyCode)),
+           event.modifierFlags.contains(.command) {
+          // Only handle if we have multiple selections or prompt text
+          if !appState.history.selectedItems.isEmpty || !appState.promptText.isEmpty {
+            appState.performCombinedCopy()
+            return .handled
+          }
+        }
+        
         switch KeyChord(NSApp.currentEvent) {
         case .clearHistory:
-          if let item = appState.footer.items.first(where: { $0.title == "clear" }),
-             item.confirmation != nil,
-             let suppressConfirmation = item.suppressConfirmation {
-            if suppressConfirmation.wrappedValue {
-              item.action()
-            } else {
-              item.showConfirmation = true
-            }
-            return .handled
-          } else {
-            return .ignored
-          }
+          appState.clearSelectionAndPrompt()
+          return .handled
         case .clearHistoryAll:
-          if let item = appState.footer.items.first(where: { $0.title == "clear_all" }),
-             item.confirmation != nil,
-             let suppressConfirmation = item.suppressConfirmation {
-            if suppressConfirmation.wrappedValue {
-              item.action()
-            } else {
-              item.showConfirmation = true
-            }
-            return .handled
-          } else {
-            return .ignored
-          }
+          // No longer used
+          return .ignored
         case .clearSearch:
           searchQuery = ""
           return .handled
@@ -107,6 +109,15 @@ struct KeyHandlingView<Content: View>: View {
           return .handled
         case .togglePreview:
           appState.togglePreview()
+          return .handled
+        case .togglePromptMode:
+          appState.isPromptMode.toggle()
+          return .handled
+        case .toggleSelection:
+          if let item = appState.history.selectedItem {
+            item.isSelected.toggle()
+            appState.updateFooterItemVisibility()
+          }
           return .handled
         default:
           ()

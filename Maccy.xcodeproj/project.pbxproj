@@ -125,6 +125,7 @@
 		DAFE2DDA268A521B00990986 /* String+Shortened.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFE2DD9268A521A00990986 /* String+Shortened.swift */; };
 		DAFE2DE9268A9B1B00990986 /* HistoryItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFE2DE8268A9B1B00990986 /* HistoryItemTests.swift */; };
 		DAFEF0B8249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFEF0B7249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift */; };
+		F5C88D252DE55BA500EF8FA3 /* PromptHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -491,6 +492,7 @@
 		DAFE2DD9268A521A00990986 /* String+Shortened.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Shortened.swift"; sourceTree = "<group>"; };
 		DAFE2DE8268A9B1B00990986 /* HistoryItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItemTests.swift; sourceTree = "<group>"; };
 		DAFEF0B7249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyboardShortcuts.Name+Shortcuts.swift"; sourceTree = "<group>"; };
+		F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptHeaderView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -603,6 +605,7 @@
 		DA19690C2C3EEF9300258481 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */,
 				DAA072DE2C41C63C006DDFD2 /* ConfirmationView.swift */,
 				DA243D112C2F64820012A27F /* ContentView.swift */,
 				DAA072DC2C41C61F006DDFD2 /* FooterItemView.swift */,
@@ -1053,6 +1056,7 @@
 				DA9C3C602C20E1890056795D /* IgnorePasteboardTypesSettingsView.swift in Sources */,
 				DA083A6E2C42E8E8004259A0 /* NSImage+Resized.swift in Sources */,
 				DAA072E12C41C6E8006DDFD2 /* FooterView.swift in Sources */,
+				F5C88D252DE55BA500EF8FA3 /* PromptHeaderView.swift in Sources */,
 				2F1A79C02C6DFB7800C98EBD /* SearchVisibility.swift in Sources */,
 				DAA072DD2C41C61F006DDFD2 /* FooterItemView.swift in Sources */,
 				DA3EAE0C2AE30F7500F39108 /* NSApplication+Windows.swift in Sources */,
