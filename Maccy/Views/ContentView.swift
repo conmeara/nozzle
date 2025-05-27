@@ -33,6 +33,15 @@ struct ContentView: View {
       .padding(.vertical, appState.popup.verticalPadding)
       .onAppear {
         searchFocused = true
+        // Ensure first item is selected on appear
+        Task {
+          try? await Task.sleep(for: .milliseconds(100))
+          if appState.selection == nil,
+             let firstItem = appState.history.unpinnedItems.first(where: \.isVisible) ?? appState.history.pinnedItems.first(where: \.isVisible) {
+            appState.selection = firstItem.id
+            appState.isKeyboardNavigating = true
+          }
+        }
       }
       .onMouseMove {
         appState.isKeyboardNavigating = false

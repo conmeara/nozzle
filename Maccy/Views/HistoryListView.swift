@@ -69,7 +69,10 @@ struct HistoryListView: View {
             HistoryItemDecorator.previewThrottler.minimumDelay = Double(previewDelay) / 1000
             HistoryItemDecorator.previewThrottler.cancel()
             appState.isKeyboardNavigating = true
-            appState.selection = appState.history.unpinnedItems.first?.id ?? appState.history.pinnedItems.first?.id
+            // Force selection of first visible item
+            if let firstItem = appState.history.unpinnedItems.first(where: \.isVisible) ?? appState.history.pinnedItems.first(where: \.isVisible) {
+              appState.selection = firstItem.id
+            }
           } else {
             modifierFlags.flags = []
             appState.isKeyboardNavigating = true

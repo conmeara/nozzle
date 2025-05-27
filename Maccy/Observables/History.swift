@@ -118,9 +118,19 @@ class History { // swiftlint:disable:this type_body_length
     items = all
 
     updateShortcuts()
+    
     // Ensure that panel size is proper *after* loading all items.
     Task {
       AppState.shared.popup.needsResize = true
+    }
+    
+    // Set initial selection to first item after a small delay to ensure UI is ready
+    Task {
+      try? await Task.sleep(for: .milliseconds(50))
+      if AppState.shared.selection == nil {
+        AppState.shared.selection = unpinnedItems.first?.id ?? pinnedItems.first?.id
+        AppState.shared.isKeyboardNavigating = true
+      }
     }
   }
 

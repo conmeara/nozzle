@@ -20,19 +20,9 @@ class HistoryItemDecorator: Identifiable, Hashable {
   var attributedTitle: AttributedString?
 
   var isVisible: Bool = true
-  var isSelected: Bool = false {
-    didSet {
-      if isSelected {
-        Self.previewThrottler.throttle {
-          Self.previewThrottler.minimumDelay = 0.2
-          self.showPreview = true
-        }
-      } else {
-        Self.previewThrottler.cancel()
-        self.showPreview = false
-      }
-    }
-  }
+  var isSelected: Bool = false
+  // Note: We no longer tie isSelected to preview display
+  // as isSelected now represents checkbox state, not focus state
   var shortcuts: [KeyShortcut] = []
   var showPreview: Bool = false
 

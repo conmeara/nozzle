@@ -24,13 +24,24 @@ class AppState: Sendable {
   }
 
   func selectWithoutScrolling(_ item: UUID?) {
+    // Store previous selection for preview cleanup
+    let previousItem = history.selectedItem
+    
+    // Update selectedItem for focus tracking (gray highlight)
     history.selectedItem = nil
     footer.selectedItem = nil
 
-    if let item = history.items.first(where: { $0.id == item }) {
-      history.selectedItem = item
-    } else if let item = footer.items.first(where: { $0.id == item }) {
-      footer.selectedItem = item
+    if let itemDecorator = history.items.first(where: { $0.id == item }) {
+      history.selectedItem = itemDecorator
+    } else if let footerItem = footer.items.first(where: { $0.id == item }) {
+      footer.selectedItem = footerItem
+    }
+    
+    // Cancel preview for previously focused item if it changes
+    if let previous = previousItem,
+       previous.id != item {
+      HistoryItemDecorator.previewThrottler.cancel()
+      previous.showPreview = false
     }
   }
 
@@ -81,6 +92,22 @@ class AppState: Sendable {
     } else {
       Clipboard.shared.copy(history.searchQuery)
       history.searchQuery = ""
+    }
+  }
+  
+  func togglePreview() {
+    guard let item = history.selectedItem else { return }
+    
+    if item.showPreview {
+      // Hide preview
+      HistoryItemDecorator.previewThrottler.cancel()
+      item.showPreview = false
+    } else {
+      // Show preview
+      HistoryItemDecorator.previewThrottler.throttle {
+        HistoryItemDecorator.previewThrottler.minimumDelay = 0.2
+        item.showPreview = true
+      }
     }
   }
 

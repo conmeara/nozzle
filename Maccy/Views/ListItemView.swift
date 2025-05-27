@@ -95,7 +95,7 @@ struct ListItemView<Title: View>: View {
     .background(
       isSelected 
         ? Color.accentColor.opacity(0.8)  // Blue for checked items
-        : (appState.selection == id ? Color.gray.opacity(0.2) : .clear)  // Gray for focused, clear otherwise
+        : (appState.selection == id ? Color.gray.opacity(0.3) : .clear)  // Darker gray for focused, clear otherwise
     )
     .clipShape(.rect(cornerRadius: 4))
     .onHover { hovering in
