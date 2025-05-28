@@ -67,6 +67,7 @@ struct ListItemView<Title: View>: View {
             Image(systemName: isSelected ? "checkmark.square.fill" : "square")
               .font(.system(size: 14))
               .foregroundColor(isSelected ? .white : .primary)
+              .opacity(0.4)
               .frame(maxWidth: .infinity, alignment: .trailing)
           }
         }

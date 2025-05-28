@@ -147,12 +147,6 @@ struct KeyHandlingView<Content: View>: View {
         case .togglePromptMode:
           appState.isPromptMode.toggle()
           return .handled
-        case .toggleSelection:
-          if let item = appState.history.selectedItem {
-            item.isSelected.toggle()
-            appState.updateFooterItemVisibility()
-          }
-          return .handled
         default:
           ()
         }

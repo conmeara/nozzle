@@ -21,7 +21,7 @@ struct KeyboardShortcutView: View {
       Text(character).frame(width: 12, alignment: .center)
     }
     .lineLimit(1)
-    .opacity(character.isEmpty ? 0 : 0.7)
+    .opacity(character.isEmpty ? 0 : 0.4)
   }
 }
 

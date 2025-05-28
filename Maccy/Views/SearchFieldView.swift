@@ -7,12 +7,7 @@ struct SearchFieldView: View {
   @Environment(AppState.self) private var appState
 
   var body: some View {
-    ZStack {
-      RoundedRectangle(cornerRadius: 5, style: .continuous)
-        .fill(Color.secondary)
-        .opacity(0.1)
-        .frame(height: 23)
-
+    VStack(spacing: 0) {
       HStack {
         Image(systemName: "magnifyingglass")
           .frame(width: 11, height: 11)
@@ -36,9 +31,15 @@ struct SearchFieldView: View {
               .padding(.trailing, 5)
           }
           .buttonStyle(PlainButtonStyle())
-          .opacity(query.isEmpty ? 0 : 0.9)
+          .opacity(query.isEmpty ? 0 : 0.4)
         }
       }
+      .frame(height: 23)
+      
+      // Divider line at the bottom
+      Rectangle()
+        .fill(Color.secondary.opacity(0.3))
+        .frame(height: 1)
     }
   }
 }

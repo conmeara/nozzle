@@ -35,7 +35,6 @@ enum KeyChord: CaseIterable {
   case close
   case togglePreview
   case togglePromptMode
-  case toggleSelection
   case unknown
 
   init(_ event: NSEvent?) {
@@ -108,8 +107,6 @@ enum KeyChord: CaseIterable {
       self = .selectCurrentItem
     case (.escape, _):
       self = .close
-    case (.space, []):
-      self = .toggleSelection
     case (.space, [.option]):
       self = .togglePreview
     case (.f, [.command]):

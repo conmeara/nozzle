@@ -12,12 +12,6 @@ struct PromptHeaderView: View {
 
   var body: some View {
     HStack(alignment: .top) {
-      if showTitle {
-        Text("Maccy")
-          .foregroundStyle(.secondary)
-          .padding(.top, 5)
-      }
-
       ZStack(alignment: .topLeading) {
         // TextEditor for multi-line input
         TextEditor(text: $promptText)

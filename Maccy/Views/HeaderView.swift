@@ -12,11 +12,6 @@ struct HeaderView: View {
 
   var body: some View {
     HStack {
-      if showTitle {
-        Text("Maccy")
-          .foregroundStyle(.secondary)
-      }
-
       SearchFieldView(placeholder: "search_placeholder", query: $searchQuery)
         .focused($searchFocused)
         .frame(maxWidth: .infinity)
