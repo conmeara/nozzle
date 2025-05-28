@@ -51,6 +51,11 @@ class History { // swiftlint:disable:this type_body_length
       .intersection(.deviceIndependentFlagsMask)
       .subtracting(.capsLock)
 
+    // Skip if it's Command or Command+Shift (handled separately for multi-select)
+    if modifierFlags == .command || modifierFlags == [.command, .shift] {
+      return nil
+    }
+
     guard HistoryItemAction(modifierFlags) != .unknown else {
       return nil
     }

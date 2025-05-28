@@ -26,14 +26,33 @@ struct KeyHandlingView<Content: View>: View {
           }
         }
         
-        // Check for Command-Enter (combined copy)
+        // Check for plain Enter to toggle selection
         if let event = NSApp.currentEvent,
-           (event.keyCode == UInt16(Key.return.QWERTYKeyCode) || event.keyCode == UInt16(Key.keypadEnter.QWERTYKeyCode)),
-           event.modifierFlags.contains(.command) {
-          // Only handle if we have multiple selections or prompt text
-          if !appState.history.selectedItems.isEmpty || !appState.promptText.isEmpty {
-            appState.performCombinedCopy()
+           (event.keyCode == UInt16(Key.return.QWERTYKeyCode) || event.keyCode == UInt16(Key.keypadEnter.QWERTYKeyCode)) {
+          let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock)
+          
+          if modifierFlags.isEmpty {
+            // Plain Enter - toggle selection
+            if let item = appState.history.selectedItem {
+              item.isSelected.toggle()
+              appState.updateFooterItemVisibility()
+            }
             return .handled
+          } else if modifierFlags == [.command, .shift] {
+            // Command-Shift-Enter - paste just the focused item
+            if let item = appState.history.selectedItem {
+              appState.popup.close()
+              Clipboard.shared.copy(item.item)
+              Clipboard.shared.paste()
+            }
+            return .handled
+          } else if modifierFlags == .command {
+            // Command-Enter (combined copy)
+            // Only handle if we have multiple selections or prompt text
+            if !appState.history.selectedItems.isEmpty || !appState.promptText.isEmpty {
+              appState.performCombinedCopy()
+              return .handled
+            }
           }
         }
         
@@ -115,6 +134,8 @@ struct KeyHandlingView<Content: View>: View {
           appState.history.togglePin(appState.history.selectedItem)
           return .handled
         case .selectCurrentItem:
+          // This now only triggers for Enter with modifiers we didn't handle above
+          // (like Option+Enter for paste)
           appState.select()
           return .handled
         case .close:
@@ -136,6 +157,34 @@ struct KeyHandlingView<Content: View>: View {
           ()
         }
 
+        // Check for Command+Number to toggle selection
+        if let event = NSApp.currentEvent,
+           event.modifierFlags.contains(.command),
+           !event.modifierFlags.contains(.shift),
+           let key = Sauce.shared.key(for: Int(event.keyCode)),
+           let item = appState.history.items.first(where: { $0.shortcuts.contains(where: { $0.key == key }) }) {
+          // Toggle the item's selection
+          item.isSelected.toggle()
+          appState.selection = item.id
+          appState.updateFooterItemVisibility()
+          return .handled
+        }
+        
+        // Check for Command+Shift+Number to paste just that item
+        if let event = NSApp.currentEvent,
+           event.modifierFlags.contains(.command),
+           event.modifierFlags.contains(.shift),
+           let key = Sauce.shared.key(for: Int(event.keyCode)),
+           let item = appState.history.items.first(where: { $0.shortcuts.contains(where: { $0.key == key }) }) {
+          // Paste this specific item
+          appState.selection = item.id
+          appState.popup.close()
+          Clipboard.shared.copy(item.item)
+          Clipboard.shared.paste()
+          return .handled
+        }
+        
+        // Original logic for other modifier combinations
         if let item = appState.history.pressedShortcutItem {
           appState.selection = item.id
           Task {
