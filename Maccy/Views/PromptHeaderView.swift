@@ -36,7 +36,7 @@ struct PromptHeaderView: View {
         
         // Placeholder text when empty
         if promptText.isEmpty {
-          Text("Type prompt (optional)...")
+          Text("prompt_placeholder")
             .foregroundColor(.secondary)
             .padding(.horizontal, 8)
             .padding(.vertical, 8)

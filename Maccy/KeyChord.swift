@@ -20,6 +20,7 @@ enum KeyChord: CaseIterable {
   case clearHistory
   case clearHistoryAll
   case clearSearch
+  case clearSelection
   case deleteCurrentItem
   case deleteOneCharFromSearch
   case deleteLastWordFromSearch
@@ -64,6 +65,8 @@ enum KeyChord: CaseIterable {
 
   init(_ key: Key, _ modifierFlags: NSEvent.ModifierFlags) { // swiftlint:disable:this cyclomatic_complexity
     switch (key, modifierFlags) {
+    case (.delete, [.command]):
+      self = .clearSelection
     case (.delete, [.command, .option]):
       self = .clearHistory
     case (.delete, [.command, .option, .shift]):

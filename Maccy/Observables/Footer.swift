@@ -20,16 +20,9 @@ class Footer {
   init() { // swiftlint:disable:this function_body_length
     items = [
       FooterItem(
-        title: "clear_selection",
-        shortcuts: [KeyShortcut(key: .delete, modifierFlags: [.command, .option])]
-      ) {
-        Task { @MainActor in
-          AppState.shared.clearSelectionAndPrompt()
-        }
-      },
-      FooterItem(
         title: "paste_combined",
-        shortcuts: [KeyShortcut(key: .v)]
+        shortcuts: [KeyShortcut(key: .v)],
+        help: "paste_combined_tooltip"
       ) {
         Task { @MainActor in
           AppState.shared.performCombinedPaste()
@@ -37,10 +30,20 @@ class Footer {
       },
       FooterItem(
         title: "copy_combined",
-        shortcuts: [KeyShortcut(key: .return)]
+        shortcuts: [KeyShortcut(key: .return)],
+        help: "copy_combined_tooltip"
       ) {
         Task { @MainActor in
           AppState.shared.performCombinedCopy()
+        }
+      },
+      FooterItem(
+        title: "clear_selection",
+        shortcuts: [KeyShortcut(key: .delete, modifierFlags: [.command])],
+        help: "clear_selection_tooltip"
+      ) {
+        Task { @MainActor in
+          AppState.shared.clearSelectionAndPrompt()
         }
       },
       FooterItem(
