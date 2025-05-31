@@ -145,7 +145,9 @@ struct KeyHandlingView<Content: View>: View {
           appState.togglePreview()
           return .handled
         case .togglePromptMode:
-          appState.isPromptMode.toggle()
+          appState.isSearchMode.toggle()
+          appState.isPromptMode = !appState.isSearchMode  // Ensure they're opposite
+          searchFocused = true
           return .handled
         default:
           ()

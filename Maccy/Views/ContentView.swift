@@ -6,31 +6,52 @@ struct ContentView: View {
   @State private var modifierFlags = ModifierFlags()
   @State private var scenePhase: ScenePhase = .background
 
-  @FocusState private var searchFocused: Bool
-  @FocusState private var promptFocused: Bool
+  @FocusState private var inputFocused: Bool
 
   var body: some View {
     ZStack {
       VisualEffectView()
 
       VStack(alignment: .leading, spacing: 0) {
-        KeyHandlingView(searchQuery: $appState.history.searchQuery, searchFocused: $searchFocused) {
-          if !appState.isPromptMode {
-            HeaderView(
-              searchFocused: $searchFocused,
-              searchQuery: $appState.history.searchQuery
+        KeyHandlingView(searchQuery: $appState.history.searchQuery, searchFocused: $inputFocused) {
+          VStack(spacing: 0) {
+            UnifiedInputFieldView(
+              query: appState.isSearchMode ? $appState.history.searchQuery : $appState.promptText,
+              isSearchMode: appState.isSearchMode,
+              isFocused: $inputFocused
             )
-          } else {
-            PromptHeaderView(
-              promptFocused: $promptFocused,
-              promptText: $appState.promptText
+            .padding(.bottom, 5)
+            .background {
+              GeometryReader { geo in
+                Color.clear
+                  .task(id: geo.size.height) {
+                    appState.popup.headerHeight = geo.size.height
+                  }
+              }
+            }
+            .onChange(of: appState.isSearchMode) { _, newValue in
+              // Clear search when switching to prompt mode
+              if !newValue {
+                appState.history.searchQuery = ""
+              }
+              // Note: We don't clear promptText when switching to search mode
+              // so it persists when user switches back
+            }
+            .onChange(of: scenePhase) {
+              if scenePhase == .background {
+                if !appState.history.searchQuery.isEmpty {
+                  appState.history.searchQuery = ""
+                }
+                // Note: We don't clear promptText when app closes
+                // so it persists when user reopens the app
+              }
+            }
+
+            HistoryListView(
+              searchQuery: $appState.history.searchQuery,
+              searchFocused: $inputFocused
             )
           }
-
-          HistoryListView(
-            searchQuery: $appState.history.searchQuery,
-            searchFocused: $searchFocused
-          )
 
           FooterView(footer: appState.footer)
         }
@@ -40,11 +61,7 @@ struct ContentView: View {
       .padding(.horizontal, 5)
       .padding(.vertical, appState.popup.verticalPadding)
       .onAppear {
-        if appState.isPromptMode {
-          promptFocused = true
-        } else {
-          searchFocused = true
-        }
+        inputFocused = true
         // Ensure first item is selected on appear
         Task {
           try? await Task.sleep(for: .milliseconds(100))
@@ -54,15 +71,6 @@ struct ContentView: View {
             appState.isKeyboardNavigating = true
           }
           appState.updateFooterItemVisibility()
-        }
-      }
-      .onChange(of: appState.isPromptMode) { _, newValue in
-        if newValue {
-          searchFocused = false
-          promptFocused = true
-        } else {
-          promptFocused = false
-          searchFocused = true
         }
       }
       .onChange(of: appState.promptText) { _, _ in

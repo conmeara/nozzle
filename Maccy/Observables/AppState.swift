@@ -12,8 +12,9 @@ class AppState: Sendable {
   var history: History
   var footer: Footer
 
-  var isPromptMode: Bool = false
+  var isPromptMode: Bool = true  // Default to prompt mode
   var promptText: String = ""
+  var isSearchMode: Bool = false  // Track search mode separately
   
   var scrollTarget: UUID?
   var selection: UUID? {
@@ -251,6 +252,9 @@ class AppState: Sendable {
     
     // Clear prompt text
     promptText = ""
+    
+    // Clear search query
+    history.searchQuery = ""
     
     // Update footer visibility
     updateFooterItemVisibility()
