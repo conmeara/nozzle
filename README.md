@@ -1,13 +1,16 @@
 
 <img width="128px" src="https://maccy.app/img/maccy/Logo.png" alt="Logo" align="left" />
 
-# [Maccy](https://maccy.app)
+# [Maccy](https://maccy.app) - Enhanced Fork
 
 [![Downloads](https://img.shields.io/github/downloads/p0deje/Maccy/total.svg)](https://github.com/p0deje/Maccy/releases/latest)
 [![Build Status](https://img.shields.io/bitrise/716921b669780314/master?token=3pMiCb5dpFzlO-7jTYtO3Q)](https://app.bitrise.io/app/716921b669780314)
 
+**This is an enhanced fork of the original Maccy clipboard manager with multi-select and prompt capabilities.**
+
 Maccy is a lightweight clipboard manager for macOS. It keeps the history of what you copy
-and lets you quickly navigate, search, and use previous clipboard contents.
+and lets you quickly navigate, search, and use previous clipboard contents. This fork adds powerful features
+for selecting multiple items and combining them with custom instructions.
 
 Maccy works on macOS Sonoma 14 or higher.
 
@@ -39,6 +42,14 @@ Maccy works on macOS Sonoma 14 or higher.
 * Native UI
 * Open source and free
 
+### New Features in This Fork
+
+* **Multi-select**: Select multiple clipboard items with checkboxes
+* **Prompt mode**: Type instructions to combine with selected items
+* **Combined operations**: Paste or copy multiple items with custom formatting
+* **Enhanced shortcuts**: More powerful keyboard navigation
+* **Improved UI**: Cleaner appearance with better visual feedback
+
 ## Install
 
 Download the latest version from the [releases](https://github.com/p0deje/Maccy/releases/latest) page, or use [Homebrew](https://brew.sh/):
@@ -49,18 +60,48 @@ brew install maccy
 
 ## Usage
 
+### Basic Usage
+
 1. <kbd>SHIFT (⇧)</kbd> + <kbd>COMMAND (⌘)</kbd> + <kbd>C</kbd> to popup Maccy or click on its icon in the menu bar.
 2. Type what you want to find.
 3. To select the history item you wish to copy, press <kbd>ENTER</kbd>, or click the item, or use <kbd>COMMAND (⌘)</kbd> + `n` shortcut.
 4. To choose the history item and paste, press <kbd>OPTION (⌥)</kbd> + <kbd>ENTER</kbd>, or <kbd>OPTION (⌥)</kbd> + <kbd>CLICK</kbd> the item, or use <kbd>OPTION (⌥)</kbd> + `n` shortcut.
 5. To choose the history item and paste without formatting, press <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>ENTER</kbd>, or <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>CLICK</kbd> the item, or use <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> + `n` shortcut.
 6. To delete the history item, press <kbd>OPTION (⌥)</kbd> + <kbd>DELETE (⌫)</kbd>.
-7. To see the full text of the history item, wait a couple of seconds for tooltip.
+7. To see the full text of the history item, wait a couple of seconds for tooltip or press <kbd>OPTION (⌥)</kbd> + <kbd>SPACE</kbd>.
 8. To pin the history item so that it remains on top of the list, press <kbd>OPTION (⌥)</kbd> + <kbd>P</kbd>. The item will be moved to the top with a random but permanent keyboard shortcut. To unpin it, press <kbd>OPTION (⌥)</kbd> + <kbd>P</kbd> again.
 9. To clear all unpinned items, select _Clear_ in the menu, or press <kbd>OPTION (⌥)</kbd> + <kbd>COMMAND (⌘)</kbd> + <kbd>DELETE (⌫)</kbd>. To clear all items including pinned, select _Clear_ in the menu with  <kbd>OPTION (⌥)</kbd> pressed, or press <kbd>SHIFT (⇧)</kbd> + <kbd>OPTION (⌥)</kbd> + <kbd>COMMAND (⌘)</kbd> + <kbd>DELETE (⌫)</kbd>.
 10. To disable Maccy and ignore new copies, click on the menu icon with <kbd>OPTION (⌥)</kbd> pressed.
 11. To ignore only the next copy, click on the menu icon with <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> pressed.
 12. To customize the behavior, check "Preferences…" window, or press <kbd>COMMAND (⌘)</kbd> + <kbd>,</kbd>.
+
+### Multi-Select Mode (New)
+
+1. **Toggle Selection**: Press <kbd>ENTER</kbd> or click an item to toggle its checkbox selection.
+2. **Select by Number**: Hold <kbd>COMMAND (⌘)</kbd> + `n` to toggle selection of the nth item.
+3. **Quick Paste Single Item**: <kbd>COMMAND (⌘)</kbd> + <kbd>SHIFT (⇧)</kbd> + `n` to paste just the nth item.
+
+### Prompt Mode (New)
+
+1. **Switch to Prompt Mode**: Press <kbd>COMMAND (⌘)</kbd> + <kbd>F</kbd> to toggle between search and prompt mode.
+2. **Type Instructions**: In prompt mode, type instructions that will be combined with selected items.
+3. **Combined Paste**: Press <kbd>COMMAND (⌘)</kbd> + <kbd>V</kbd> to paste selected items with your prompt.
+4. **Combined Copy**: Press <kbd>COMMAND (⌘)</kbd> + <kbd>ENTER</kbd> to copy the combined content to clipboard.
+5. **Clear All**: Press <kbd>COMMAND (⌘)</kbd> + <kbd>DELETE (⌫)</kbd> to clear selections and prompt.
+
+### Combined Operations Template
+
+When using combined paste/copy, items are formatted using a template:
+```
+{prompt}
+Context:
+{items}
+```
+
+You can customize this template in Terminal:
+```sh
+defaults write org.p0deje.Maccy pasteTemplate "{prompt}\n\nSelected items:\n{items}"
+```
 
 ## Advanced
 
