@@ -1,48 +1,48 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository (nozzle - enhanced fork of Maccy).
 
-**Last Updated**: After implementing multi-select, prompt mode, and UI enhancements in the Maccy fork.
+**Last Updated**: After implementing multi-select, prompt mode, and UI enhancements in the nozzle fork.
 
 ## Project Overview
 
-Maccy is a macOS clipboard manager application built with Swift and SwiftUI. It runs as a menu bar app that monitors the clipboard and maintains a searchable history of copied items.
+nozzle is a macOS clipboard manager application built with Swift and SwiftUI. It runs as a menu bar app that monitors the clipboard and maintains a searchable history of copied items.
 
-**This is an enhanced fork** that adds multi-select capabilities, prompt mode for combining items with instructions, and improved keyboard navigation.
+**nozzle is an enhanced fork of the original Maccy** that adds multi-select capabilities, prompt mode for combining items with instructions, and improved keyboard navigation.
 
 ## Commands
 
 ### Building
 ```bash
 # Build the app
-xcodebuild -project Maccy.xcodeproj -scheme Maccy build
+xcodebuild -project nozzle.xcodeproj -scheme nozzle build
 
 # Build for release
-xcodebuild -project Maccy.xcodeproj -scheme Maccy -configuration Release build
+xcodebuild -project nozzle.xcodeproj -scheme nozzle -configuration Release build
 ```
 
 ### Testing
 ```bash
 # Run all tests
-xcodebuild -project Maccy.xcodeproj -scheme Maccy test
+xcodebuild -project nozzle.xcodeproj -scheme nozzle test
 
 # Run specific test class
-xcodebuild -project Maccy.xcodeproj -scheme Maccy test -only-testing:MaccyTests/ClipboardTests
+xcodebuild -project nozzle.xcodeproj -scheme nozzle test -only-testing:nozzleTests/ClipboardTests
 
 # Run UI tests
-xcodebuild -project Maccy.xcodeproj -scheme Maccy test -only-testing:MaccyUITests
+xcodebuild -project nozzle.xcodeproj -scheme nozzle test -only-testing:nozzleUITests
 ```
 
 ### Archiving for Release
 ```bash
-xcodebuild -project Maccy.xcodeproj -scheme Maccy archive -archivePath ./build/Maccy.xcarchive
+xcodebuild -project nozzle.xcodeproj -scheme nozzle archive -archivePath ./build/nozzle.xcarchive
 ```
 
 ## Architecture
 
 ### Core Components
 
-1. **MaccyApp.swift**: Main SwiftUI app entry point with @main attribute
+1. **nozzleApp.swift**: Main SwiftUI app entry point with @main attribute
 2. **AppDelegate.swift**: Handles app lifecycle, menu bar icon, global hotkeys, and clipboard monitoring
 3. **Clipboard.swift**: Core clipboard monitoring and management logic
 4. **History.swift**: Observable object managing clipboard history with Core Data backing
