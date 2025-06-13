@@ -262,17 +262,55 @@ class AppState: Sendable {
   
   @MainActor
   func performCombinedPaste() {
-    let combinedText = formatCombinedContent()
-    guard !combinedText.isEmpty else { return }
+    let selectedItems = history.selectedItems
+    let hasPrompt = !promptText.isEmpty
+    let hasSelectedItems = !selectedItems.isEmpty
     
-    // Copy combined text to clipboard
-    Clipboard.shared.copyString(combinedText)
+    guard hasPrompt || hasSelectedItems else { return }
     
-    // Paste to active application
-    Clipboard.shared.paste()
-    
-    // Close the popup
+    // Close the popup immediately for better UX
     popup.close()
+    
+    // Build sequence of operations
+    var operations: [(String, HistoryItem?)] = []
+    
+    // Add prompt if present
+    if hasPrompt {
+      operations.append(("prompt", nil))
+    }
+    
+    // Add selected items
+    for item in selectedItems {
+      operations.append(("item", item.item))
+    }
+    
+    // Execute operations sequentially with proper delays
+    executeSequentialPaste(operations: operations, index: 0)
+  }
+  
+  @MainActor
+  private func executeSequentialPaste(operations: [(String, HistoryItem?)], index: Int) {
+    guard index < operations.count else { return }
+    
+    let (type, item) = operations[index]
+    
+    // Perform the copy operation
+    if type == "prompt" {
+      Clipboard.shared.copyString(self.promptText)
+    } else if let historyItem = item {
+      Clipboard.shared.copy(historyItem)
+    }
+    
+    // Wait for clipboard to update, then paste
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { // 50ms for clipboard update
+      Clipboard.shared.paste()
+      
+      // Wait for paste to complete, then continue with next operation
+      let nextDelay: TimeInterval = (type == "prompt") ? 0.1 : 0.15 // Extra time for complex data
+      DispatchQueue.main.asyncAfter(deadline: .now() + nextDelay) {
+        self.executeSequentialPaste(operations: operations, index: index + 1)
+      }
+    }
   }
   
   @MainActor
