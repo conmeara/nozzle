@@ -211,6 +211,13 @@ class AppState: Sendable {
               .modelContainer(Storage.shared.container)
           },
           Settings.Pane(
+            identifier: Settings.PaneIdentifier.shortcuts,
+            title: NSLocalizedString("Title", tableName: "ShortcutsSettings", comment: ""),
+            toolbarIcon: NSImage(systemSymbolName: "command", accessibilityDescription: "Shortcuts")!
+          ) {
+            ShortcutsSettingsPane()
+          },
+          Settings.Pane(
             identifier: Settings.PaneIdentifier.ignore,
             title: NSLocalizedString("Title", tableName: "IgnoreSettings", comment: ""),
             toolbarIcon: NSImage.nosign!

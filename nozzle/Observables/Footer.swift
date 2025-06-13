@@ -21,20 +21,11 @@ class Footer {
     items = [
       FooterItem(
         title: "paste_combined",
-        shortcuts: [KeyShortcut(key: .v)],
+        shortcuts: [KeyShortcut(key: .return)],
         help: "paste_combined_tooltip"
       ) {
         Task { @MainActor in
           AppState.shared.performCombinedPaste()
-        }
-      },
-      FooterItem(
-        title: "copy_combined",
-        shortcuts: [KeyShortcut(key: .return)],
-        help: "copy_combined_tooltip"
-      ) {
-        Task { @MainActor in
-          AppState.shared.performCombinedCopy()
         }
       },
       FooterItem(

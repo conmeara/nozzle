@@ -32,21 +32,6 @@ struct GeneralSettingsPane: View {
         )
       }
 
-      Settings.Section(label: { Text("Open", tableName: "GeneralSettings") }) {
-        KeyboardShortcuts.Recorder(for: .popup)
-          .help(Text("OpenTooltip", tableName: "GeneralSettings"))
-      }
-      Settings.Section(label: { Text("Pin", tableName: "GeneralSettings") }) {
-        KeyboardShortcuts.Recorder(for: .pin)
-          .help(Text("PinTooltip", tableName: "GeneralSettings"))
-      }
-      Settings.Section(
-        bottomDivider: true,
-        label: { Text("Delete", tableName: "GeneralSettings") }
-      ) {
-        KeyboardShortcuts.Recorder(for: .delete)
-          .help(Text("DeleteTooltip", tableName: "GeneralSettings"))
-      }
 
       Settings.Section(
         bottomDivider: true,
@@ -85,6 +70,7 @@ struct GeneralSettingsPane: View {
         .foregroundStyle(.gray)
         .controlSize(.small)
       }
+
 
       Settings.Section(title: "") {
         if let notificationsURL = notificationsURL {

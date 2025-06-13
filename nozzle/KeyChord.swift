@@ -17,6 +17,15 @@ enum KeyChord: CaseIterable {
   static var pinKey: Key? { Sauce.shared.key(shortcut: .pin) }
   static var pinModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .pin)?.modifiers }
 
+  static var togglePreviewKey: Key? { Sauce.shared.key(shortcut: .togglePreview) }
+  static var togglePreviewModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .togglePreview)?.modifiers }
+
+  static var clearSelectionKey: Key? { Sauce.shared.key(shortcut: .clearSelection) }
+  static var clearSelectionModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .clearSelection)?.modifiers }
+
+  static var togglePromptModeKey: Key? { Sauce.shared.key(shortcut: .togglePromptMode) }
+  static var togglePromptModeModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .togglePromptMode)?.modifiers }
+
   case clearHistory
   case clearHistoryAll
   case clearSearch
@@ -64,7 +73,7 @@ enum KeyChord: CaseIterable {
 
   init(_ key: Key, _ modifierFlags: NSEvent.ModifierFlags) { // swiftlint:disable:this cyclomatic_complexity
     switch (key, modifierFlags) {
-    case (.delete, [.command]):
+    case (KeyChord.clearSelectionKey, KeyChord.clearSelectionModifiers):
       self = .clearSelection
     case (.delete, [.command, .option]):
       self = .clearHistory
@@ -107,9 +116,9 @@ enum KeyChord: CaseIterable {
       self = .selectCurrentItem
     case (.escape, _):
       self = .close
-    case (.space, [.option]):
+    case (KeyChord.togglePreviewKey, KeyChord.togglePreviewModifiers):
       self = .togglePreview
-    case (.f, [.command]):
+    case (KeyChord.togglePromptModeKey, KeyChord.togglePromptModeModifiers):
       self = .togglePromptMode
     case (_, _) where !modifierFlags.isDisjoint(with: [.command, .control, .option]):
       self = .ignored

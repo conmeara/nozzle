@@ -15,16 +15,7 @@ struct KeyHandlingView<Content: View>: View {
         // key code and don't properly work with multiple inputs,
         // so pressing ⌘, on non-English layout doesn't open
         // preferences. Stick to NSEvent to fix this behavior.
-        // Check for Command-V (combined paste) before standard key chord handling
-        if let event = NSApp.currentEvent,
-           event.keyCode == UInt16(KeyChord.pasteKey.QWERTYKeyCode),
-           event.modifierFlags.contains(.command) {
-          // Only handle if we have multiple selections or prompt text
-          if !appState.history.selectedItems.isEmpty || !appState.promptText.isEmpty {
-            appState.performCombinedPaste()
-            return .handled
-          }
-        }
+        // Keyboard handling is now done through the switch statement below
         
         // Check for plain Enter to toggle selection
         if let event = NSApp.currentEvent,
@@ -47,10 +38,10 @@ struct KeyHandlingView<Content: View>: View {
             }
             return .handled
           } else if modifierFlags == .command {
-            // Command-Enter (combined copy)
+            // Command-Enter (combined paste)
             // Only handle if we have multiple selections or prompt text
             if !appState.history.selectedItems.isEmpty || !appState.promptText.isEmpty {
-              appState.performCombinedCopy()
+              appState.performCombinedPaste()
               return .handled
             }
           }
