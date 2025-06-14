@@ -244,13 +244,11 @@ class AppState: Sendable {
   }
   
   func updateFooterItemVisibility() {
-    // Find paste and copy footer items
-    if let pasteItem = footer.items.first(where: { $0.title == "paste_combined" }),
-       let copyItem = footer.items.first(where: { $0.title == "copy_combined" }) {
-      // Show these items only if we have selected items or prompt text
+    // Find paste footer item
+    if let pasteItem = footer.items.first(where: { $0.title == "paste_combined" }) {
+      // Show this item only if we have selected items or prompt text
       let hasContent = !history.selectedItems.isEmpty || !promptText.isEmpty
       pasteItem.isVisible = hasContent
-      copyItem.isVisible = hasContent
     }
   }
   
@@ -359,65 +357,31 @@ class AppState: Sendable {
     }
     
     // Wait for clipboard to update, then paste
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { // 50ms for clipboard update
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) { // 40ms for clipboard update
       Clipboard.shared.paste()
       
       // Add line break after each item (except the last one)
       let isLastItem = index == operations.count - 1
       if !isLastItem {
-        // Add a line break by pasting a newline
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+        // Add a line break by pasting a newline - conservative timing to avoid race conditions
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { // Wait longer for paste to complete
           Clipboard.shared.copyString("\n")
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) { // Clipboard update
             Clipboard.shared.paste()
+            // Wait for newline paste to complete before continuing
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+              self.executeSequentialPaste(operations: operations, index: index + 1, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
+            }
           }
         }
-      }
-      
-      // Wait for paste to complete, then continue with next operation
-      let nextDelay: TimeInterval = (type == "prompt") ? 0.1 : 0.15 // Extra time for complex data
-      DispatchQueue.main.asyncAfter(deadline: .now() + nextDelay + (isLastItem ? 0 : 0.1)) {
-        self.executeSequentialPaste(operations: operations, index: index + 1, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
+      } else {
+        // Last item - no line break needed
+        let nextDelay: TimeInterval = (type == "prompt") ? 0.08 : 0.1
+        DispatchQueue.main.asyncAfter(deadline: .now() + nextDelay) {
+          self.executeSequentialPaste(operations: operations, index: index + 1, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
+        }
       }
     }
   }
   
-  @MainActor
-  func performCombinedCopy() {
-    let combinedText = formatCombinedContent()
-    guard !combinedText.isEmpty else { return }
-    
-    // Copy combined text to clipboard
-    Clipboard.shared.copyString(combinedText)
-    
-    // Close the popup
-    popup.close()
-  }
-  
-  private func formatCombinedContent() -> String {
-    // Get selected items
-    let selectedItems = history.selectedItems
-    
-    // Check if we have content to combine
-    guard !promptText.isEmpty || !selectedItems.isEmpty else { return "" }
-    
-    // Get the template from user defaults
-    let template = Defaults[.pasteTemplate]
-    
-    // Get text content from selected items
-    let itemTexts = selectedItems.map { $0.title }
-    let itemsString = itemTexts.joined(separator: "\n")
-    
-    // Replace placeholders in template
-    var output = template
-      .replacingOccurrences(of: "{prompt}", with: promptText)
-      .replacingOccurrences(of: "{items}", with: itemsString)
-    
-    // Clean up if prompt is empty
-    if promptText.isEmpty {
-      output = output.replacingOccurrences(of: "\nContext:\n", with: "")
-    }
-    
-    return output.trimmingCharacters(in: .whitespacesAndNewlines)
-  }
 }
