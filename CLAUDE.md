@@ -138,4 +138,3 @@ func clearSelectionAndPrompt()
 - Test mode switching behavior
 - Test combined operation formatting
 - Test keyboard shortcut conflicts
-

@@ -362,9 +362,21 @@ class AppState: Sendable {
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { // 50ms for clipboard update
       Clipboard.shared.paste()
       
+      // Add line break after each item (except the last one)
+      let isLastItem = index == operations.count - 1
+      if !isLastItem {
+        // Add a line break by pasting a newline
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+          Clipboard.shared.copyString("\n")
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            Clipboard.shared.paste()
+          }
+        }
+      }
+      
       // Wait for paste to complete, then continue with next operation
       let nextDelay: TimeInterval = (type == "prompt") ? 0.1 : 0.15 // Extra time for complex data
-      DispatchQueue.main.asyncAfter(deadline: .now() + nextDelay) {
+      DispatchQueue.main.asyncAfter(deadline: .now() + nextDelay + (isLastItem ? 0 : 0.1)) {
         self.executeSequentialPaste(operations: operations, index: index + 1, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
       }
     }
