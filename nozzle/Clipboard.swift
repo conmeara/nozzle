@@ -14,6 +14,7 @@ class Clipboard {
 
   private var timer: Timer?
   private var isPerformingMultiPaste = false
+  private var multiPasteEndTime: Date?
 
   private let dynamicTypePrefix = "dyn."
   private let microsoftSourcePrefix = "com.microsoft.ole.source."
@@ -68,7 +69,11 @@ class Clipboard {
     pasteboard.clearContents()
     pasteboard.setString(string, forType: .string)
     sync()
-    if !isPerformingMultiPaste {
+    
+    if isPerformingMultiPaste {
+      // Update changeCount to prevent the timer from detecting this change
+      changeCount = pasteboard.changeCount
+    } else {
       checkForChangesInPasteboard()
     }
   }
@@ -110,9 +115,12 @@ class Clipboard {
     pasteboard.setString(item.application ?? "", forType: .source)
     sync()
 
-    Task {
-      Notifier.notify(body: item.title, sound: .knock)
-      if !isPerformingMultiPaste {
+    if isPerformingMultiPaste {
+      // Update changeCount to prevent the timer from detecting this change
+      changeCount = pasteboard.changeCount
+    } else {
+      Task {
+        Notifier.notify(body: item.title, sound: .knock)
         checkForChangesInPasteboard()
       }
     }
@@ -157,6 +165,10 @@ class Clipboard {
 
   func setMultiPasteMode(_ enabled: Bool) {
     isPerformingMultiPaste = enabled
+    if !enabled {
+      // Set a grace period after multi-paste ends to catch any pending async operations
+      multiPasteEndTime = Date().addingTimeInterval(0.5) // 500ms grace period
+    }
   }
 
   @objc
@@ -170,6 +182,11 @@ class Clipboard {
 
     // Skip clipboard monitoring during multi-paste operations
     if isPerformingMultiPaste {
+      return
+    }
+    
+    // Also skip if we're within the grace period after multi-paste
+    if let endTime = multiPasteEndTime, Date() < endTime {
       return
     }
 

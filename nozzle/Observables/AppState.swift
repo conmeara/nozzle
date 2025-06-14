@@ -15,6 +15,7 @@ class AppState: Sendable {
   var isPromptMode: Bool = true  // Default to prompt mode
   var promptText: String = ""
   var isSearchMode: Bool = false  // Track search mode separately
+  private var preservedSelections: Set<HistoryItem> = []
   
   var scrollTarget: UUID?
   var selection: UUID? {
@@ -257,6 +258,9 @@ class AppState: Sendable {
     // Clear all selected items
     history.items.forEach { $0.isSelected = false }
     
+    // Clear preserved selections
+    preservedSelections.removeAll()
+    
     // Clear prompt text
     promptText = ""
     
@@ -264,6 +268,21 @@ class AppState: Sendable {
     history.searchQuery = ""
     
     // Update footer visibility
+    updateFooterItemVisibility()
+  }
+  
+  func preserveCurrentSelections() {
+    // Store currently selected items
+    preservedSelections = Set(history.selectedItems.map { $0.item })
+  }
+  
+  func restorePreservedSelections() {
+    // Restore selections from preserved set
+    for decorator in history.items {
+      if preservedSelections.contains(decorator.item) {
+        decorator.isSelected = true
+      }
+    }
     updateFooterItemVisibility()
   }
   
@@ -276,7 +295,8 @@ class AppState: Sendable {
     guard hasPrompt || hasSelectedItems else { return }
     
     // Store current selection states and prompt text
-    let selectedItemIds = selectedItems.map { $0.id }
+    // Use the underlying HistoryItem for stable identification
+    let selectedHistoryItems = selectedItems.map { $0.item }
     let currentPromptText = promptText
     
     // Enable multi-paste mode to prevent clipboard monitoring
@@ -299,11 +319,11 @@ class AppState: Sendable {
     }
     
     // Execute operations sequentially with proper delays
-    executeSequentialPaste(operations: operations, index: 0, selectedItemIds: selectedItemIds, promptText: currentPromptText)
+    executeSequentialPaste(operations: operations, index: 0, selectedHistoryItems: selectedHistoryItems, promptText: currentPromptText)
   }
   
   @MainActor
-  private func executeSequentialPaste(operations: [(String, HistoryItem?)], index: Int, selectedItemIds: [UUID], promptText: String) {
+  private func executeSequentialPaste(operations: [(String, HistoryItem?)], index: Int, selectedHistoryItems: [HistoryItem], promptText: String) {
     guard index < operations.count else {
       // All operations complete, restore state
       Clipboard.shared.setMultiPasteMode(false)
@@ -313,12 +333,15 @@ class AppState: Sendable {
         // Restore prompt text
         self.promptText = promptText
         
-        // Restore selections
-        for item in self.history.items {
-          if selectedItemIds.contains(item.id) {
-            item.isSelected = true
+        // Restore selections by matching the underlying HistoryItem
+        for decorator in self.history.items {
+          if selectedHistoryItems.contains(decorator.item) {
+            decorator.isSelected = true
           }
         }
+        
+        // Also update preserved selections for when popup reopens
+        self.preservedSelections = Set(selectedHistoryItems)
         
         // Update footer visibility
         self.updateFooterItemVisibility()
@@ -342,7 +365,7 @@ class AppState: Sendable {
       // Wait for paste to complete, then continue with next operation
       let nextDelay: TimeInterval = (type == "prompt") ? 0.1 : 0.15 // Extra time for complex data
       DispatchQueue.main.asyncAfter(deadline: .now() + nextDelay) {
-        self.executeSequentialPaste(operations: operations, index: index + 1, selectedItemIds: selectedItemIds, promptText: promptText)
+        self.executeSequentialPaste(operations: operations, index: index + 1, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
       }
     }
   }

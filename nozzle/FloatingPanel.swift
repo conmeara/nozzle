@@ -117,6 +117,9 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
   }
 
   override func close() {
+    // Preserve selections before closing
+    AppState.shared.preserveCurrentSelections()
+    
     super.close()
     isPresented = false
     statusBarButton?.isHighlighted = false

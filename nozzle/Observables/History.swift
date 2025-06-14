@@ -124,6 +124,9 @@ class History { // swiftlint:disable:this type_body_length
 
     updateShortcuts()
     
+    // Restore preserved selections after loading
+    AppState.shared.restorePreservedSelections()
+    
     // Ensure that panel size is proper *after* loading all items.
     Task {
       AppState.shared.popup.needsResize = true
