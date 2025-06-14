@@ -275,6 +275,13 @@ class AppState: Sendable {
     
     guard hasPrompt || hasSelectedItems else { return }
     
+    // Store current selection states and prompt text
+    let selectedItemIds = selectedItems.map { $0.id }
+    let currentPromptText = promptText
+    
+    // Enable multi-paste mode to prevent clipboard monitoring
+    Clipboard.shared.setMultiPasteMode(true)
+    
     // Close the popup immediately for better UX
     popup.close()
     
@@ -292,12 +299,32 @@ class AppState: Sendable {
     }
     
     // Execute operations sequentially with proper delays
-    executeSequentialPaste(operations: operations, index: 0)
+    executeSequentialPaste(operations: operations, index: 0, selectedItemIds: selectedItemIds, promptText: currentPromptText)
   }
   
   @MainActor
-  private func executeSequentialPaste(operations: [(String, HistoryItem?)], index: Int) {
-    guard index < operations.count else { return }
+  private func executeSequentialPaste(operations: [(String, HistoryItem?)], index: Int, selectedItemIds: [UUID], promptText: String) {
+    guard index < operations.count else {
+      // All operations complete, restore state
+      Clipboard.shared.setMultiPasteMode(false)
+      
+      // Restore selections after a short delay to ensure UI is updated
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        // Restore prompt text
+        self.promptText = promptText
+        
+        // Restore selections
+        for item in self.history.items {
+          if selectedItemIds.contains(item.id) {
+            item.isSelected = true
+          }
+        }
+        
+        // Update footer visibility
+        self.updateFooterItemVisibility()
+      }
+      return
+    }
     
     let (type, item) = operations[index]
     
@@ -315,7 +342,7 @@ class AppState: Sendable {
       // Wait for paste to complete, then continue with next operation
       let nextDelay: TimeInterval = (type == "prompt") ? 0.1 : 0.15 // Extra time for complex data
       DispatchQueue.main.asyncAfter(deadline: .now() + nextDelay) {
-        self.executeSequentialPaste(operations: operations, index: index + 1)
+        self.executeSequentialPaste(operations: operations, index: index + 1, selectedItemIds: selectedItemIds, promptText: promptText)
       }
     }
   }

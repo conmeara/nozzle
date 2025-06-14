@@ -13,6 +13,7 @@ class Clipboard {
   private let pasteboard = NSPasteboard.general
 
   private var timer: Timer?
+  private var isPerformingMultiPaste = false
 
   private let dynamicTypePrefix = "dyn."
   private let microsoftSourcePrefix = "com.microsoft.ole.source."
@@ -67,7 +68,9 @@ class Clipboard {
     pasteboard.clearContents()
     pasteboard.setString(string, forType: .string)
     sync()
-    checkForChangesInPasteboard()
+    if !isPerformingMultiPaste {
+      checkForChangesInPasteboard()
+    }
   }
   
   @MainActor
@@ -109,7 +112,9 @@ class Clipboard {
 
     Task {
       Notifier.notify(body: item.title, sound: .knock)
-      checkForChangesInPasteboard()
+      if !isPerformingMultiPaste {
+        checkForChangesInPasteboard()
+      }
     }
   }
 
@@ -150,6 +155,10 @@ class Clipboard {
     pasteboard.clearContents()
   }
 
+  func setMultiPasteMode(_ enabled: Bool) {
+    isPerformingMultiPaste = enabled
+  }
+
   @objc
   @MainActor
   func checkForChangesInPasteboard() {
@@ -158,6 +167,11 @@ class Clipboard {
     }
 
     changeCount = pasteboard.changeCount
+
+    // Skip clipboard monitoring during multi-paste operations
+    if isPerformingMultiPaste {
+      return
+    }
 
     if Defaults[.ignoreEvents] {
       if Defaults[.ignoreOnlyNextEvent] {
