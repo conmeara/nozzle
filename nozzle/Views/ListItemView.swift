@@ -16,6 +16,22 @@ struct ListItemView<Title: View>: View {
   @Default(.showApplicationIcons) private var showIcons
   @Environment(AppState.self) private var appState
   @Environment(ModifierFlags.self) private var modifierFlags
+  
+  private var shouldShowHoverBackground: Bool {
+    guard appState.selection == id else { return false }
+    
+    // Check if this is a history item that's selected
+    if appState.history.selectedItem?.id == id {
+      return true
+    }
+    
+    // Check if this is a footer item that's selected
+    if appState.footer.selectedItem?.id == id {
+      return true
+    }
+    
+    return false
+  }
 
   var body: some View {
     HStack(spacing: 0) {
@@ -97,7 +113,7 @@ struct ListItemView<Title: View>: View {
       Group {
         if isSelected {
           Color.accentColor.opacity(0.8)  // Blue for checked items
-        } else if appState.selection == id {
+        } else if shouldShowHoverBackground {
           // Enhanced visibility for focused item
           Color(white: 0.5).opacity(0.5)  // Medium gray with higher opacity
         } else {
