@@ -105,11 +105,8 @@ class AppState: Sendable {
       HistoryItemDecorator.previewThrottler.cancel()
       item.showPreview = false
     } else {
-      // Show preview
-      HistoryItemDecorator.previewThrottler.throttle {
-        HistoryItemDecorator.previewThrottler.minimumDelay = 0.2
-        item.showPreview = true
-      }
+      // Show preview immediately for keyboard shortcut (no throttling)
+      HistoryItemDecorator.showPreviewImmediately(for: item)
     }
   }
 

@@ -13,6 +13,11 @@ class HistoryItemDecorator: Identifiable, Hashable {
   static var previewThrottler = Throttler(minimumDelay: Double(Defaults[.previewDelay]) / 1000)
   static var previewImageSize: NSSize { NSScreen.forPopup?.visibleFrame.size ?? NSSize(width: 2048, height: 1536) }
   static var thumbnailImageSize: NSSize { NSSize(width: 340, height: Defaults[.imageMaxHeight]) }
+  
+  static func showPreviewImmediately(for item: HistoryItemDecorator) {
+    previewThrottler.cancel()
+    item.showPreview = true
+  }
 
   let id = UUID()
 
