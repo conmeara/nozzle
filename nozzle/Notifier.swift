@@ -15,8 +15,7 @@ class Notifier {
   static func notify(body: String?, sound: NSSound?) {
     guard let body else { return }
 
-    authorize()
-
+    // Don't request authorization - only show notifications if already authorized
     center.getNotificationSettings { settings in
       guard (settings.authorizationStatus == .authorized) ||
             (settings.authorizationStatus == .provisional) else { return }
