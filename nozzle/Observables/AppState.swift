@@ -250,6 +250,9 @@ class AppState: Sendable {
   }
   
   func clearSelectionAndPrompt() {
+    // Preserve the current hover/active selection
+    let currentSelection = selection
+    
     // Clear all selected items
     history.items.forEach { $0.isSelected = false }
     
@@ -264,6 +267,11 @@ class AppState: Sendable {
     
     // Update footer visibility
     updateFooterItemVisibility()
+    
+    // Restore the hover/active selection
+    if let currentSelection = currentSelection {
+      selection = currentSelection
+    }
   }
   
   func preserveCurrentSelections() {

@@ -32,7 +32,10 @@ class History { // swiftlint:disable:this type_body_length
         updateItems(search.search(string: searchQuery, within: all))
 
         if searchQuery.isEmpty {
-          AppState.shared.selection = unpinnedItems.first?.id
+          // Only set selection to first item if there's no current selection
+          if AppState.shared.selection == nil {
+            AppState.shared.selection = unpinnedItems.first?.id
+          }
         } else {
           AppState.shared.highlightFirst()
         }
