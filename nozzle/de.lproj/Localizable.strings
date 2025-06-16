@@ -1,11 +1,9 @@
 "search_placeholder" = "Suchen …";
 "clear_tooltip" = "Lösche nur die nicht angehefteten Einträge.\nHalte zusätzlich ⇧ gedrückt, um alle Einträge zu löschen.";
 "clear_all_tooltip" = "Lösche alle Einträge.";
-"about_tooltip" = "Informationen über die Anwendung.";
 "quit_tooltip" = "Beende die Anwendung.";
 "clear" = "Löschen";
 "clear_all" = "Alle löschen";
-"about" = "Über";
 "quit" = "Beenden";
 "preferences" = "Einstellungen…";
 "preferences_advanced" = "Erweitert";

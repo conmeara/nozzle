@@ -1,11 +1,9 @@
 "search_placeholder" = "qidirish uchun yozing…";
 "clear_tooltip" = "Ochilmagan elemetlarni tozalang.\nHammasini tozalash uchun ⇧ bosing.";
 "clear_all_tooltip" = "Barcha elementlarni tozlash.";
-"about_tooltip" = "Ilova haqida ko'proq o'qish";
 "quit_tooltip" = "Dasturdan chiqish.";
 "clear" = "Tozalash";
 "clear_all" = "Hammasini tozalash";
-"about" = "Ilova haqida";
 "quit" = "Chiqish";
 "preferences" = "Sozlash";
 "preferences_advanced" = "Ko'proq sozlamalar";

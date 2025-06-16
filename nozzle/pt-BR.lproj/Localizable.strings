@@ -1,10 +1,8 @@
 "search_placeholder" = "digite para buscar…";
-"about" = "Sobre";
 "preferences" = "Preferências…";
 "preferences_advanced" = "Avançado";
 "clear_all" = "Limpar tudo";
 "clear_all_tooltip" = "Limpar todos os itens.";
-"about_tooltip" = "Ler mais sobre o aplicativo.";
 "clear_alert_confirm" = "Limpar";
 "accessibility_alert_open" = "Abrir Ajustes do Sistema";
 "clear_alert_message" = "Tem certeza de que deseja limpar o histórico?";

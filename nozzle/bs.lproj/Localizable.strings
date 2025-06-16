@@ -1,11 +1,9 @@
 "search_placeholder" = "počni kucati za pretragu…";
 "clear_tooltip" = "Očisti sve stavke.\nOznači sa ⇧ da očistiš sve.";
 "clear_all_tooltip" = "Očisti sve stavke.";
-"about_tooltip" = "Pročitaj više o aplikaciji.";
 "quit_tooltip" = "Ugasi aplikaciju.";
 "clear" = "Očisti";
 "clear_all" = "Očisti sve";
-"about" = "O Aplikaciji";
 "quit" = "Zatvori";
 "preferences" = "Podešavanja…";
 "preferences_advanced" = "Napredno";

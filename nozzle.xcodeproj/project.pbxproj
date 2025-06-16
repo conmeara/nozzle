@@ -114,7 +114,6 @@
 		00669E730162BEFCD3D9180 /* ShortcutsSettings.strings in Resources */ = {isa = PBXBuildFile; fileRef = 84DA6AE6669645AEB14775D7 /* ShortcutsSettings.strings */; };
 		DAA5ACB52C1B803000B58513 /* GeneralSettings.strings in Resources */ = {isa = PBXBuildFile; fileRef = DAA5ACB32C1B803000B58513 /* GeneralSettings.strings */; };
 		DAA5ACCA2C1BEE8A00B58513 /* SoftwareUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA5ACC92C1BEE8A00B58513 /* SoftwareUpdater.swift */; };
-		DAAEB196219694AE00A7883C /* About.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAAEB195219694AE00A7883C /* About.swift */; };
 		DAB082962A2B7B850053E463 /* AppStoreReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB082952A2B7B850053E463 /* AppStoreReview.swift */; };
 		DABDE97F2974706C005B32E9 /* KeyboardLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = DABDE97E2974706C005B32E9 /* KeyboardLayout.swift */; };
 		DAC0CA3E2C88E7A4003BF498 /* Fuse in Frameworks */ = {isa = PBXBuildFile; productRef = DAC0CA3D2C88E7A4003BF498 /* Fuse */; };
@@ -454,7 +453,6 @@
 		DAA5ACC72C1BA35D00B58513 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/GeneralSettings.strings; sourceTree = "<group>"; };
 		DAA5ACC82C1BA35E00B58513 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/GeneralSettings.strings; sourceTree = "<group>"; };
 		DAA5ACC92C1BEE8A00B58513 /* SoftwareUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoftwareUpdater.swift; sourceTree = "<group>"; };
-		DAAEB195219694AE00A7883C /* About.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = About.swift; sourceTree = "<group>"; };
 		DAB082952A2B7B850053E463 /* AppStoreReview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreReview.swift; sourceTree = "<group>"; };
 		DAB6265F2CAD7E4F001B720E /* hu */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hu; path = hu.lproj/PinsSettings.strings; sourceTree = "<group>"; };
 		DAB626602CAD7E59001B720E /* hu */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hu; path = hu.lproj/AdvancedSettings.strings; sourceTree = "<group>"; };
@@ -742,7 +740,6 @@
 				DA181178247D150B00066D55 /* Settings */,
 				DA21AD3C249E85BD003E7C98 /* Sounds */,
 				DA19690C2C3EEF9300258481 /* Views */,
-				DAAEB195219694AE00A7883C /* About.swift */,
 				DA6D98E12AEABE03008A77CE /* Accessibility.swift */,
 				DAEE38461E3DBEB100DD2966 /* AppDelegate.swift */,
 				DAB082952A2B7B850053E463 /* AppStoreReview.swift */,
@@ -1035,7 +1032,6 @@
 				DA0EF1881E444B2A00E58577 /* Clipboard.swift in Sources */,
 				DA3F1B452C90084600267632 /* Sauce+KeyboardShortcuts.swift in Sources */,
 				DA689FCC2C1D1D510009B887 /* MenuIcon.swift in Sources */,
-				DAAEB196219694AE00A7883C /* About.swift in Sources */,
 				DA6D98E22AEABE03008A77CE /* Accessibility.swift in Sources */,
 				DAFEF0B8249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift in Sources */,
 				DA1969212C3F6C6800258481 /* HistoryItemAction.swift in Sources */,

@@ -1,11 +1,9 @@
 "search_placeholder" = "escriba para buscar…";
 "clear_tooltip" = "Limpiar elementos no anclados.\nSelecciona con ⇧ para limpiarlos todos.";
 "clear_all_tooltip" = "Limpiar todo.";
-"about_tooltip" = "Leer más sobre la aplicación.";
 "quit_tooltip" = "Cerrar aplicación.";
 "clear" = "Limpiar";
 "clear_all" = "Limpiar todo";
-"about" = "Acerca de";
 "quit" = "Salir";
 "preferences" = "Preferencias…";
 "preferences_advanced" = "Avanzado";

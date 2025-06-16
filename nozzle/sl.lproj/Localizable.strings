@@ -7,7 +7,6 @@
 "clear_all_tooltip" = "Počisti vse elemente.";
 "quit_tooltip" = "Zapri aplikacijo.";
 "clear_all" = "Izbriši vse";
-"about" = "Informacije";
 "preferences" = "Nastavitve…";
 "preferences_pins" = "Pini";
 "copy_modifiers_config" = "• Izberite s pritisnjenim %@, da kopirate element.";
@@ -21,7 +20,6 @@
 "system_preferences_name" = "Sistemske nastavitve";
 "system_preferences_pane" = "Nastavitve varnosti in zasebnosti";
 "clear_tooltip" = "Počisti nepripete elemente.\nIzberite z ⇧, da počistite vse.";
-"about_tooltip" = "Preberite več o aplikaciji.";
 "clear" = "Izbriši";
 "quit" = "Zapri";
 "paste_modifiers_config" = "• Izberite s pritisnjenim %@, da kopirate in prilepite element.";

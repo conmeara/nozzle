@@ -1,11 +1,9 @@
 "search_placeholder" = "tipkaj za pretraživanje …";
 "clear_tooltip" = "Izbriši neprikvačene.\nIzbriši sve pomoću tipke ⇧.";
 "clear_all_tooltip" = "Izbriši sve.";
-"about_tooltip" = "Saznaj više o programu.";
 "quit_tooltip" = "Zatvori program.";
 "clear" = "Izbriši";
 "clear_all" = "Izbriši sve";
-"about" = "Informacije";
 "quit" = "Zatvori program";
 "preferences" = "Postavke …";
 "preferences_advanced" = "Napredno";

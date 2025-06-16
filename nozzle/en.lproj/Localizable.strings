@@ -5,14 +5,12 @@
 "clear_selection_tooltip" = "Clear selected items and prompt text.";
 "paste_combined_tooltip" = "Paste all selected items with prompt.";
 "copy_combined_tooltip" = "Copy all selected items with prompt to clipboard.";
-"about_tooltip" = "Read more about the application.";
 "quit_tooltip" = "Quit application.";
 "clear" = "Clear";
 "clear_all" = "Clear all";
 "clear_selection" = "Clear";
 "paste_combined" = "Paste";
 "copy_combined" = "Copy to Clipboard";
-"about" = "About";
 "quit" = "Quit";
 "preferences" = "Preferences…";
 "preferences_advanced" = "Advanced";

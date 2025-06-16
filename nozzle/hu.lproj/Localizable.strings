@@ -1,11 +1,9 @@
 "preferences" = "Beállítások…";
 "search_placeholder" = "írj a kereséshez…";
 "clear_tooltip" = "Rögzítettlen elemek törlése\nVálassz a ⇧-el az összes törléséhez.";
-"about_tooltip" = "Tudj meg többet az alkalmazásról.";
 "quit_tooltip" = "Alkalmazás bezárása.";
 "clear" = "Törlés";
 "clear_all" = "Összes törlése";
-"about" = "Névjegy";
 "quit" = "Bezárás";
 "preferences_pins" = "Rögzítések";
 "paste_modifiers_config" = "• Válassz a(z) %@ lenyomásával az elem másolásához és beillesztéséhez.";

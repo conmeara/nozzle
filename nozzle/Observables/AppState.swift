@@ -72,7 +72,6 @@ class AppState: Sendable {
     return title.shortened(to: 20)
   }
 
-  private let about = About()
   private var settingsWindowController: SettingsWindowController?
 
   init() {
@@ -167,10 +166,6 @@ class AppState: Sendable {
     } else {
       selectFromKeyboardNavigation(footer.items.first(where: \.isVisible)?.id)
     }
-  }
-
-  func openAbout() {
-    about.openAbout(nil)
   }
 
   @MainActor

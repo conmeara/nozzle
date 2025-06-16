@@ -1,11 +1,9 @@
 "search_placeholder" = "tapez pour rechercher…";
 "clear_tooltip" = "Supprimer les éléments non épinglés.\nSélectionnez avec ⇧ pour tout supprimer.";
 "clear_all_tooltip" = "Supprimer toute la liste.";
-"about_tooltip" = "Plus d'informations à propos de l'application.";
 "quit_tooltip" = "Quitter l'application.";
 "clear" = "Supprimer";
 "clear_all" = "Tout supprimer";
-"about" = "À propos";
 "quit" = "Quitter";
 "preferences" = "Préférences…";
 "preferences_advanced" = "Avancé";

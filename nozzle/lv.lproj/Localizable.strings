@@ -1,7 +1,6 @@
 "search_placeholder" = "ierakstiet, lai meklētu…";
 "clear_tooltip" = "Notīriet nepiespraustos vienumus.\nAtlasiet ar ⇧, lai notīrītu visus.";
 "clear_all" = "Notīrīt visu";
-"about" = "Par";
 "quit" = "Iziet";
 "preferences" = "Iestatījumi…";
 "preferences_advanced" = "Papildu iestatījumi";
@@ -19,7 +18,6 @@
 "system_preferences_pane" = "Drošības un konfidencialitātes iestatījumi";
 "quit_tooltip" = "Iziet no lietotnes.";
 "clear_all_tooltip" = "Notīrīt visus vienumus.";
-"about_tooltip" = "Lasīt vairāk par lietotni.";
 "clear" = "Notīrīt";
 "format_modifiers_config" = "• Lai kopētu, notīrītu formatējumu un ielīmētu vienumu, izvēlieties, nospiežot %@.";
 "accessibility_alert_open" = "Atvērt sistēmas iestatījumus";

@@ -1,11 +1,9 @@
 "search_placeholder" = "搜尋…";
 "clear_tooltip" = "清除未釘選的項目。\n按住 ⇧ 並選取以全部清除。";
 "clear_all_tooltip" = "清除全部項目。";
-"about_tooltip" = "了解應用程式詳情。";
 "quit_tooltip" = "退出應用程式。";
 "clear" = "清除";
 "clear_all" = "全部清除";
-"about" = "關於";
 "quit" = "結束";
 "preferences" = "偏好設定…";
 "preferences_advanced" = "進階";
