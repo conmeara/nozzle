@@ -1,5 +1,4 @@
 "Open" = "Odpri:";
-"CheckNow" = "Preverite zdaj";
 "Delete" = "Izbriši:";
 "Behavior" = "Vedenje:";
 "PasteAutomatically" = "Samodejno prilepite";
@@ -10,7 +9,6 @@
 "Mixed" = "Mešano";
 "NotificationsAndSounds" = "Obvestila in zvoki";
 "LaunchAtLogin" = "Zaženi ob prijavi";
-"CheckForUpdates" = "Samodejno preverite, ali so na voljo posodobitve";
 "OpenTooltip" = "Globalna tipka za bližnjico za odpiranje aplikacije.\nPrivzeto: ⇧⌘C.";
 "Pin" = "Pripni:";
 "PinTooltip" = "Bližnjična tipka za pripenjanje zgodovinskega elementa.\nPrivzeto: ⌥P.";

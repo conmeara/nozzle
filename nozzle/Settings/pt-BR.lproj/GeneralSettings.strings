@@ -1,7 +1,5 @@
 "Title" = "Geral";
 "LaunchAtLogin" = "Iniciar no login";
-"CheckForUpdates" = "Verificar atualizações automaticamente";
-"CheckNow" = "Verificar agora";
 "Open" = "Abrir:";
 "OpenTooltip" = "Busca:";
 "Pin" = "Fixar:";

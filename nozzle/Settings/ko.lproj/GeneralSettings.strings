@@ -1,7 +1,5 @@
 "Title" = "일반";
 "LaunchAtLogin" = "로그인 시 실행";
-"CheckForUpdates" = "자동으로 업데이트 확인";
-"CheckNow" = "지금 확인하기";
 "Open" = "열려 있는:";
 "OpenTooltip" = "어디에서나 어플리케이션을 여는 단축키입니다.\n기본값: %@C.";
 "Pin" = "핀:";

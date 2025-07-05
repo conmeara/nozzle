@@ -1,7 +1,5 @@
 "Title" = "Vispārīgi";
 "LaunchAtLogin" = "Palaist lietotni pieteikšanās laikā";
-"CheckForUpdates" = "Automātiski pārbaudīt, vai nav atjauninājumu";
-"CheckNow" = "Pārbaudīt tagad";
 "Open" = "Atvērt:";
 "OpenTooltip" = "Globālais īsinājumtaustiņš, lai atvērtu programmu.\nNoklusējums: ⇧⌘C.";
 "Pin" = "Piespraust:";

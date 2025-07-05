@@ -1,7 +1,5 @@
 "Title" = "Opće";
 "LaunchAtLogin" = "Pokreni nakon prijave";
-"CheckForUpdates" = "Automatski provjeri aktualnost";
-"CheckNow" = "Provjeri sada";
 "Open" = "Otvoriti:";
 "OpenTooltip" = "Globalni prečac za otvaranje programa.\nStandardno: %@C.";
 "Pin" = "Prikačiti:";

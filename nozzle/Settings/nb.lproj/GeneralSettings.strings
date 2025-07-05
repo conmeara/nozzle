@@ -1,7 +1,5 @@
 "Title" = "Generelt";
 "LaunchAtLogin" = "Oppstart ved innlogging";
-"CheckForUpdates" = "Sjekk for oppdateringer automatisk";
-"CheckNow" = "Sjekk nå";
 "Open" = "Åpen:";
 "OpenTooltip" = "Global hurtigtast for åpning av program.\nStandard: %@C.";
 "Pin" = "Merke:";

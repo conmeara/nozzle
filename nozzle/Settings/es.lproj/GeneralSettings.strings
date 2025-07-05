@@ -1,7 +1,5 @@
 "Title" = "General";
 "LaunchAtLogin" = "Abrir al inciar la sesión";
-"CheckForUpdates" = "Buscar actualizaciones automáticamente";
-"CheckNow" = "Comprobar ahora";
 "Open" = "Abrir:";
 "OpenTooltip" = "Combinación de teclas global para abrir la aplicación.\nPor defecto: %@C.";
 "Pin" = "Anclar:";

@@ -168,6 +168,9 @@ struct KeyHandlingView<Content: View>: View {
           appState.popup.close()
           Clipboard.shared.copy(item.item)
           Clipboard.shared.paste()
+          
+          // Only call this in the App Store version.
+          AppStoreReview.ask()
           return .handled
         }
         

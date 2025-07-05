@@ -1,7 +1,5 @@
 "Title" = "Genel";
 "LaunchAtLogin" = "Girişte başlat";
-"CheckForUpdates" = "Güncellemeleri otomatik olarak denetle";
-"CheckNow" = "Şimdi denetle";
 "Open" = "Açmak:";
 "OpenTooltip" = "Uygulamayı açmak için global kısayol düğmesi.\nSaptanmış: %@C.";
 "Pin" = "İğnelemek:";

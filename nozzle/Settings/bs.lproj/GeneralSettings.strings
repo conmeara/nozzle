@@ -1,7 +1,5 @@
 "Title" = "Opšte";
 "LaunchAtLogin" = "Započni aplikacjiu pri prijavi";
-"CheckForUpdates" = "Provjeri dostupna ažuriranja";
-"CheckNow" = "Provjeri sada";
 "Open" = "Obrisati:";
 "OpenTooltip" = "Globalna prečica da otvoriš aplikaciju.\nStandardno: %@C.";
 "Pin" = "Zakačiti:";

@@ -1,7 +1,5 @@
 "Title" = "Général";
 "LaunchAtLogin" = "Lancer au démarrage";
-"CheckForUpdates" = "Vérifier les mises à jour automatiquement";
-"CheckNow" = "Vérifier maintenant";
 "Open" = "Ouvrir :";
 "OpenTooltip" = "Raccourci pour ouvrir l’application.\nPar défaut : %@C.";
 "Pin" = "Épingler :";

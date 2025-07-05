@@ -1,7 +1,5 @@
 "Title" = "Algemeen";
 "LaunchAtLogin" = "Start bij inloggen";
-"CheckForUpdates" = "Controleer automatisch op updates";
-"CheckNow" = "Controleer nu";
 "Open" = "Open:";
 "OpenTooltip" = "Algemene sneltoets om app te openen.\nStandaard: %@C.";
 "Pin" = "Pin:";

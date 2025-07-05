@@ -326,6 +326,9 @@ class AppState: Sendable {
       // All operations complete, restore state
       Clipboard.shared.setMultiPasteMode(false)
       
+      // Only call this in the App Store version.
+      AppStoreReview.ask()
+      
       // Restore selections after a short delay to ensure UI is updated
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
         // Restore prompt text

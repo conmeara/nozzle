@@ -1,7 +1,5 @@
 "Title" = "一般";
 "LaunchAtLogin" = "ログイン時に実行";
-"CheckForUpdates" = "自動的にアップデートを確認";
-"CheckNow" = "今確認する";
 "Open" = "開く:";
 "OpenTooltip" = "どこからでもアプリケーションを開くショートカットです。\nデフォルト：%@C.";
 "Pin" = "ピン:";

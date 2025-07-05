@@ -1,7 +1,5 @@
 "Title" = "Asosiy";
 "LaunchAtLogin" = "Yoqish bilan ishga tushirish";
-"CheckForUpdates" = "Yangilanishlarni avtomatik ravishda tekshirish";
-"CheckNow" = "Hozir tekshirish";
 "Open" = "Ochish:";
 "OpenTooltip" = "Ilovani ochish uchun global shortcut.\nStandart: ⇧⌘C.";
 "Pin" = "Mustahkamlash:";

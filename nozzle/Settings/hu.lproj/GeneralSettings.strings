@@ -1,6 +1,5 @@
 "Title" = "Általános";
 "LaunchAtLogin" = "Indítás a bejelentkezéssel együtt";
-"CheckNow" = "Ellenőrzés most";
 "Open" = "Megnyitás:";
 "Delete" = "Törlés:";
 "DeleteTooltip" = "Gyorsbillentyű az előzmény elem törléséhez.\nAlapértelmezett: ⌥⌫.";
@@ -13,7 +12,6 @@
 "Regex" = "Reguláris kifejezés";
 "Mixed" = "Kevert";
 "NotificationsAndSounds" = "Értesítések és hangok";
-"CheckForUpdates" = "Frissítések automatikus keresése";
 "OpenTooltip" = "Globális gyorsbillentyű az alkalmazás megnyitásához.\nAlapértelmezett: ⇧⌘C.";
 "Pin" = "Kitűzés:";
 "PinTooltip" = "Gyorsbillentyű az előzmény elem kitűzéséhez.\nAlapértelmezett: ⌥P.";

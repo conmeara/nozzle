@@ -1,7 +1,5 @@
 "Title" = "Obecné";
 "LaunchAtLogin" = "Spustit při přihlášení";
-"CheckForUpdates" = "Automaticky kontrolovat aktualizace";
-"CheckNow" = "Zkontrolovat teď";
 "Open" = "Otevřít:";
 "OpenTooltip" = "Vyhledávání:";
 "Pin" = "Připnout:";

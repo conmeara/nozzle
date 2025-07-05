@@ -1,7 +1,5 @@
 "Title" = "通用";
 "LaunchAtLogin" = "登录时启动";
-"CheckForUpdates" = "自动检查更新";
-"CheckNow" = "检查更新";
 "Open" = "打开：";
 "OpenTooltip" = "打开应用的全局快捷键。\n默认： %@C。";
 "Pin" = "固定：";
