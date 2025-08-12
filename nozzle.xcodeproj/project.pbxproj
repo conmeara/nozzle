@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00669E730162BEFCD3D9180 /* ShortcutsSettings.strings in Resources */ = {isa = PBXBuildFile; fileRef = 84DA6AE6669645AEB14775D7 /* ShortcutsSettings.strings */; };
 		0ABDD5122BB47F1E0054963B /* NSWorkspace+ApplicationName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ABDD5112BB47F1E0054963B /* NSWorkspace+ApplicationName.swift */; };
+		2B3F6DC573DC4F8CA63449FA /* ShortcutsSettingsPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1B48C134654A3AAFFB9743 /* ShortcutsSettingsPane.swift */; };
 		2F1A79C02C6DFB7800C98EBD /* SearchVisibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F1A79BF2C6DFB7800C98EBD /* SearchVisibility.swift */; };
 		2F39CB0A2AD9AE1F00B749FD /* Settings in Frameworks */ = {isa = PBXBuildFile; productRef = 2F39CB092AD9AE1F00B749FD /* Settings */; };
 		2F8B9DE62C5D6E5D0046EF69 /* NSPoint+DefaultsSerializable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F8B9DE52C5D6E5D0046EF69 /* NSPoint+DefaultsSerializable.swift */; };
@@ -109,8 +111,6 @@
 		DAA365E72C4C57E600A394F8 /* KeyEquivalent+Keys.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA365E62C4C57E600A394F8 /* KeyEquivalent+Keys.swift */; };
 		DAA54BFA2C3C951900B7FDD8 /* FloatingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA54BF92C3C951900B7FDD8 /* FloatingPanel.swift */; };
 		DAA5ACB22C1B3F8800B58513 /* GeneralSettingsPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA5ACB12C1B3F8800B58513 /* GeneralSettingsPane.swift */; };
-		2B3F6DC573DC4F8CA63449FA /* ShortcutsSettingsPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1B48C134654A3AAFFB9743 /* ShortcutsSettingsPane.swift */; };
-		00669E730162BEFCD3D9180 /* ShortcutsSettings.strings in Resources */ = {isa = PBXBuildFile; fileRef = 84DA6AE6669645AEB14775D7 /* ShortcutsSettings.strings */; };
 		DAA5ACB52C1B803000B58513 /* GeneralSettings.strings in Resources */ = {isa = PBXBuildFile; fileRef = DAA5ACB32C1B803000B58513 /* GeneralSettings.strings */; };
 		DAB082962A2B7B850053E463 /* AppStoreReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB082952A2B7B850053E463 /* AppStoreReview.swift */; };
 		DABDE97F2974706C005B32E9 /* KeyboardLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = DABDE97E2974706C005B32E9 /* KeyboardLayout.swift */; };
@@ -171,7 +171,9 @@
 		4762D69A2467226400B3A2BA /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4DC4D112252713D700FE5FAC /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7CEEFDF124F41F8500ECAD2A /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		84DA6AE6669645AEB14775D8 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/ShortcutsSettings.strings; sourceTree = "<group>"; };
 		ABC72863283A9053001EE086 /* th */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = th; path = th.lproj/Localizable.strings; sourceTree = "<group>"; };
+		CD1B48C134654A3AAFFB9743 /* ShortcutsSettingsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsSettingsPane.swift; sourceTree = "<group>"; };
 		DA00992C256411F90030E697 /* appcast.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = appcast.xml; sourceTree = "<group>"; };
 		DA00992D256411F90030E697 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		DA00992F256411F90030E697 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
@@ -428,9 +430,6 @@
 		DAA365E62C4C57E600A394F8 /* KeyEquivalent+Keys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyEquivalent+Keys.swift"; sourceTree = "<group>"; };
 		DAA54BF92C3C951900B7FDD8 /* FloatingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingPanel.swift; sourceTree = "<group>"; };
 		DAA5ACB12C1B3F8800B58513 /* GeneralSettingsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsPane.swift; sourceTree = "<group>"; };
-		CD1B48C134654A3AAFFB9743 /* ShortcutsSettingsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsSettingsPane.swift; sourceTree = "<group>"; };
-		84DA6AE6669645AEB14775D7 /* ShortcutsSettings.strings */ = {isa = PBXVariantGroup; children = (84DA6AE6669645AEB14775D8 /* en */,); name = ShortcutsSettings.strings; sourceTree = "<group>"; };
-		84DA6AE6669645AEB14775D8 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/ShortcutsSettings.strings; sourceTree = "<group>"; };
 		DAA5ACB42C1B803000B58513 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/GeneralSettings.strings; sourceTree = "<group>"; };
 		DAA5ACB72C1BA34800B58513 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/GeneralSettings.strings; sourceTree = "<group>"; };
 		DAA5ACB82C1BA34A00B58513 /* bs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = bs; path = bs.lproj/GeneralSettings.strings; sourceTree = "<group>"; };
@@ -704,7 +703,7 @@
 		DAEE383A1E3DBEB100DD2966 = {
 			isa = PBXGroup;
 			children = (
-				DAEE38451E3DBEB100DD2966 /*/* nozzle */,
+				DAEE38451E3DBEB100DD2966 /* nozzle */,
 				DA360DB11E3DF137005C6F6B /* nozzleTests */,
 				DA0EE7B7204657830025FC60 /* nozzleUITests */,
 				DACCD5822C93605C00BAD74C /* nozzle.xctestplan */,
@@ -726,7 +725,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		DAEE38451E3DBEB100DD2966 /*/* nozzle */ = {
+		DAEE38451E3DBEB100DD2966 /* nozzle */ = {
 			isa = PBXGroup;
 			children = (
 				2FBB7A252B5FECBB00C65BBE /* Extensions */,
@@ -806,7 +805,7 @@
 			productReference = DA360DB01E3DF137005C6F6B /* nozzleTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		DAEE38421E3DBEB100DD2966 /*/* nozzle */ = {
+		DAEE38421E3DBEB100DD2966 /* nozzle */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = DAEE38501E3DBEB100DD2966 /* Build configuration list for PBXNativeTarget "nozzle" */;
 			buildPhases = (
@@ -912,7 +911,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				DAEE38421E3DBEB100DD2966 /*/* nozzle */,
+				DAEE38421E3DBEB100DD2966 /* nozzle */,
 				DA360DAF1E3DF137005C6F6B /* nozzleTests */,
 				DA0EE7B5204657830025FC60 /* nozzleUITests */,
 			);
@@ -1081,12 +1080,12 @@
 /* Begin PBXTargetDependency section */
 		DA0EE7BC204657840025FC60 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = DAEE38421E3DBEB100DD2966 /*/* nozzle */;
+			target = DAEE38421E3DBEB100DD2966 /* nozzle */;
 			targetProxy = DA0EE7BB204657840025FC60 /* PBXContainerItemProxy */;
 		};
 		DA360DB61E3DF137005C6F6B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = DAEE38421E3DBEB100DD2966 /*/* nozzle */;
+			target = DAEE38421E3DBEB100DD2966 /* nozzle */;
 			targetProxy = DA360DB51E3DF137005C6F6B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -1125,6 +1124,14 @@
 				DA7A04602D720B3200743037 /* uz */,
 			);
 			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		84DA6AE6669645AEB14775D7 /* ShortcutsSettings.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				84DA6AE6669645AEB14775D8 /* en */,
+			);
+			name = ShortcutsSettings.strings;
 			sourceTree = "<group>";
 		};
 		DA5E627E2C39E53F00F4C710 /* PreviewItemView.strings */ = {
@@ -1624,7 +1631,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 2.3.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.conmeara.nozzle;
+				PRODUCT_BUNDLE_IDENTIFIER = com.conmeara.nozzleai;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -1660,7 +1667,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 2.3.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.conmeara.nozzle;
+				PRODUCT_BUNDLE_IDENTIFIER = com.conmeara.nozzleai;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
