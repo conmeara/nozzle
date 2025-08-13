@@ -1,6 +1,6 @@
 import SwiftUI
 
-class ApplicationImage {
+class ApplicationImage: @unchecked Sendable {
   fileprivate static let fallbackImage = NSImage(
     systemSymbolName: "questionmark.app.dashed",
     accessibilityDescription: nil

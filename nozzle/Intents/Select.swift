@@ -3,8 +3,8 @@ import AppIntents
 struct Select: AppIntent, CustomIntentMigratedAppIntent {
   static let intentClassName = "SelectIntent"
 
-  static var title: LocalizedStringResource = "Select Item in Clipboard History"
-  static var description = IntentDescription("""
+  static let title: LocalizedStringResource = "Select Item in Clipboard History"
+  static let description = IntentDescription("""
   Selects an item in nozzle clipboard history.
   Depending on nozzle settings, it might trigger pasting of the selected item.
   """)
@@ -19,15 +19,23 @@ struct Select: AppIntent, CustomIntentMigratedAppIntent {
   private let positionOffset = 1
 
   func perform() async throws -> some IntentResult & ReturnsValue<String> {
-    let items = AppState.shared.history.items
-    let index = number - positionOffset
-    guard items.count >= index else {
+    let (item, title): (HistoryItemDecorator?, String) = await MainActor.run {
+      let items = AppState.shared.history.items
+      let index = number - positionOffset
+      guard items.count >= index else {
+        return (nil, "")
+      }
+      
+      let item = items[index]
+      return (item, item.title)
+    }
+    
+    guard let item else {
       throw AppIntentError.notFound
     }
+    
+    await AppState.shared.history.select(item)
 
-    let value = items[index].title
-    await AppState.shared.history.select(items[index])
-
-    return .result(value: value)
+    return .result(value: title)
   }
 }

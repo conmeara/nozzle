@@ -1,4 +1,4 @@
-class ApplicationImageCache {
+actor ApplicationImageCache {
   static let shared = ApplicationImageCache()
 
   private let universalClipboardIdentifier: String =

@@ -1,11 +1,11 @@
 import Settings
 
 extension Settings.PaneIdentifier {
-  static let advanced = Self("advanced")
-  static let appearance = Self("appearance")
-  static let general = Self("general")
-  static let ignore = Self("ignore")
-  static let pins = Self("pins")
-  static let shortcuts = Self("shortcuts")
-  static let storage = Self("storage")
+  nonisolated(unsafe) static let advanced = Self("advanced")
+  nonisolated(unsafe) static let appearance = Self("appearance")
+  nonisolated(unsafe) static let general = Self("general")
+  nonisolated(unsafe) static let ignore = Self("ignore")
+  nonisolated(unsafe) static let pins = Self("pins")
+  nonisolated(unsafe) static let shortcuts = Self("shortcuts")
+  nonisolated(unsafe) static let storage = Self("storage")
 }

@@ -6,7 +6,7 @@ import Sauce
 import Settings
 import SwiftData
 
-@Observable
+@Observable @MainActor
 class History { // swiftlint:disable:this type_body_length
   static let shared = History()
 

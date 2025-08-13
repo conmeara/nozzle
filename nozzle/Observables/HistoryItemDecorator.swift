@@ -4,13 +4,13 @@ import Foundation
 import Observation
 import Sauce
 
-@Observable
+@Observable @MainActor
 class HistoryItemDecorator: Identifiable, Hashable {
-  static func == (lhs: HistoryItemDecorator, rhs: HistoryItemDecorator) -> Bool {
+  nonisolated static func == (lhs: HistoryItemDecorator, rhs: HistoryItemDecorator) -> Bool {
     return lhs.id == rhs.id
   }
 
-  static var previewThrottler = Throttler(minimumDelay: Double(Defaults[.previewDelay]) / 1000)
+  nonisolated(unsafe) static var previewThrottler = Throttler(minimumDelay: Double(Defaults[.previewDelay]) / 1000)
   static var previewImageSize: NSSize { NSScreen.forPopup?.visibleFrame.size ?? NSSize(width: 2048, height: 1536) }
   static var thumbnailImageSize: NSSize { NSSize(width: 340, height: Defaults[.imageMaxHeight]) }
   
@@ -55,10 +55,8 @@ class HistoryItemDecorator: Identifiable, Hashable {
   var isPinned: Bool { item.pin != nil }
   var isUnpinned: Bool { item.pin == nil }
 
-  func hash(into hasher: inout Hasher) {
+  nonisolated func hash(into hasher: inout Hasher) {
     hasher.combine(id)
-    hasher.combine(title)
-    hasher.combine(attributedTitle)
   }
 
   private(set) var item: HistoryItem
@@ -67,10 +65,13 @@ class HistoryItemDecorator: Identifiable, Hashable {
     self.item = item
     self.shortcuts = shortcuts
     self.title = item.title
-    self.applicationImage = ApplicationImageCache.shared.getImage(item: item)
+    self.applicationImage = ApplicationImage(bundleIdentifier: nil) // Default fallback
 
     synchronizeItemPin()
     synchronizeItemTitle()
+    Task {
+      self.applicationImage = await ApplicationImageCache.shared.getImage(item: item)
+    }
     Task {
       await sizeImages()
     }

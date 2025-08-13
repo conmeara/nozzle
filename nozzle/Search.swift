@@ -36,7 +36,7 @@ class Search {
   private let fuse = Fuse(threshold: 0.7) // threshold found by trial-and-error
   private let fuzzySearchLimit = 5_000
 
-  func search(string: String, within: [Searchable]) -> [SearchResult] {
+  @MainActor func search(string: String, within: [Searchable]) -> [SearchResult] {
     guard !string.isEmpty else {
       return within.map { SearchResult(object: $0) }
     }
@@ -53,7 +53,7 @@ class Search {
     }
   }
 
-  private func fuzzySearch(string: String, within: [Searchable]) -> [SearchResult] {
+  @MainActor private func fuzzySearch(string: String, within: [Searchable]) -> [SearchResult] {
     let pattern = fuse.createPattern(from: string)
     let searchResults: [SearchResult] = within.compactMap { item in
       fuzzySearch(for: pattern, in: item.title, of: item)
@@ -91,7 +91,7 @@ class Search {
     }
   }
 
-  private func simpleSearch(
+  @MainActor private func simpleSearch(
     string: String,
     within: [Searchable],
     options: NSString.CompareOptions
@@ -112,7 +112,7 @@ class Search {
     }
   }
 
-  private func mixedSearch(string: String, within: [Searchable]) -> [SearchResult] {
+  @MainActor private func mixedSearch(string: String, within: [Searchable]) -> [SearchResult] {
     var results = simpleSearch(string: string, within: within, options: .caseInsensitive)
     guard results.isEmpty else {
       return results

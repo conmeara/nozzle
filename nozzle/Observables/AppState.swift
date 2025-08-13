@@ -3,8 +3,8 @@ import Defaults
 import Foundation
 import Settings
 
-@Observable
-class AppState: Sendable {
+@Observable @MainActor
+class AppState {
   static let shared = AppState()
 
   var appDelegate: AppDelegate?

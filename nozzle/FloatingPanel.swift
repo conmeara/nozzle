@@ -3,6 +3,7 @@ import SwiftUI
 
 // An NSPanel subclass that implements floating panel traits.
 // https://stackoverflow.com/questions/46023769/how-to-show-a-window-without-stealing-focus-on-macos
+@MainActor
 class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
   var isPresented: Bool = false
   var statusBarButton: NSStatusBarButton?

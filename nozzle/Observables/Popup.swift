@@ -3,7 +3,7 @@ import Defaults
 import KeyboardShortcuts
 import Observation
 
-@Observable
+@Observable @MainActor
 class Popup {
   let verticalPadding: CGFloat = 5
 

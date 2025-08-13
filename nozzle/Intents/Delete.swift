@@ -3,8 +3,8 @@ import AppIntents
 struct Delete: AppIntent, CustomIntentMigratedAppIntent {
   static let intentClassName = "DeleteIntent"
 
-  static var title: LocalizedStringResource = "Delete Item from Clipboard History"
-  static var description = IntentDescription("Deletes an item from nozzle clipboard history.")
+  static let title: LocalizedStringResource = "Delete Item from Clipboard History"
+  static let description = IntentDescription("Deletes an item from nozzle clipboard history.")
 
   @Parameter(title: "Number", default: 1)
   var number: Int
@@ -16,13 +16,17 @@ struct Delete: AppIntent, CustomIntentMigratedAppIntent {
   private let positionOffset = 1
 
   func perform() async throws -> some IntentResult {
-    let items = AppState.shared.history.items
-    let index = number - positionOffset
-    guard items.count >= index else {
-      throw AppIntentError.notFound
+    await MainActor.run {
+      let items = AppState.shared.history.items
+      let index = number - positionOffset
+      guard items.count >= index else {
+        return
+      }
+      
+      Task {
+        await AppState.shared.history.delete(items[index])
+      }
     }
-
-    await AppState.shared.history.delete(items[index])
 
     return .result()
   }

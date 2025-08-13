@@ -2,6 +2,7 @@ import Defaults
 import KeyboardShortcuts
 import SwiftUI
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
   var panel: FloatingPanel<ContentView>!
 
