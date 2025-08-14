@@ -94,7 +94,6 @@
 		DA9C3C602C20E1890056795D /* IgnorePasteboardTypesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA9C3C5F2C20E1890056795D /* IgnorePasteboardTypesSettingsView.swift */; };
 		DA9C3C622C20E1BF0056795D /* IgnoreRegexpsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA9C3C612C20E1BF0056795D /* IgnoreRegexpsSettingsView.swift */; };
 		DA9C3C652C211B5F0056795D /* AdvancedSettingsPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA9C3C642C211B5F0056795D /* AdvancedSettingsPane.swift */; };
-		DAA072D12C4089D3006DDFD2 /* VisualEffectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D02C4089D3006DDFD2 /* VisualEffectView.swift */; };
 		DAA072D32C40A961006DDFD2 /* Color+Random.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D22C40A961006DDFD2 /* Color+Random.swift */; };
 		DAA072D52C40AC52006DDFD2 /* HistoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D42C40AC52006DDFD2 /* HistoryListView.swift */; };
 		DAA072D72C41C574006DDFD2 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D62C41C574006DDFD2 /* AppState.swift */; };
@@ -392,7 +391,6 @@
 		DA9C3C5F2C20E1890056795D /* IgnorePasteboardTypesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnorePasteboardTypesSettingsView.swift; sourceTree = "<group>"; };
 		DA9C3C612C20E1BF0056795D /* IgnoreRegexpsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnoreRegexpsSettingsView.swift; sourceTree = "<group>"; };
 		DA9C3C642C211B5F0056795D /* AdvancedSettingsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedSettingsPane.swift; sourceTree = "<group>"; };
-		DAA072D02C4089D3006DDFD2 /* VisualEffectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualEffectView.swift; sourceTree = "<group>"; };
 		DAA072D22C40A961006DDFD2 /* Color+Random.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Random.swift"; sourceTree = "<group>"; };
 		DAA072D42C40AC52006DDFD2 /* HistoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryListView.swift; sourceTree = "<group>"; };
 		DAA072D62C41C574006DDFD2 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -624,7 +622,6 @@
 				DA1969132C3F11D600258481 /* PreviewItemView.swift */,
 				DA1969172C3F327500258481 /* SearchFieldView.swift */,
 				DA1969182CF327500258481 /* UnifiedInputFieldView.swift */,
-				DAA072D02C4089D3006DDFD2 /* VisualEffectView.swift */,
 				DA555F112CF155A2009608BD /* WrappingTextView.swift */,
 			);
 			path = Views;
@@ -1011,7 +1008,6 @@
 				DA13D7DB2C1A223E00FA9E23 /* Delete.swift in Sources */,
 				DA19691F2C3F5F0600258481 /* KeyHandlingView.swift in Sources */,
 				DA13D7DC2C1A223E00FA9E23 /* HistoryItemAppEntity.swift in Sources */,
-				DAA072D12C4089D3006DDFD2 /* VisualEffectView.swift in Sources */,
 				DA555F122CF155A8009608BD /* WrappingTextView.swift in Sources */,
 				DAC929D7297A0E8B00814F19 /* NSPasteboard.PasteboardType+Types.swift in Sources */,
 				DA9C3C472C20B91D0056795D /* String+Identifiable.swift in Sources */,

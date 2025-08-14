@@ -40,6 +40,11 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
     titlebarAppearsTransparent = true
     isMovableByWindowBackground = true
     hidesOnDeactivate = false
+    
+    // Configure transparency for Liquid Glass
+    isOpaque = false
+    backgroundColor = .clear
+    hasShadow = true
 
     // Hide all traffic light buttons
     standardWindowButton(.closeButton)?.isHidden = true
