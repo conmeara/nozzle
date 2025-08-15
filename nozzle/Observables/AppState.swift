@@ -293,7 +293,6 @@ class AppState {
     guard hasPrompt || hasSelectedItems else { return }
     
     // Store current selection states and prompt text
-    // Use the underlying HistoryItem for stable identification
     let selectedHistoryItems = selectedItems.map { $0.item }
     let currentPromptText = promptText
     
@@ -303,88 +302,143 @@ class AppState {
     // Close the popup immediately for better UX
     popup.close()
     
-    // Build sequence of operations
-    var operations: [(String, HistoryItem?)] = []
+    // Separate text items from media items
+    var textItems: [HistoryItemDecorator] = []
+    var mediaItems: [HistoryItem] = []
     
-    // Add prompt if present
-    if hasPrompt {
-      operations.append(("prompt", nil))
-    }
-    
-    // Add selected items
     for item in selectedItems {
-      operations.append(("item", item.item))
+      if item.item.imageData != nil || !item.item.fileURLs.isEmpty {
+        // Treat items with images or files as media
+        mediaItems.append(item.item)
+      } else {
+        // Treat everything else as text (including items with no content)
+        textItems.append(item)
+      }
     }
     
-    // Execute operations sequentially with proper delays
-    executeSequentialPaste(operations: operations, index: 0, selectedHistoryItems: selectedHistoryItems, promptText: currentPromptText)
+    // Execute the paste operations
+    executeCombinedPaste(
+      textItems: textItems,
+      mediaItems: mediaItems,
+      promptText: currentPromptText,
+      selectedHistoryItems: selectedHistoryItems
+    )
   }
   
   @MainActor
-  private func executeSequentialPaste(operations: [(String, HistoryItem?)], index: Int, selectedHistoryItems: [HistoryItem], promptText: String) {
-    guard index < operations.count else {
-      // All operations complete, restore state
-      Clipboard.shared.setMultiPasteMode(false)
+  private func executeCombinedPaste(
+    textItems: [HistoryItemDecorator],
+    mediaItems: [HistoryItem],
+    promptText: String,
+    selectedHistoryItems: [HistoryItem]
+  ) {
+    // Step 1: Combine and paste all text content as one operation
+    if !textItems.isEmpty || !promptText.isEmpty {
+      let (rtf, html, plain) = combinedFormattedContent(from: textItems, promptText: promptText)
+      Clipboard.shared.copyFormattedText(rtf: rtf, html: html, plain: plain)
       
-      // Only call this in the App Store version.
-      AppStoreReview.ask()
-      
-      // Restore selections after a short delay to ensure UI is updated
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-        // Restore prompt text
-        self.promptText = promptText
+      // Wait for clipboard update, then paste
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
+        Clipboard.shared.paste()
         
-        // Restore selections by matching the underlying HistoryItem
-        for decorator in self.history.items {
-          if selectedHistoryItems.contains(decorator.item) {
-            decorator.isSelected = true
-          }
+        // Step 2: After text is pasted, paste media items sequentially
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+          self.pasteMediaItems(mediaItems, index: 0, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
         }
-        
-        // Also update preserved selections for when popup reopens
-        self.preservedSelections = Set(selectedHistoryItems)
-        
-        // Update footer visibility
-        self.updateFooterItemVisibility()
       }
+    } else {
+      // No text content, just paste media items
+      pasteMediaItems(mediaItems, index: 0, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
+    }
+  }
+  
+  @MainActor
+  private func pasteMediaItems(_ mediaItems: [HistoryItem], index: Int, selectedHistoryItems: [HistoryItem], promptText: String) {
+    guard index < mediaItems.count else {
+      // All operations complete, restore state
+      finalizeCombinedPaste(selectedHistoryItems: selectedHistoryItems, promptText: promptText)
       return
     }
     
-    let (type, item) = operations[index]
+    let item = mediaItems[index]
+    Clipboard.shared.copy(item)
     
-    // Perform the copy operation
-    if type == "prompt" {
-      Clipboard.shared.copyString(self.promptText)
-    } else if let historyItem = item {
-      Clipboard.shared.copy(historyItem)
-    }
-    
-    // Wait for clipboard to update, then paste
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) { // 40ms for clipboard update
+    // Wait for clipboard update, then paste
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
       Clipboard.shared.paste()
       
-      // Add line break after each item (except the last one)
-      let isLastItem = index == operations.count - 1
-      if !isLastItem {
-        // Add a line break by pasting a newline - conservative timing to avoid race conditions
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { // Wait longer for paste to complete
-          Clipboard.shared.copyString("\n")
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) { // Clipboard update
-            Clipboard.shared.paste()
-            // Wait for newline paste to complete before continuing
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-              self.executeSequentialPaste(operations: operations, index: index + 1, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
-            }
-          }
-        }
-      } else {
-        // Last item - no line break needed
-        let nextDelay: TimeInterval = (type == "prompt") ? 0.08 : 0.1
-        DispatchQueue.main.asyncAfter(deadline: .now() + nextDelay) {
-          self.executeSequentialPaste(operations: operations, index: index + 1, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
-        }
+      // Wait before next media item
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        self.pasteMediaItems(mediaItems, index: index + 1, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
       }
     }
+  }
+  
+  @MainActor
+  private func finalizeCombinedPaste(selectedHistoryItems: [HistoryItem], promptText: String) {
+    // Disable multi-paste mode
+    Clipboard.shared.setMultiPasteMode(false)
+    
+    // Only call this in the App Store version.
+    AppStoreReview.ask()
+    
+    // Restore selections after a short delay to ensure UI is updated
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+      // Restore prompt text
+      self.promptText = promptText
+      
+      // Restore selections by matching the underlying HistoryItem
+      for decorator in self.history.items {
+        if selectedHistoryItems.contains(decorator.item) {
+          decorator.isSelected = true
+        }
+      }
+      
+      // Also update preserved selections for when popup reopens
+      self.preservedSelections = Set(selectedHistoryItems)
+      
+      // Update footer visibility
+      self.updateFooterItemVisibility()
+    }
+  }
+  
+  private func combinedFormattedContent(from items: [HistoryItemDecorator], promptText: String) -> (rtf: Data?, html: Data?, plain: String) {
+    let combined = NSMutableAttributedString()
+    
+    // Add prompt as plain text if present
+    if !promptText.isEmpty {
+      combined.append(NSAttributedString(string: promptText + "\n"))
+    }
+    
+    // Add each item preserving its formatting
+    for item in items {
+      if let rtf = item.item.rtf {
+        combined.append(rtf)
+      } else if let html = item.item.html {
+        combined.append(html)
+      } else if let text = item.item.text {
+        combined.append(NSAttributedString(string: text))
+      }
+      combined.append(NSAttributedString(string: "\n"))
+    }
+    
+    // Return all formats - pasteboard will use the best available
+    // Only convert to RTF/HTML if we have content to avoid crashes
+    let plainText = combined.string
+    let fullRange = NSRange(location: 0, length: combined.length)
+    
+    let rtfData: Data?
+    let htmlData: Data?
+    
+    if combined.length > 0 {
+      rtfData = try? combined.data(from: fullRange, documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf])
+      htmlData = try? combined.data(from: fullRange, documentAttributes: [.documentType: NSAttributedString.DocumentType.html])
+    } else {
+      rtfData = nil
+      htmlData = nil
+    }
+    
+    return (rtf: rtfData, html: htmlData, plain: plainText)
   }
   
 }

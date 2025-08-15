@@ -83,6 +83,31 @@ class Clipboard {
   func copyString(_ string: String) {
     copy(string)
   }
+  
+  @MainActor
+  func copyFormattedText(rtf: Data?, html: Data?, plain: String) {
+    pasteboard.clearContents()
+    
+    // Set formatted content with fallbacks
+    if let rtf = rtf {
+      pasteboard.setData(rtf, forType: .rtf)
+    }
+    if let html = html {
+      pasteboard.setData(html, forType: .html)
+    }
+    pasteboard.setString(plain, forType: .string)
+    
+    // Add nozzle markers
+    pasteboard.setString("", forType: .fromnozzle)
+    sync()
+    
+    if isPerformingMultiPaste {
+      // Update changeCount to prevent the timer from detecting this change
+      changeCount = pasteboard.changeCount
+    } else {
+      checkForChangesInPasteboard()
+    }
+  }
 
   @MainActor
   func copy(_ item: HistoryItem?, removeFormatting: Bool = false) {
