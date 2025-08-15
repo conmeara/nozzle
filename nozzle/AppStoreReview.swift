@@ -16,7 +16,15 @@ class AppStoreReview {
     Defaults[.lastReviewRequestedAt] = today
 
     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-      SKStoreReviewController.requestReview()
+      if #available(macOS 15.0, *) {
+        if let window = NSApp.keyWindow,
+           let contentViewController = window.contentViewController {
+          AppStore.requestReview(in: contentViewController)
+        }
+        // No fallback on macOS 15.0+ - simply skip if no view controller available
+      } else {
+        SKStoreReviewController.requestReview()
+      }
     }
   }
 }

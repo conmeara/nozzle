@@ -72,8 +72,8 @@ class HistoryItemDecorator: Identifiable, Hashable {
     Task {
       self.applicationImage = await ApplicationImageCache.shared.getImage(item: item)
     }
-    Task {
-      await sizeImages()
+    Task { @MainActor in
+      sizeImages()
     }
   }
 

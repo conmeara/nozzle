@@ -111,8 +111,10 @@ class History { // swiftlint:disable:this type_body_length
 
     Task {
       for await _ in Defaults.updates(.imageMaxHeight, initial: false) {
-        for item in items {
-          await item.sizeImages()
+        await MainActor.run {
+          for item in items {
+            item.sizeImages()
+          }
         }
       }
     }
