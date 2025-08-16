@@ -16,6 +16,7 @@ struct ListItemView<Title: View>: View {
   @Default(.showApplicationIcons) private var showIcons
   @Environment(AppState.self) private var appState
   @Environment(ModifierFlags.self) private var modifierFlags
+  @State private var isHovering = false
   
   private var shouldShowHoverBackground: Bool {
     // Single source of truth: only check the actual selected items
@@ -59,7 +60,7 @@ struct ListItemView<Title: View>: View {
 
       Spacer()
 
-      // Checkbox or Command shortcut
+      // Copy button, checkbox, or Command shortcut
       if showCheckbox {
         ZStack {
           if modifierFlags.flags.contains(.command) && !shortcuts.isEmpty {
@@ -68,12 +69,19 @@ struct ListItemView<Title: View>: View {
               KeyboardShortcutView(shortcut: shortcut)
                 .opacity(shortcut.isVisible(shortcuts, modifierFlags.flags) ? 1 : 0)
             }
-          } else {
-            // Show checkbox when Command is not held
-            Image(systemName: isSelected ? "checkmark.square.fill" : "square")
+          } else if isSelected {
+            // Show round checkbox when item is selected
+            Image(systemName: "checkmark.circle.fill")
               .font(.system(size: 14))
-              .foregroundColor(isSelected ? .white : .primary)
-              .opacity(0.4)
+              .foregroundColor(.white)
+              .opacity(0.8)
+              .frame(maxWidth: .infinity, alignment: .trailing)
+          } else if isHovering {
+            // Show copy button when hovering over unselected item
+            Image(systemName: "doc.on.doc")
+              .font(.system(size: 12))
+              .foregroundColor(.primary)
+              .opacity(0.6)
               .frame(maxWidth: .infinity, alignment: .trailing)
           }
         }
@@ -110,6 +118,7 @@ struct ListItemView<Title: View>: View {
     }
     .clipShape(.rect(cornerRadius: 4))
     .onHover { hovering in
+      isHovering = hovering
       if hovering {
         if !appState.isKeyboardNavigating {
           // Always update selection on hover for unified system

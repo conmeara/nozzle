@@ -18,6 +18,9 @@ class History { // swiftlint:disable:this type_body_length
     }
   }
   
+  // Items that were copied via copy button while popup was open - to be reordered when popup closes
+  private var delayedReorderItems: Set<HistoryItem> = []
+  
   // Computed property for multi-selected items
   var selectedItems: [HistoryItemDecorator] {
     items.filter(\.isSelected)
@@ -200,6 +203,35 @@ class History { // swiftlint:disable:this type_body_length
     }
 
     return itemDecorator
+  }
+  
+  @MainActor
+  func addToDelayedReorder(_ item: HistoryItem) {
+    delayedReorderItems.insert(item)
+  }
+  
+  @MainActor
+  func processDelayedReorders() {
+    // Process items that were copied via copy button while popup was open
+    guard !delayedReorderItems.isEmpty else { return }
+    
+    let itemsToProcess = Array(delayedReorderItems)
+    delayedReorderItems.removeAll()
+    
+    // Move delayed items to top by reordering the list
+    for item in itemsToProcess {
+      // Find the decorator for this item and move it to top
+      if let decorator = all.first(where: { $0.item == item }),
+         let index = all.firstIndex(of: decorator) {
+        // Remove from current position and insert at top
+        all.remove(at: index)
+        all.insert(decorator, at: 0)
+      }
+    }
+    
+    items = all
+    updateUnpinnedShortcuts()
+    AppState.shared.popup.needsResize = true
   }
 
   @MainActor

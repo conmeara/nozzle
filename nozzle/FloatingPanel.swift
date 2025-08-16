@@ -126,6 +126,9 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
     // Preserve selections before closing
     AppState.shared.preserveCurrentSelections()
     
+    // Process any delayed reorders from copy button operations
+    AppState.shared.history.processDelayedReorders()
+    
     super.close()
     isPresented = false
     statusBarButton?.isHighlighted = false
