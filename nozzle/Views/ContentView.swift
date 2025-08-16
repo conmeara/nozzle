@@ -78,7 +78,10 @@ struct ContentView: View {
       }
     }
     .onMouseMove {
-      appState.isKeyboardNavigating = false
+      // Only set to false if it was true (avoid constant updates)
+      if appState.isKeyboardNavigating {
+        appState.isKeyboardNavigating = false
+      }
     }
     .task {
       try? await appState.history.load()

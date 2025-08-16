@@ -18,19 +18,9 @@ struct ListItemView<Title: View>: View {
   @Environment(ModifierFlags.self) private var modifierFlags
   
   private var shouldShowHoverBackground: Bool {
-    guard appState.selection == id else { return false }
-    
-    // Check if this is a history item that's selected
-    if appState.history.selectedItem?.id == id {
-      return true
-    }
-    
-    // Check if this is a footer item that's selected
-    if appState.footer.selectedItem?.id == id {
-      return true
-    }
-    
-    return false
+    // Single source of truth: only check the actual selected items
+    appState.history.selectedItem?.id == id || 
+    appState.footer.selectedItem?.id == id
   }
 
   var body: some View {
@@ -111,9 +101,9 @@ struct ListItemView<Title: View>: View {
     .foregroundStyle(.primary)
     .background {
       if isSelected {
-        Color.accentColor.opacity(0.3)  // Lighter blue for selected items with glass effect
+        Color(NSColor.controlAccentColor).opacity(0.25)  // Subtle accent color for Liquid Glass selection
       } else if shouldShowHoverBackground {
-        Color.white.opacity(0.1)  // Very light translucent for hover
+        Color(NSColor.quaternaryLabelColor).opacity(0.5)  // Hover for Liquid Glass
       } else {
         Color.clear
       }
@@ -122,6 +112,7 @@ struct ListItemView<Title: View>: View {
     .onHover { hovering in
       if hovering {
         if !appState.isKeyboardNavigating {
+          // Always update selection on hover for unified system
           appState.selectWithoutScrolling(id)
         } else {
           appState.hoverSelectionWhileKeyboardNavigating = id

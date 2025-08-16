@@ -52,7 +52,8 @@ class AppState {
     didSet {
       if let hoverSelection = hoverSelectionWhileKeyboardNavigating {
         hoverSelectionWhileKeyboardNavigating = nil
-        selection = hoverSelection
+        // Update the actual selection instead of the separate property
+        selectWithoutScrolling(hoverSelection)
       }
     }
   }
