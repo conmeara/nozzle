@@ -56,7 +56,7 @@ xcodebuild -project nozzle.xcodeproj -scheme nozzle archive -archivePath ./build
    - History.xcdatamodeld: Legacy storage (being migrated from)
    - Storage.xcdatamodeld: Current storage model
 3. **UI Updates**: Observable objects (AppState, History, Footer) drive SwiftUI views
-4. **Global Hotkey**: Default Shift+Cmd+C opens the history popup
+4. **Global Hotkey**: Default Option+V opens the history popup
 
 ### Key Patterns
 
@@ -88,7 +88,7 @@ xcodebuild -project nozzle.xcodeproj -scheme nozzle archive -archivePath ./build
 - Each history item can be selected via checkbox
 - Selection state tracked with `isChecked` property on items
 - Visual feedback with blue background for selected items
-- Keyboard shortcuts: Enter toggles selection, Cmd+N toggles nth item
+- Keyboard shortcuts: Tab toggles selection, Cmd+N toggles nth item
 
 ### Prompt Mode
 - Toggle between search and prompt mode with Cmd+F
@@ -103,7 +103,8 @@ xcodebuild -project nozzle.xcodeproj -scheme nozzle archive -archivePath ./build
 - Default template: "{prompt}\nContext:\n{items}"
 
 ### Enhanced Keyboard Navigation
-- Plain Enter: Toggle selection (changed from copy)
+- Plain Enter: Immediately paste current item and close popup
+- Tab: Toggle selection (for multi-select)
 - Cmd+Shift+Enter: Paste single item (bypass multi-select)
 - Option+Space: Toggle preview
 - Cmd+Delete: Clear all selections and prompt

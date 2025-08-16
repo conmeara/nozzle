@@ -17,16 +17,17 @@ struct KeyHandlingView<Content: View>: View {
         // preferences. Stick to NSEvent to fix this behavior.
         // Keyboard handling is now done through the switch statement below
         
-        // Check for plain Enter to toggle selection
+        // Check for plain Enter to immediately paste current item
         if let event = NSApp.currentEvent,
            (event.keyCode == UInt16(Key.return.QWERTYKeyCode) || event.keyCode == UInt16(Key.keypadEnter.QWERTYKeyCode)) {
           let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock)
           
           if modifierFlags.isEmpty {
-            // Plain Enter - toggle selection
+            // Plain Enter - immediately paste current item
             if let item = appState.history.selectedItem {
-              item.isSelected.toggle()
-              appState.updateFooterItemVisibility()
+              appState.popup.close()
+              Clipboard.shared.copy(item.item)
+              Clipboard.shared.paste()
             }
             return .handled
           } else if modifierFlags == [.command, .shift] {
@@ -139,6 +140,13 @@ struct KeyHandlingView<Content: View>: View {
           appState.isSearchMode.toggle()
           appState.isPromptMode = !appState.isSearchMode  // Ensure they're opposite
           searchFocused = true
+          return .handled
+        case .toggleSelection:
+          // Tab key - toggle selection
+          if let item = appState.history.selectedItem {
+            item.isSelected.toggle()
+            appState.updateFooterItemVisibility()
+          }
           return .handled
         default:
           ()
