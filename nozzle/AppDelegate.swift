@@ -14,6 +14,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     statusItem.button?.image = Defaults[.menuIcon].image
     statusItem.button?.imagePosition = .imageLeft
     statusItem.button?.target = self
+    statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
     return statusItem
   }()
 
@@ -142,9 +143,53 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         return
       }
+
+      if event.type == .rightMouseUp {
+        showContextMenu()
+        return
+      }
     }
 
     panel.toggle(height: AppState.shared.popup.height, at: .statusItem)
+  }
+
+  private func showContextMenu() {
+    // Close the main app window to avoid glass-on-glass effect
+    panel.close()
+    
+    let menu = NSMenu()
+    
+    let preferencesItem = NSMenuItem(
+      title: NSLocalizedString("preferences", comment: ""),
+      action: #selector(openPreferencesFromMenu),
+      keyEquivalent: ","
+    )
+    preferencesItem.target = self
+    menu.addItem(preferencesItem)
+    
+    menu.addItem(NSMenuItem.separator())
+    
+    let quitItem = NSMenuItem(
+      title: NSLocalizedString("quit", comment: ""),
+      action: #selector(quitFromMenu),
+      keyEquivalent: "q"
+    )
+    quitItem.target = self
+    menu.addItem(quitItem)
+    
+    statusItem.menu = menu
+    statusItem.button?.performClick(nil)
+    statusItem.menu = nil
+  }
+
+  @objc
+  private func openPreferencesFromMenu() {
+    AppState.shared.openPreferences()
+  }
+
+  @objc
+  private func quitFromMenu() {
+    AppState.shared.quit()
   }
 
   private func synchronizeMenuIconText() {

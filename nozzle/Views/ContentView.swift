@@ -51,7 +51,6 @@ struct ContentView: View {
           )
         }
 
-        FooterView(footer: appState.footer)
       }
     }
     .animation(.default.speed(3), value: appState.history.items)
@@ -76,11 +75,7 @@ struct ContentView: View {
           appState.selection = firstItem.id
           appState.isKeyboardNavigating = true
         }
-        appState.updateFooterItemVisibility()
       }
-    }
-    .onChange(of: appState.promptText) { _, _ in
-      appState.updateFooterItemVisibility()
     }
     .onMouseMove {
       appState.isKeyboardNavigating = false

@@ -260,8 +260,6 @@ class AppState {
     // Clear search query
     history.searchQuery = ""
     
-    // Update footer visibility
-    updateFooterItemVisibility()
     
     // Restore the hover/active selection
     if let currentSelection = currentSelection {
@@ -281,7 +279,6 @@ class AppState {
         decorator.isSelected = true
       }
     }
-    updateFooterItemVisibility()
   }
   
   @MainActor
