@@ -70,7 +70,14 @@ class HistoryItemDecorator: Identifiable, Hashable {
     synchronizeItemPin()
     synchronizeItemTitle()
     Task {
-      self.applicationImage = await ApplicationImageCache.shared.getImage(item: item)
+      // Extract HistoryItem properties on MainActor before passing to actor
+      let (universalClipboard, application) = await MainActor.run {
+        (item.universalClipboard, item.application)
+      }
+      self.applicationImage = await ApplicationImageCache.shared.getImage(
+        universalClipboard: universalClipboard,
+        application: application
+      )
     }
     Task { @MainActor in
       sizeImages()

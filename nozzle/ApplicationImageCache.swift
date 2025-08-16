@@ -6,8 +6,8 @@ actor ApplicationImageCache {
   private let fallback = ApplicationImage(bundleIdentifier: nil)
   private var cache: [String: ApplicationImage] = [:]
 
-  func getImage(item: HistoryItem) -> ApplicationImage {
-    guard let bundleIdentifier = bundleIdentifier(for: item) else {
+  func getImage(universalClipboard: Bool, application: String?) -> ApplicationImage {
+    guard let bundleIdentifier = bundleIdentifier(universalClipboard: universalClipboard, application: application) else {
       return fallback
     }
 
@@ -21,12 +21,12 @@ actor ApplicationImageCache {
     return image
   }
 
-  private func bundleIdentifier(for item: HistoryItem) -> String? {
-    if item.universalClipboard {
+  private func bundleIdentifier(universalClipboard: Bool, application: String?) -> String? {
+    if universalClipboard {
       return universalClipboardIdentifier
     }
 
-    if let bundleIdentifier = item.application {
+    if let bundleIdentifier = application {
       return bundleIdentifier
     }
 
