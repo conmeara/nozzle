@@ -39,9 +39,15 @@ struct UnifiedInputFieldView: View {
   var body: some View {
     VStack(spacing: 0) {
       HStack(spacing: 5) {
-        // Magnifying glass icon (only visible in search mode)
+        // Icon that changes based on mode
         if isSearchMode {
           Image(systemName: "magnifyingglass")
+            .frame(width: 11, height: 11)
+            .foregroundColor(.secondary)
+            .opacity(0.8)
+            .transition(.opacity.animation(.easeInOut(duration: 0.15)))
+        } else {
+          Image(systemName: "plus.circle")
             .frame(width: 11, height: 11)
             .foregroundColor(.secondary)
             .opacity(0.8)
@@ -59,6 +65,18 @@ struct UnifiedInputFieldView: View {
               appState.select()
             }
           }
+        
+        // Microphone button (only in instruction mode)
+        if !isSearchMode {
+          Button(action: {
+            // Placeholder for future microphone functionality
+          }) {
+            Image(systemName: "mic")
+              .frame(width: 14, height: 14)
+              .foregroundColor(.secondary)
+          }
+          .buttonStyle(PlainButtonStyle())
+        }
         
         // Clear button
         if !query.isEmpty {
