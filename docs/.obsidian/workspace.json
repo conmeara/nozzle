@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Landmarks Building an app with Liquid Glass.md",
+                "file": "Layout/Lists.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Landmarks Building an app with Liquid Glass"
+              "title": "Lists"
             }
           }
         ]
@@ -168,10 +168,36 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "499f95c375e9eb5f",
+  "active": "4b0abb1c6ceb1040",
   "lastOpenFiles": [
-    "Adopting Liquid Glass.md",
-    "Landmarks Building an app with Liquid Glass.md",
-    "Liquid Glass.md"
+    "Layout/Custom layout.md",
+    "Layout/Lists.md",
+    "Layout/Layout adjustments.md",
+    "Layout/Divider.md",
+    "Layout/Spacer.md",
+    "Layout/ZStack.md",
+    "Layout/LazyVGrid.md",
+    "Layout/LazyHGrid.md",
+    "Layout/gridColumnAlignment(_).md",
+    "Layout/gridCellUnsizedAxes(_).md",
+    "Layout/gridCellAnchor(_).md",
+    "Layout/gridCellColumns(_).md",
+    "Layout/init(alignmentcontent).md",
+    "Layout/init(alignmenthorizontalSpacingverticalSpacingcontent).md",
+    "Layout/Grid.md",
+    "Layout/sectionFooters.md",
+    "Layout/sectionHeaders.md",
+    "Layout/init(alignmentspacingpinnedViewscontent) 1.md",
+    "Layout/init(alignmentspacingpinnedViewscontent).md",
+    "Layout/Creating performant scrollable stacks.md",
+    "Layout/Grouping data with lazy stack views.md",
+    "Layout/init(alignmentspacingcontent) 1.md",
+    "Layout/init(alignmentspacingcontent).md",
+    "Layout/Building layouts with stack views.md",
+    "Layout/Picking container views for your content.md",
+    "Liquid Glass/Liquid Glass.md",
+    "Layout",
+    "Liquid Glass",
+    "Layout"
   ]
 }
