@@ -20,7 +20,7 @@ struct ContentView: View {
             isSearchMode: appState.isSearchMode,
             isFocused: $inputFocused
           )
-          .padding(.top, 8)
+          .padding(.top, 4)
           .padding(.bottom, 4)
           .onChange(of: appState.isSearchMode) { _, newValue in
             // Clear search when switching to prompt mode
@@ -41,45 +41,94 @@ struct ContentView: View {
           }
           
           // Controls and tab buttons row
-          HStack(spacing: 6) {
-            // Mode icon (search or plus) that switches mode on click
-            Button(action: {
-              appState.isSearchMode.toggle()
-              inputFocused = true
-            }) {
-              Image(systemName: appState.isSearchMode ? "magnifyingglass" : "plus.circle")
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
-                .opacity(0.8)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .help(appState.isSearchMode ? "Switch to prompt mode" : "Switch to search mode")
-            
-            // Microphone button (only in prompt mode)
-            if !appState.isSearchMode {
+          HStack(spacing: 0) {
+            // Icon group with tight spacing
+            HStack(spacing: 6) {
+              // Mode icon (search or plus) that switches mode on click
               Button(action: {
-                // Placeholder for future microphone functionality
+                appState.isSearchMode.toggle()
+                inputFocused = true
               }) {
-                Image(systemName: "mic")
-                  .font(.system(size: 11))
+                Image(systemName: appState.isSearchMode ? "magnifyingglass" : "plus.circle")
+                  .font(.system(size: 14))
                   .foregroundColor(.secondary)
                   .opacity(0.8)
               }
               .buttonStyle(PlainButtonStyle())
-              .help("Voice input")
+              .help(appState.isSearchMode ? "Switch to prompt mode" : "Switch to search mode")
+              
+              // Microphone button (only in prompt mode)
+              if !appState.isSearchMode {
+                Button(action: {
+                  // Placeholder for future microphone functionality
+                }) {
+                  Image(systemName: "mic")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                    .opacity(0.8)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .help("Voice input")
+              }
+              
+              // Generate prompt button (only in prompt mode)
+              if !appState.isSearchMode {
+                Button(action: {
+                  // Placeholder for generate prompt functionality
+                }) {
+                  Image(systemName: "wand.and.stars")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                    .opacity(0.8)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .help("Generate prompt")
+              }
+              
+              // Enhance prompt button (only in prompt mode)  
+              if !appState.isSearchMode {
+                Button(action: {
+                  // Placeholder for enhance prompt functionality
+                }) {
+                  Image(systemName: "sparkles")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                    .opacity(0.8)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .help("Enhance prompt")
+              }
             }
             
-            // Tab buttons positioned after microphone
-            TabButton(title: "#", isSelected: selectedTab == "hashtag") {
-              selectedTab = "hashtag"
-            }
+            // Padding between icon group and tab group
+            Spacer()
+              .frame(width: 16)
             
-            TabButton(title: "Clipboard", isSelected: selectedTab == "clipboard") {
-              selectedTab = "clipboard"
-            }
-            
-            TabButton(title: "+", isSelected: false) {
-              // Placeholder for add action
+            // Tab group with tight spacing
+            HStack(spacing: 4) {
+              TabButton(title: "#", isSelected: selectedTab == "hashtag") {
+                selectedTab = "hashtag"
+              }
+              
+              TabButton(title: "Clipboard", isSelected: selectedTab == "clipboard") {
+                selectedTab = "clipboard"
+              }
+              
+              TabButton(title: "Screenshot", isSelected: selectedTab == "screenshot") {
+                selectedTab = "screenshot"
+              }
+              
+              TabButton(title: "Notes", isSelected: selectedTab == "notes") {
+                selectedTab = "notes"
+              }
+              
+              TabButton(title: "Folder", isSelected: selectedTab == "folder") {
+                selectedTab = "folder"
+              }
+              
+              TabButton(title: "+", isSelected: false) {
+                // Placeholder for add action
+              }
             }
             
             Spacer()
@@ -95,7 +144,7 @@ struct ContentView: View {
                 inputFocused = true
               }) {
                 Image(systemName: "xmark.circle.fill")
-                  .font(.system(size: 11))
+                  .font(.system(size: 14))
                   .foregroundColor(.secondary)
                   .opacity(0.8)
               }
@@ -152,7 +201,7 @@ struct ContentView: View {
                       }
                       
                       // Text content
-                      if !item.text.isEmpty {
+                      if !item.text.isEmpty && item.thumbnailImage == nil {
                         Text(item.text)
                           .font(.system(size: 13))
                           .textSelection(.enabled)
@@ -214,6 +263,7 @@ struct ContentView: View {
                       }
                       .padding(.vertical, 8)
                     }
+                    .padding(.top, 8)
                   }
                 } else {
                   // No selection placeholder
@@ -227,7 +277,7 @@ struct ContentView: View {
                   .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
               }
-              .frame(width: 400)
+              .frame(width: 350)
             }
           }
         }
@@ -302,8 +352,9 @@ struct TabButton: View {
   var body: some View {
     Button(action: action) {
       Text(title)
-        .font(.system(size: 11, weight: .medium))
+        .font(.system(size: 13, weight: .regular))
         .foregroundColor(isSelected ? .primary : .secondary)
+        .opacity(isSelected ? 1.0 : 0.8)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(

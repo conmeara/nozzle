@@ -32,7 +32,7 @@ struct UnifiedInputFieldView: View {
         .focused($isFocused)
         .disableAutocorrection(true)
         .lineLimit(isSearchMode ? 1...1 : 1...10)
-        .font(.system(size: 14))
+        .font(.system(size: 13))
         .onSubmit {
           if isSearchMode || !query.contains("\n") {
             appState.select()
