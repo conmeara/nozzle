@@ -71,19 +71,6 @@ struct ContentView: View {
                 .help("Voice input")
               }
               
-              // Generate prompt button (only in prompt mode)
-              if !appState.isSearchMode {
-                Button(action: {
-                  // Placeholder for generate prompt functionality
-                }) {
-                  Image(systemName: "wand.and.stars")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-                    .opacity(0.8)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .help("Generate prompt")
-              }
               
               // Enhance prompt button (only in prompt mode)  
               if !appState.isSearchMode {
@@ -287,7 +274,7 @@ struct ContentView: View {
     .animation(.easeInOut(duration: 0.2), value: appState.searchVisible)
     .animation(.easeInOut(duration: 0.15), value: appState.showPreviewPane)
     .padding(.horizontal, 5)
-    .padding(.vertical, appState.popup.verticalPadding)
+    .padding(.top, appState.popup.verticalPadding)
     .background(
       reduceTransparency ? Color(NSColor.windowBackgroundColor) : Color.clear
     )
@@ -359,7 +346,7 @@ struct TabButton: View {
         .padding(.vertical, 4)
         .background(
           RoundedRectangle(cornerRadius: 4)
-            .fill(isSelected ? Color.white : Color.white.opacity(0.6))
+            .fill(isSelected ? Color(NSColor.controlAccentColor).opacity(0.2) : Color(NSColor.quaternaryLabelColor))
         )
     }
     .buttonStyle(PlainButtonStyle())
