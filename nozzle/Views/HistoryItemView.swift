@@ -74,8 +74,8 @@ struct HistoryItemView: View {
       let copyButtonAreaWidth: CGFloat = 60
       let isCopyButtonClick = location.x > (frameWidth - copyButtonAreaWidth)
       
-      if isCopyButtonClick && !item.isSelected && !NSEvent.modifierFlags.contains(.command) {
-        // Copy button clicked
+      if isCopyButtonClick && !item.isSelected {
+        // Copy button clicked - copy to clipboard
         copyItemToClipboard()
       } else if NSEvent.modifierFlags.contains(.command) {
         // Command-click: immediate paste
@@ -86,9 +86,6 @@ struct HistoryItemView: View {
         appState.selection = item.id  // Move focus to this item
         appState.updateFooterItemVisibility()
       }
-    }
-    .popover(isPresented: $item.showPreview, arrowEdge: .trailing) {
-      PreviewItemView(item: item)
     }
   }
 }

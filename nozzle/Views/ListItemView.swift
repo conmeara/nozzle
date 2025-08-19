@@ -77,7 +77,7 @@ struct ListItemView<Title: View>: View {
               .opacity(0.8)
               .frame(maxWidth: .infinity, alignment: .trailing)
           } else if isHovering {
-            // Show copy button when hovering over unselected item
+            // Show copy button when hovering - always show the clipboard icon
             Image(systemName: "doc.on.doc")
               .font(.system(size: 12))
               .foregroundColor(.primary)
@@ -109,9 +109,9 @@ struct ListItemView<Title: View>: View {
     .foregroundStyle(.primary)
     .background {
       if isSelected {
-        Color(NSColor.controlAccentColor).opacity(0.25)  // Subtle accent color for Liquid Glass selection
+        Color(NSColor.controlAccentColor).opacity(0.25)  // Subtle accent color for selection
       } else if shouldShowHoverBackground {
-        Color(NSColor.quaternaryLabelColor).opacity(0.5)  // Hover for Liquid Glass
+        Color(NSColor.quaternaryLabelColor).opacity(0.5)  // Hover background
       } else {
         Color.clear
       }

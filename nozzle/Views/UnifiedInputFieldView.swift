@@ -14,97 +14,34 @@ struct UnifiedInputFieldView: View {
       return NSLocalizedString("prompt_placeholder", comment: "")
     }
   }
-  
-  private var currentHeight: CGFloat {
-    if isSearchMode {
-      return 25
-    } else if query.isEmpty {
-      return 25 // Start with single line
-    } else {
-      // Expand based on content
-      let lines = query.components(separatedBy: .newlines).count
-      let wrappedLines = estimateWrappedLines(for: query)
-      let totalLines = max(lines, wrappedLines)
-      return min(CGFloat(25 + (totalLines - 1) * 18), 80)
-    }
-  }
-  
-  private func estimateWrappedLines(for text: String) -> Int {
-    // Rough estimate based on character count and typical line width
-    let charactersPerLine = 50
-    let totalCharacters = text.count
-    return max(1, (totalCharacters + charactersPerLine - 1) / charactersPerLine)
-  }
 
   var body: some View {
-    VStack(spacing: 0) {
-      HStack(spacing: 5) {
-        // Icon that changes based on mode
-        if isSearchMode {
-          Image(systemName: "magnifyingglass")
-            .frame(width: 11, height: 11)
-            .foregroundColor(.secondary)
-            .opacity(0.8)
-            .transition(.opacity.animation(.easeInOut(duration: 0.15)))
-        } else {
-          Image(systemName: "plus.circle")
-            .frame(width: 11, height: 11)
-            .foregroundColor(.secondary)
-            .opacity(0.8)
-            .transition(.opacity.animation(.easeInOut(duration: 0.15)))
-        }
-        
-        // Single TextField that adapts based on mode
-        TextField(placeholderText, text: $query, axis: isSearchMode ? .horizontal : .vertical)
-          .textFieldStyle(.plain)
-          .focused($isFocused)
-          .disableAutocorrection(true)
-          .lineLimit(isSearchMode ? 1...1 : 1...4)
-          .onSubmit {
-            if isSearchMode || !query.contains("\n") {
-              appState.select()
-            }
-          }
-        
-        // Microphone button (only in instruction mode)
-        if !isSearchMode {
-          Button(action: {
-            // Placeholder for future microphone functionality
-          }) {
-            Image(systemName: "mic")
-              .frame(width: 14, height: 14)
-              .foregroundColor(.secondary)
-          }
-          .buttonStyle(PlainButtonStyle())
-        }
-        
-        // Clear button
-        if !query.isEmpty {
-          Button(action: {
-            if isSearchMode {
-              appState.history.searchQuery = ""
-            } else {
-              appState.promptText = ""
-            }
-            isFocused = true
-          }) {
-            Image(systemName: "xmark.circle.fill")
-              .frame(width: 14, height: 14)
-              .foregroundColor(.secondary)
-          }
-          .buttonStyle(PlainButtonStyle())
-        }
+    HStack(spacing: 6) {
+      // Search icon only in search mode, inline with text
+      if isSearchMode {
+        Image(systemName: "magnifyingglass")
+          .font(.system(size: 11))
+          .foregroundColor(.secondary)
+          .opacity(0.8)
+          .transition(.opacity.animation(.easeInOut(duration: 0.15)))
       }
-      .frame(height: currentHeight)
-      .padding(.horizontal, 10)
-      .animation(.easeInOut(duration: 0.15), value: currentHeight)
-      .animation(.easeInOut(duration: 0.15), value: isSearchMode)
       
-      // Divider line at the bottom  
-      Rectangle()
-        .fill(Color.secondary.opacity(0.3))
-        .frame(height: 1)
+      // Minimal transparent text field with multi-line support
+      TextField(placeholderText, text: $query, axis: isSearchMode ? .horizontal : .vertical)
+        .textFieldStyle(.plain)
+        .focused($isFocused)
+        .disableAutocorrection(true)
+        .lineLimit(isSearchMode ? 1...1 : 1...10)
+        .font(.system(size: 14))
+        .onSubmit {
+          if isSearchMode || !query.contains("\n") {
+            appState.select()
+          }
+        }
     }
+    .padding(.horizontal, 8)
+    .padding(.vertical, 4)
+    .animation(.easeInOut(duration: 0.15), value: isSearchMode)
   }
 }
 
@@ -129,7 +66,7 @@ struct UnifiedInputFieldView: View {
     
     // Prompt mode with text
     UnifiedInputFieldView(
-      query: .constant("This is a longer prompt that might wrap to multiple lines"),
+      query: .constant("This is a longer prompt that might wrap to multiple lines and can grow up to 10 lines with scrolling for even longer text"),
       isSearchMode: false,
       isFocused: $focused
     )

@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "b5120dc5ed8bb83c",
@@ -168,10 +169,11 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "4b0abb1c6ceb1040",
+  "active": "499f95c375e9eb5f",
   "lastOpenFiles": [
-    "Layout/Custom layout.md",
+    "UI_REDESIGN_SESSION.md",
     "Layout/Lists.md",
+    "Layout/Custom layout.md",
     "Layout/Layout adjustments.md",
     "Layout/Divider.md",
     "Layout/Spacer.md",
@@ -195,7 +197,6 @@
     "Layout/init(alignmentspacingcontent).md",
     "Layout/Building layouts with stack views.md",
     "Layout/Picking container views for your content.md",
-    "Liquid Glass/Liquid Glass.md",
     "Layout",
     "Liquid Glass",
     "Layout"

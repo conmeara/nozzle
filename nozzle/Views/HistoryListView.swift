@@ -23,33 +23,38 @@ struct HistoryListView: View {
   }
 
   var body: some View {
-    if pinTo == .top {
-      LazyVStack(spacing: 0) {
-        ForEach(pinnedItems) { item in
-          HistoryItemView(item: item)
-        }
-
-        if showPinsSeparator {
-          Divider()
-            .padding(.horizontal, 10)
-            .padding(.vertical, 3)
-        }
-      }
-      .background {
-        GeometryReader { geo in
-          Color.clear
-            .task(id: geo.size.height) {
-              appState.popup.pinnedItemsHeight = geo.size.height
-            }
-        }
-      }
-    }
-
     ScrollView {
       ScrollViewReader { proxy in
         LazyVStack(spacing: 0) {
+          // Show pinned items at top if configured
+          if pinTo == .top {
+            ForEach(pinnedItems) { item in
+              HistoryItemView(item: item)
+            }
+            
+            if showPinsSeparator {
+              Divider()
+                .padding(.horizontal, 10)
+                .padding(.vertical, 3)
+            }
+          }
+          
+          // Unpinned items
           ForEach(unpinnedItems) { item in
             HistoryItemView(item: item)
+          }
+          
+          // Show pinned items at bottom if configured
+          if pinTo == .bottom {
+            if showPinsSeparator {
+              Divider()
+                .padding(.horizontal, 10)
+                .padding(.vertical, 3)
+            }
+            
+            ForEach(pinnedItems) { item in
+              HistoryItemView(item: item)
+            }
           }
         }
         .task(id: appState.scrollTarget) {
@@ -94,28 +99,6 @@ struct HistoryListView: View {
         }
       }
       .contentMargins(.leading, 10, for: .scrollIndicators)
-    }
-
-    if pinTo == .bottom {
-      LazyVStack(spacing: 0) {
-        if showPinsSeparator {
-          Divider()
-            .padding(.horizontal, 10)
-            .padding(.vertical, 3)
-        }
-
-        ForEach(pinnedItems) { item in
-          HistoryItemView(item: item)
-        }
-      }
-      .background {
-        GeometryReader { geo in
-          Color.clear
-            .task(id: geo.size.height) {
-              appState.popup.pinnedItemsHeight = geo.size.height
-            }
-        }
-      }
     }
   }
 }

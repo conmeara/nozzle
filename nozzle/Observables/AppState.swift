@@ -17,6 +17,17 @@ class AppState {
   var isSearchMode: Bool = false  // Track search mode separately
   private var preservedSelections: Set<HistoryItem> = []
   
+  // Preview pane state management
+  var showPreviewPane: Bool = Defaults[.showPreviewPane] {
+    didSet {
+      Defaults[.showPreviewPane] = showPreviewPane
+    }
+  }
+  
+  var previewItem: HistoryItemDecorator? {
+    return history.selectedItem
+  }
+  
   var scrollTarget: UUID?
   var selection: UUID? {
     didSet {
@@ -98,16 +109,8 @@ class AppState {
   }
   
   func togglePreview() {
-    guard let item = history.selectedItem else { return }
-    
-    if item.showPreview {
-      // Hide preview
-      HistoryItemDecorator.previewThrottler.cancel()
-      item.showPreview = false
-    } else {
-      // Show preview immediately for keyboard shortcut (no throttling)
-      HistoryItemDecorator.showPreviewImmediately(for: item)
-    }
+    // Toggle the preview pane visibility
+    showPreviewPane.toggle()
   }
 
   private func selectFromKeyboardNavigation(_ id: UUID?) {
