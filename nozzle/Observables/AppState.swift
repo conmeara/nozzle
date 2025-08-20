@@ -243,11 +243,8 @@ class AppState {
   func updateFooterItemVisibility() {
     // Find paste footer item
     if let pasteItem = footer.items.first(where: { $0.title == "paste_combined" }) {
-      // Check for content from clipboard or non-clipboard sources
-      let isClipboard = contentManager.activeSourceId == "clipboard"
-      let hasSelected = isClipboard
-        ? !history.selectedItems.isEmpty
-        : !contentManager.nonClipboardSelection.isEmpty  // Phase 1
+      // Phase 2: Use centralized selection
+      let hasSelected = !contentManager.selectedItems.isEmpty
       
       // Show this item only if we have selected items or prompt text
       let hasContent = hasSelected || !promptText.isEmpty
@@ -294,51 +291,54 @@ class AppState {
   
   @MainActor
   func performCombinedPaste() {
-    let selectedItems = history.selectedItems
+    // Phase 2: Use centralized selection from ContentManager
+    let selectedContentItems = contentManager.selectedItems
     let hasPrompt = !promptText.isEmpty
-    let hasSelectedItems = !selectedItems.isEmpty
+    let hasSelectedItems = !selectedContentItems.isEmpty
     
     guard hasPrompt || hasSelectedItems else { return }
     
     // Store current selection states and prompt text
-    let selectedHistoryItems = selectedItems.map { $0.item }
     let currentPromptText = promptText
     
-    // Enable multi-paste mode to prevent clipboard monitoring
-    Clipboard.shared.setMultiPasteMode(true)
+    // Enable multi-paste mode to prevent clipboard monitoring (only for clipboard items)
+    let hasClipboardItems = selectedContentItems.contains { $0.sourceType == .clipboard }
+    if hasClipboardItems {
+      Clipboard.shared.setMultiPasteMode(true)
+    }
     
     // Close the popup immediately for better UX
     popup.close()
     
     // Separate text items from media items
-    var textItems: [HistoryItemDecorator] = []
-    var mediaItems: [HistoryItem] = []
+    var textContentItems: [ContentItem] = []
+    var mediaContentItems: [ContentItem] = []
     
-    for item in selectedItems {
-      if item.item.imageData != nil || !item.item.fileURLs.isEmpty {
+    for item in selectedContentItems {
+      if item.imageData != nil || item.fileURL != nil {
         // Treat items with images or files as media
-        mediaItems.append(item.item)
+        mediaContentItems.append(item)
       } else {
-        // Treat everything else as text (including items with no content)
-        textItems.append(item)
+        // Treat everything else as text
+        textContentItems.append(item)
       }
     }
     
     // Execute the paste operations
     executeCombinedPaste(
-      textItems: textItems,
-      mediaItems: mediaItems,
+      textItems: textContentItems,
+      mediaItems: mediaContentItems,
       promptText: currentPromptText,
-      selectedHistoryItems: selectedHistoryItems
+      hasClipboardItems: hasClipboardItems
     )
   }
   
   @MainActor
   private func executeCombinedPaste(
-    textItems: [HistoryItemDecorator],
-    mediaItems: [HistoryItem],
+    textItems: [ContentItem],
+    mediaItems: [ContentItem],
     promptText: String,
-    selectedHistoryItems: [HistoryItem]
+    hasClipboardItems: Bool
   ) {
     // Step 1: Combine and paste all text content as one operation
     if !textItems.isEmpty || !promptText.isEmpty {
@@ -351,25 +351,34 @@ class AppState {
         
         // Step 2: After text is pasted, paste media items sequentially
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-          self.pasteMediaItems(mediaItems, index: 0, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
+          self.pasteMediaItems(mediaItems, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems)
         }
       }
     } else {
       // No text content, just paste media items
-      pasteMediaItems(mediaItems, index: 0, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
+      pasteMediaItems(mediaItems, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems)
     }
   }
   
   @MainActor
-  private func pasteMediaItems(_ mediaItems: [HistoryItem], index: Int, selectedHistoryItems: [HistoryItem], promptText: String) {
+  private func pasteMediaItems(_ mediaItems: [ContentItem], index: Int, promptText: String, hasClipboardItems: Bool) {
     guard index < mediaItems.count else {
       // All operations complete, restore state
-      finalizeCombinedPaste(selectedHistoryItems: selectedHistoryItems, promptText: promptText)
+      finalizeCombinedPaste(promptText: promptText, hasClipboardItems: hasClipboardItems)
       return
     }
     
     let item = mediaItems[index]
-    Clipboard.shared.copy(item)
+    // Copy content item to clipboard
+    if let imageData = item.imageData, let image = NSImage(data: imageData) {
+      let pasteboard = NSPasteboard.general
+      pasteboard.clearContents()
+      pasteboard.writeObjects([image])
+    } else if let fileURL = item.fileURL {
+      let pasteboard = NSPasteboard.general
+      pasteboard.clearContents()
+      pasteboard.writeObjects([fileURL as NSURL])
+    }
     
     // Wait for clipboard update, then paste
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
@@ -377,15 +386,17 @@ class AppState {
       
       // Wait before next media item
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-        self.pasteMediaItems(mediaItems, index: index + 1, selectedHistoryItems: selectedHistoryItems, promptText: promptText)
+        self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems)
       }
     }
   }
   
   @MainActor
-  private func finalizeCombinedPaste(selectedHistoryItems: [HistoryItem], promptText: String) {
-    // Disable multi-paste mode
-    Clipboard.shared.setMultiPasteMode(false)
+  private func finalizeCombinedPaste(promptText: String, hasClipboardItems: Bool) {
+    // Disable multi-paste mode (only if we had clipboard items)
+    if hasClipboardItems {
+      Clipboard.shared.setMultiPasteMode(false)
+    }
     
     // Only call this in the App Store version.
     AppStoreReview.ask()
@@ -395,22 +406,14 @@ class AppState {
       // Restore prompt text
       self.promptText = promptText
       
-      // Restore selections by matching the underlying HistoryItem
-      for decorator in self.history.items {
-        if selectedHistoryItems.contains(decorator.item) {
-          decorator.isSelected = true
-        }
-      }
-      
-      // Also update preserved selections for when popup reopens
-      self.preservedSelections = Set(selectedHistoryItems)
+      // Phase 2: Selection is handled by ContentManager, no need to restore individual selections
       
       // Update footer visibility
       self.updateFooterItemVisibility()
     }
   }
   
-  private func combinedFormattedContent(from items: [HistoryItemDecorator], promptText: String) -> (rtf: Data?, html: Data?, plain: String) {
+  private func combinedFormattedContent(from items: [ContentItem], promptText: String) -> (rtf: Data?, html: Data?, plain: String) {
     let combined = NSMutableAttributedString()
     
     // Add prompt as plain text if present
@@ -420,11 +423,13 @@ class AppState {
     
     // Add each item preserving its formatting
     for item in items {
-      if let rtf = item.item.rtf {
-        combined.append(rtf)
-      } else if let html = item.item.html {
-        combined.append(html)
-      } else if let text = item.item.text {
+      if let rtfData = item.rtfData,
+         let attributedString = NSAttributedString(rtf: rtfData, documentAttributes: nil) {
+        combined.append(attributedString)
+      } else if let htmlData = item.htmlData,
+                let attributedString = NSAttributedString(html: htmlData, documentAttributes: nil) {
+        combined.append(attributedString)
+      } else if let text = item.plainText {
         combined.append(NSAttributedString(string: text))
       }
       combined.append(NSAttributedString(string: "\n"))

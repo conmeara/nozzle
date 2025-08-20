@@ -30,16 +30,9 @@ struct UniversalItemView: View {
                 // Optionally close the popup after copy
                 appState.popup.close()
             } else {
-                // Toggle selection
-                item.isSelected.toggle()
-                
-                // Update non-clipboard selection tracking
-                if item.isSelected {
-                    contentManager.nonClipboardSelection.insert(item.id)
-                } else {
-                    contentManager.nonClipboardSelection.remove(item.id)
-                }
-                
+                // Toggle selection using centralized system
+                contentManager.toggleSelection(item.id)
+                item.isSelected = contentManager.isSelected(item.id)
                 appState.updateFooterItemVisibility()
             }
         }

@@ -8,12 +8,53 @@ final class ContentManager {
     private(set) var sources: [String: any ContentSource] = [:]
     private(set) var orderedSourceIds: [String] = []
     var activeSourceId: String = "clipboard"   // default tab
-    var nonClipboardSelection: Set<UUID> = []  // Phase 1: selection outside clipboard
+    
+    // Phase 2: Centralized selection
+    private(set) var selectedItemIds: Set<UUID> = []
+    
+    var selectedItems: [ContentItem] {
+        allItems.filter { selectedItemIds.contains($0.id) }
+    }
+    
+    var allItems: [ContentItem] {
+        orderedSourceIds.flatMap { sources[$0]?.items ?? [] }
+    }
     
     // Computed views
     var activeItems: [ContentItem] {
         guard let src = sources[activeSourceId] else { return [] }
         return src.items
+    }
+    
+    // Selection management
+    func toggleSelection(_ id: UUID) {
+        if selectedItemIds.remove(id) == nil {
+            selectedItemIds.insert(id)
+        }
+        // Bridge to clipboard selection if needed
+        syncClipboardSelection(id)
+    }
+    
+    func clearSelection() {
+        selectedItemIds.removeAll()
+        // Also clear clipboard selection
+        if let clipboardSource = sources["clipboard"] as? ClipboardSource {
+            History.shared.items.forEach { $0.isSelected = false }
+        }
+    }
+    
+    func isSelected(_ id: UUID) -> Bool {
+        selectedItemIds.contains(id)
+    }
+    
+    private func syncClipboardSelection(_ id: UUID) {
+        // If this is a clipboard item, sync with History
+        if let item = allItems.first(where: { $0.id == id }),
+           item.sourceType == .clipboard {
+            if let historyItem = History.shared.items.first(where: { $0.id == id }) {
+                historyItem.isSelected = selectedItemIds.contains(id)
+            }
+        }
     }
     
     // Registration
@@ -37,7 +78,4 @@ final class ContentManager {
     func searchAcrossAllSources(query: String) -> [ContentItem] {
         sources.values.flatMap { $0.search(query: query) }
     }
-    
-    // Phase 2 placeholder
-    // var selectedItemIds: Set<UUID> = []
 }

@@ -176,14 +176,25 @@ struct ContentView: View {
               )
               .frame(minWidth: 300)
             } else if contentManager.activeSourceId == "aggregated" {
-              // Phase 2: Aggregated view placeholder
-              VStack {
-                Spacer()
-                Text("Aggregated view coming soon")
-                  .foregroundColor(.secondary)
-                Spacer()
+              // Phase 2: Aggregated view showing selected items from all sources
+              let selectedItems = contentManager.selectedItems
+                .map(UniversalItemDecorator.init)
+              if selectedItems.isEmpty {
+                VStack {
+                  Spacer()
+                  Text("No items selected")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                  Text("Select items from any source to see them here")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color.secondary.opacity(0.7))
+                  Spacer()
+                }
+                .frame(minWidth: 300)
+              } else {
+                UniversalListView(items: selectedItems)
+                  .frame(minWidth: 300)
               }
-              .frame(minWidth: 300)
             } else {
               // Non-clipboard sources use UniversalListView
               let items = contentManager.getItems(for: contentManager.activeSourceId)

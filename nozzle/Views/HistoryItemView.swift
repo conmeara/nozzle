@@ -5,6 +5,7 @@ struct HistoryItemView: View {
   @Bindable var item: HistoryItemDecorator
 
   @Environment(AppState.self) private var appState
+  @Environment(ContentManager.self) private var contentManager
   @State private var copyButtonArea = CGRect.zero
 
   private func copyItemToClipboard() {
@@ -81,8 +82,9 @@ struct HistoryItemView: View {
         // Command-click: immediate paste
         appState.history.select(item)
       } else {
-        // Regular click: toggle selection
-        item.isSelected.toggle()
+        // Regular click: toggle selection using centralized system
+        contentManager.toggleSelection(item.id)
+        item.isSelected = contentManager.isSelected(item.id)
         appState.selection = item.id  // Move focus to this item
         appState.updateFooterItemVisibility()
       }
