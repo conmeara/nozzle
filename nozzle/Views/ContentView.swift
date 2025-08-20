@@ -6,6 +6,7 @@ struct ContentView: View {
   @State private var modifierFlags = ModifierFlags()
   @State private var scenePhase: ScenePhase = .background
   @State private var selectedTab = "clipboard"
+  @State private var contentManager = ContentManager.shared
 
   @FocusState private var inputFocused: Bool
   @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -16,7 +17,22 @@ struct ContentView: View {
         VStack(spacing: 0) {
           // Input field at the top
           UnifiedInputFieldView(
-            query: appState.isSearchMode ? $appState.history.searchQuery : $appState.promptText,
+            query: appState.isSearchMode
+              ? Binding(
+                  get: {
+                    contentManager.activeSourceId == "clipboard"
+                      ? appState.history.searchQuery
+                      : (contentManager.sources[contentManager.activeSourceId]?.searchQuery ?? "")
+                  },
+                  set: { newValue in
+                    if contentManager.activeSourceId == "clipboard" {
+                      appState.history.searchQuery = newValue
+                    } else {
+                      contentManager.sources[contentManager.activeSourceId]?.searchQuery = newValue
+                    }
+                  }
+                )
+              : $appState.promptText,
             isSearchMode: appState.isSearchMode,
             isFocused: $inputFocused
           )
@@ -93,28 +109,23 @@ struct ContentView: View {
             
             // Tab group with tight spacing
             HStack(spacing: 4) {
-              TabButton(title: "#", isSelected: selectedTab == "hashtag") {
-                selectedTab = "hashtag"
+              // Aggregated tab placeholder ("#") - Phase 2
+              TabButton(title: "#", isSelected: selectedTab == "aggregated") {
+                selectedTab = "aggregated"
+                contentManager.activeSourceId = "aggregated"
               }
               
-              TabButton(title: "Clipboard", isSelected: selectedTab == "clipboard") {
-                selectedTab = "clipboard"
+              // Dynamic tabs from sources
+              ForEach(contentManager.getAllSources(), id: \.id) { src in
+                TabButton(title: src.name, isSelected: selectedTab == src.id) {
+                  selectedTab = src.id
+                  contentManager.activeSourceId = src.id
+                }
               }
               
-              TabButton(title: "Screenshot", isSelected: selectedTab == "screenshot") {
-                selectedTab = "screenshot"
-              }
-              
-              TabButton(title: "Notes", isSelected: selectedTab == "notes") {
-                selectedTab = "notes"
-              }
-              
-              TabButton(title: "Folder", isSelected: selectedTab == "folder") {
-                selectedTab = "folder"
-              }
-              
+              // "+" to add a folder source
               TabButton(title: "+", isSelected: false) {
-                // Placeholder for add action
+                openFolderPickerAndRegister()
               }
             }
             
@@ -157,12 +168,29 @@ struct ContentView: View {
 
           // Main content area with optional preview pane
           HStack(spacing: 0) {
-            // History list
-            HistoryListView(
-              searchQuery: $appState.history.searchQuery,
-              searchFocused: $inputFocused
-            )
-            .frame(minWidth: 300)
+            // Content list based on active source
+            if contentManager.activeSourceId == "clipboard" {
+              HistoryListView(
+                searchQuery: $appState.history.searchQuery,
+                searchFocused: $inputFocused
+              )
+              .frame(minWidth: 300)
+            } else if contentManager.activeSourceId == "aggregated" {
+              // Phase 2: Aggregated view placeholder
+              VStack {
+                Spacer()
+                Text("Aggregated view coming soon")
+                  .foregroundColor(.secondary)
+                Spacer()
+              }
+              .frame(minWidth: 300)
+            } else {
+              // Non-clipboard sources use UniversalListView
+              let items = contentManager.getItems(for: contentManager.activeSourceId)
+                .map(UniversalItemDecorator.init)
+              UniversalListView(items: items)
+                .frame(minWidth: 300)
+            }
             
             // Preview pane (conditional with fixed width)
             if appState.showPreviewPane {
@@ -301,6 +329,7 @@ struct ContentView: View {
       try? await appState.history.load()
     }
     .environment(appState)
+    .environment(contentManager)
     .environment(modifierFlags)
     .environment(\.scenePhase, scenePhase)
     // FloatingPanel is not a scene, so let's implement custom scenePhase..
@@ -326,6 +355,34 @@ struct ContentView: View {
         // Prevent NSPopover from becoming first responder.
         popover.behavior = .semitransient
       }
+    }
+  }
+  
+  @MainActor
+  private func openFolderPickerAndRegister() {
+    let panel = NSOpenPanel()
+    panel.allowsMultipleSelection = false
+    panel.canChooseDirectories = true
+    panel.canChooseFiles = false
+    panel.prompt = "Select Folder"
+    panel.message = "Choose a folder to monitor"
+    
+    if panel.runModal() == .OK, let url = panel.url {
+      // Store the bookmark for persistence
+      try? Bookmarks.store(url: url)
+      
+      // Create and register the source
+      let source = FileSystemSource(folderURL: url)
+      contentManager.registerSource(source)
+      
+      // Refresh the source content
+      Task {
+        await source.refresh()
+      }
+      
+      // Switch to the new tab
+      selectedTab = source.id
+      contentManager.activeSourceId = source.id
     }
   }
 }

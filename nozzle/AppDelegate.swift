@@ -84,6 +84,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     migrateUserDefaults()
     disableUnusedGlobalHotkeys()
 
+    // Initialize ContentManager and register sources
+    let contentManager = ContentManager.shared
+    
+    // Register clipboard source
+    contentManager.registerSource(ClipboardSource())
+    
+    // Restore folder sources from bookmarks
+    for url in Bookmarks.resolveAll() {
+      let source = FileSystemSource(folderURL: url)
+      contentManager.registerSource(source)
+      Task {
+        await source.refresh()
+      }
+    }
+
     panel = FloatingPanel(
       contentRect: NSRect(origin: .zero, size: Defaults[.windowSize]),
       identifier: Bundle.main.bundleIdentifier ?? "org.conmeara.nozzle",

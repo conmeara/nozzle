@@ -8,6 +8,7 @@ class AppState {
   static let shared = AppState()
 
   var appDelegate: AppDelegate?
+  private let contentManager = ContentManager.shared
   var popup: Popup
   var history: History
   var footer: Footer
@@ -242,8 +243,14 @@ class AppState {
   func updateFooterItemVisibility() {
     // Find paste footer item
     if let pasteItem = footer.items.first(where: { $0.title == "paste_combined" }) {
+      // Check for content from clipboard or non-clipboard sources
+      let isClipboard = contentManager.activeSourceId == "clipboard"
+      let hasSelected = isClipboard
+        ? !history.selectedItems.isEmpty
+        : !contentManager.nonClipboardSelection.isEmpty  // Phase 1
+      
       // Show this item only if we have selected items or prompt text
-      let hasContent = !history.selectedItems.isEmpty || !promptText.isEmpty
+      let hasContent = hasSelected || !promptText.isEmpty
       pasteItem.isVisible = hasContent
     }
   }
