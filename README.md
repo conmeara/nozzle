@@ -1,16 +1,17 @@
 
 <img width="128px" src="https://nozzle.app/img/nozzle/Logo.png" alt="Logo" align="left" />
 
-# nozzle - Enhanced Fork of Maccy Clipboard Manager
+# nozzle v3 - Universal Content Aggregation Platform
 
 [![Downloads](https://img.shields.io/github/downloads/conmeara/nozzle/total.svg)](https://github.com/conmeara/nozzle/releases/latest)
 [![Build Status](https://img.shields.io/bitrise/716921b669780314/master?token=3pMiCb5dpFzlO-7jTYtO3Q)](https://app.bitrise.io/app/716921b669780314)
 
-**This is an enhanced fork of the original Maccy clipboard manager with multi-select and prompt capabilities.**
+**nozzle has evolved from a clipboard manager into a universal multi-source content aggregation platform.**
 
-nozzle is a lightweight clipboard manager for macOS. It keeps the history of what you copy
-and lets you quickly navigate, search, and use previous clipboard contents. This fork adds powerful features
-for selecting multiple items and combining them with custom instructions.
+nozzle v3 is a revolutionary content management tool for macOS that unifies clipboard history, 
+file system monitoring, and future content sources into a single, powerful interface. It maintains 
+all the beloved clipboard management features while introducing a scalable architecture for 
+unlimited content types.
 
 nozzle works on macOS Sonoma 14 or higher.
 
@@ -36,19 +37,43 @@ nozzle works on macOS Sonoma 14 or higher.
 
 ## Features
 
+### Core Foundation
 * Lightweight and fast
-* Keyboard-first
+* Keyboard-first navigation
 * Secure and private
-* Native UI
+* Native macOS UI
 * Open source and free
 
-### New Features in This Fork
+### v3 Multi-Source Architecture
 
-* **Multi-select**: Select multiple clipboard items with checkboxes
+* **Universal Content Sources**: Unified interface for clipboard, folders, and future content types
+* **Dynamic Source Management**: Add/remove content sources on-demand with persistent configuration
+* **Protocol-Oriented Design**: Scalable architecture supporting unlimited source types
+* **Cross-Source Operations**: Select and combine content from any source type
+* **Security-Scoped Access**: Secure folder monitoring with user-granted permissions
+
+### Enhanced UI Features
+
+* **Dynamic Tab System**: Tabs automatically appear for each registered content source
+* **Aggregated View**: Special "#" tab showing selected items from all sources
+* **Universal Item Interface**: Consistent UI for all content types
+* **Folder Integration**: Native file picker for adding monitored directories
+* **Real-time Updates**: Live content updates as files change
+
+### Advanced Selection & Operations
+
+* **Multi-select**: Select multiple items across different sources with checkboxes
 * **Prompt mode**: Type instructions to combine with selected items
 * **Combined operations**: Paste or copy multiple items with custom formatting
-* **Enhanced shortcuts**: More powerful keyboard navigation
-* **Improved UI**: Cleaner appearance with better visual feedback
+* **Cross-source selection**: Mix clipboard items with files seamlessly
+* **Template system**: Customizable formatting for combined operations
+
+### Enhanced Keyboard Navigation
+
+* **Tab switching**: Navigate between different content sources
+* **Universal shortcuts**: Consistent keyboard controls across all source types
+* **Enhanced multi-select**: Tab to toggle selection, Cmd+N for nth item
+* **Quick actions**: Immediate paste, copy, and preview operations
 
 ## Install
 
@@ -60,53 +85,104 @@ brew install nozzle
 
 ## Usage
 
-### Basic Usage
+### Getting Started
 
-1. <kbd>SHIFT (⇧)</kbd> + <kbd>COMMAND (⌘)</kbd> + <kbd>C</kbd> to popup nozzle or click on its icon in the menu bar.
-2. Type what you want to find.
-3. To select the history item you wish to copy, press <kbd>ENTER</kbd>, or click the item, or use <kbd>COMMAND (⌘)</kbd> + `n` shortcut.
-4. To choose the history item and paste, press <kbd>OPTION (⌥)</kbd> + <kbd>ENTER</kbd>, or <kbd>OPTION (⌥)</kbd> + <kbd>CLICK</kbd> the item, or use <kbd>OPTION (⌥)</kbd> + `n` shortcut.
-5. To choose the history item and paste without formatting, press <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>ENTER</kbd>, or <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>CLICK</kbd> the item, or use <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> + `n` shortcut.
-6. To delete the history item, press <kbd>OPTION (⌥)</kbd> + <kbd>DELETE (⌫)</kbd>.
-7. To see the full text of the history item, wait a couple of seconds for tooltip or press <kbd>OPTION (⌥)</kbd> + <kbd>SPACE</kbd>.
-8. To pin the history item so that it remains on top of the list, press <kbd>OPTION (⌥)</kbd> + <kbd>P</kbd>. The item will be moved to the top with a random but permanent keyboard shortcut. To unpin it, press <kbd>OPTION (⌥)</kbd> + <kbd>P</kbd> again.
-9. To clear all unpinned items, select _Clear_ in the menu, or press <kbd>OPTION (⌥)</kbd> + <kbd>COMMAND (⌘)</kbd> + <kbd>DELETE (⌫)</kbd>. To clear all items including pinned, select _Clear_ in the menu with  <kbd>OPTION (⌥)</kbd> pressed, or press <kbd>SHIFT (⇧)</kbd> + <kbd>OPTION (⌥)</kbd> + <kbd>COMMAND (⌘)</kbd> + <kbd>DELETE (⌫)</kbd>.
-10. To disable nozzle and ignore new copies, click on the menu icon with <kbd>OPTION (⌥)</kbd> pressed.
-11. To ignore only the next copy, click on the menu icon with <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> pressed.
-12. To customize the behavior, check "Preferences…" window, or press <kbd>COMMAND (⌘)</kbd> + <kbd>,</kbd>.
+1. **Open nozzle**: <kbd>SHIFT (⇧)</kbd> + <kbd>COMMAND (⌘)</kbd> + <kbd>C</kbd> or click the menu bar icon
+2. **Navigate sources**: Use the dynamic tab bar to switch between clipboard, folders, and aggregated view
+3. **Add folders**: Click the "+" tab to add monitored directories via file picker
+4. **Search content**: Type to search within the active source
+5. **Customize**: Access Preferences with <kbd>COMMAND (⌘)</kbd> + <kbd>,</kbd>
 
-### Multi-Select Mode (New)
+### Source Management
 
-1. **Toggle Selection**: Press <kbd>ENTER</kbd> or click an item to toggle its checkbox selection.
-2. **Select by Number**: Hold <kbd>COMMAND (⌘)</kbd> + `n` to toggle selection of the nth item.
-3. **Quick Paste Single Item**: <kbd>COMMAND (⌘)</kbd> + <kbd>SHIFT (⇧)</kbd> + `n` to paste just the nth item.
+#### Clipboard Source
+- **Access**: Default "Clipboard" tab shows clipboard history
+- **Search**: Type to filter clipboard items
+- **All traditional shortcuts**: Work exactly as before for backward compatibility
 
-### Prompt Mode (New)
+#### Folder Sources
+- **Add folders**: Click "+" tab → select directory → automatic monitoring begins
+- **Security**: Uses security-scoped bookmarks for persistent access
+- **Updates**: Content refreshes when files change in monitored directories
+- **Remove**: Use Preferences to manage registered folders
 
-1. **Switch to Prompt Mode**: Press <kbd>COMMAND (⌘)</kbd> + <kbd>F</kbd> to toggle between search and prompt mode.
-2. **Type Instructions**: In prompt mode, type instructions that will be combined with selected items.
-3. **Combined Paste**: Press <kbd>COMMAND (⌘)</kbd> + <kbd>V</kbd> to paste selected items with your prompt.
-4. **Combined Copy**: Press <kbd>COMMAND (⌘)</kbd> + <kbd>ENTER</kbd> to copy the combined content to clipboard.
-5. **Clear All**: Press <kbd>COMMAND (⌘)</kbd> + <kbd>DELETE (⌫)</kbd> to clear selections and prompt.
+#### Aggregated View
+- **Access**: "#" tab shows selected items from all sources
+- **Cross-source**: Mix clipboard items with files seamlessly
+- **Operations**: Perform combined actions on heterogeneous content
 
-### Combined Operations Template
+### Universal Item Operations
 
-When using combined paste/copy, items are formatted using a template:
+#### Selection
+- **Toggle selection**: Click item checkbox or press <kbd>TAB</kbd> while highlighted
+- **Multi-select**: Select items across different sources
+- **Select by number**: <kbd>COMMAND (⌘)</kbd> + `n` toggles nth item selection
+- **Clear selections**: <kbd>COMMAND (⌘)</kbd> + <kbd>DELETE (⌫)</kbd>
+
+#### Actions
+- **Copy item**: Click right side of item or <kbd>ENTER</kbd> on highlighted item
+- **Paste item**: <kbd>OPTION (⌥)</kbd> + <kbd>ENTER</kbd> or <kbd>OPTION (⌥)</kbd> + click
+- **Paste without formatting**: <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>ENTER</kbd>
+- **Preview**: <kbd>OPTION (⌥)</kbd> + <kbd>SPACE</kbd> or wait for tooltip
+- **Delete** (clipboard only): <kbd>OPTION (⌥)</kbd> + <kbd>DELETE (⌫)</kbd>
+
+### Advanced Multi-Source Features
+
+#### Prompt Mode
+1. **Switch modes**: <kbd>COMMAND (⌘)</kbd> + <kbd>F</kbd> toggles search ↔ prompt mode
+2. **Type instructions**: In prompt mode, enter text to combine with selected items
+3. **Combined paste**: <kbd>COMMAND (⌘)</kbd> + <kbd>V</kbd> pastes prompt + selected content
+4. **Combined copy**: <kbd>COMMAND (⌘)</kbd> + <kbd>ENTER</kbd> copies combined content
+
+#### Cross-Source Workflows
+1. **Select from clipboard**: Toggle clipboard items in Clipboard tab
+2. **Select from folders**: Toggle files in any folder tab
+3. **View aggregated**: Switch to "#" tab to see all selections
+4. **Combined operations**: Use prompt mode to combine with instructions
+
+#### Template Customization
+Default template combines prompt with selected items:
 ```
 {prompt}
 Context:
 {items}
 ```
 
-You can customize this template in Terminal:
-```sh
-defaults write org.p0deje.nozzle pasteTemplate "{prompt}\n\nSelected items:\n{items}"
+Customize the template:
+```bash
+defaults write org.p0deje.nozzle pasteTemplate "{prompt}\n\nSelected content:\n{items}"
 ```
 
 ## Advanced
 
-### Ignore Copied Items
+### Content Source Management
 
+#### Security-Scoped Bookmarks
+nozzle v3 uses security-scoped bookmarks to maintain persistent access to user-selected folders:
+- Bookmarks are stored securely in UserDefaults
+- Access permissions persist across app restarts
+- Folders are automatically restored on launch
+- Stale bookmarks are cleaned up automatically
+
+#### Adding Custom Sources
+The v3 architecture supports extending with new content source types:
+```swift
+// Implement the ContentSource protocol
+class CustomSource: ContentSource {
+    let id: String
+    let name: String
+    let icon: NSImage
+    let type: ContentSourceType
+    // ... implement required methods
+}
+
+// Register with ContentManager
+ContentManager.shared.registerSource(CustomSource())
+```
+
+### Clipboard Management
+
+#### Ignore Copied Items
 You can tell nozzle to ignore all copied items:
 
 ```sh
@@ -192,12 +268,35 @@ You can use it to suggest changes in translations and localize the application t
 
 ## Motivation
 
-There are dozens of similar applications out there, so why build another?
-Over the past years since I moved from Linux to macOS, I struggled to find
-a clipboard manager that is as free and simple as [Parcellite](http://parcellite.sourceforge.net),
-but I couldn't. So I've decided to build one.
+### The Evolution to v3
 
-Also, I wanted to learn Swift and get acquainted with macOS application development.
+nozzle began as an enhanced fork of Maccy, adding multi-select and prompt capabilities to clipboard management. However, as users' content workflows became more complex, it became clear that clipboard-only management was limiting.
+
+**Why Multi-Source Architecture?**
+
+Modern content workflows involve more than just clipboard history:
+- Developers need quick access to code snippets stored in files
+- Writers want to reference documents and notes alongside clipboard content
+- Designers work with assets scattered across different locations
+- Teams share content through various mediums
+
+### The Universal Content Vision
+
+nozzle v3 introduces a revolutionary approach: **treat all content sources equally**. Whether content comes from:
+- Clipboard history
+- File system directories  
+- Future sources (notes, screenshots, cloud services)
+
+They all use the same interface, selection system, and operations. This creates a truly unified content management experience that scales beyond traditional clipboard limitations.
+
+### Technical Excellence
+
+The v3 architecture showcases modern macOS development:
+- Protocol-oriented design for infinite extensibility
+- Swift 6 with @Observable for reactive UI
+- Security-scoped bookmarks for persistent access
+- MainActor isolation for thread safety
+- SwiftUI + AppKit hybrid approach
 
 
 ## License
