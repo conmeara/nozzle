@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository (nozzle - enhanced fork of Maccy).
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 **Last Updated**: After implementing multi-select, prompt mode, and UI enhancements in the nozzle fork.
 
@@ -69,18 +69,21 @@ xcodebuild -project nozzle.xcodeproj -scheme nozzle archive -archivePath ./build
 
 ### Important Dependencies
 
-- **Sparkle**: Auto-update framework
-- **KeyboardShortcuts**: Global hotkey management
-- **Settings**: Preferences window framework
-- **Sauce**: Keyboard input handling
-- **Defaults**: Type-safe UserDefaults wrapper
+- **Defaults**: Type-safe UserDefaults wrapper (sindresorhus/Defaults 8.2.0)
+- **KeyboardShortcuts**: Global hotkey management (sindresorhus/KeyboardShortcuts 2.0.2)
+- **Settings**: Preferences window framework (sindresorhus/Settings 3.1.1)
+- **Sauce**: Keyboard input handling (Clipy/Sauce 2.4.1)
+- **LaunchAtLogin-Modern**: Launch at login functionality (sindresorhus/LaunchAtLogin-Modern 1.1.0)
+- **Fuse**: Fuzzy search library (krisk/fuse-swift 1.4.0)
+- **SwiftHEXColors**: Hex color utilities (thii/SwiftHEXColors 1.4.1)
 
 ### Testing Approach
 
-- Unit tests focus on models and business logic
-- UI tests verify end-to-end functionality
+- Unit tests focus on models and business logic (nozzleTests target)
+- UI tests verify end-to-end functionality (nozzleUITests target)
 - Test plan includes retry-on-failure for flaky tests
-- Some Core Data migration tests are disabled in the test plan
+- Some Core Data migration tests (HistoryTests) are disabled in nozzle.xctestplan
+- Tests run with `enable-testing` command line argument
 
 ## New Features Added in Fork
 
@@ -136,6 +139,31 @@ func clearSelectionAndPrompt()
 
 ### Testing Considerations
 - Test multi-select state management
-- Test mode switching behavior
+- Test mode switching behavior  
 - Test combined operation formatting
 - Test keyboard shortcut conflicts
+
+## Project Structure
+
+### Core Directories
+- **nozzle/**: Main application source code
+  - **Observables/**: State management (@Observable classes)
+  - **Views/**: SwiftUI views and UI components
+  - **Models/**: Data models (HistoryItem, HistoryItemContent)
+  - **Extensions/**: Swift extensions for various types
+  - **Settings/**: Preferences panes with localization support
+  - **Intents/**: App Intents for Shortcuts integration
+  - **Sounds/**: Audio assets (Knock.caf, Write.caf)
+- **nozzleTests/**: Unit tests with test fixtures
+- **nozzleUITests/**: UI automation tests
+- **docs/**: Development documentation and design notes
+
+### Localization
+- Supports 26+ languages with .lproj directories
+- Localized strings files for all UI components
+- Main localizable files: Localizable.strings, *Settings.strings, PreviewItemView.strings
+
+### Build Assets
+- **Assets.xcassets/**: App icons, menu bar icons, and system images
+- **nozzle.entitlements**: Required permissions for accessibility and notifications
+- **Info.plist**: App metadata and configuration
