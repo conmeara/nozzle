@@ -18,12 +18,13 @@ class ApplicationImage: @unchecked Sendable {
   }
 
   var nsImage: NSImage {
-    guard let bundleIdentifier else {
-      return Self.fallbackImage
-    }
-
+    // If we have an image already, return it (for file type badges)
     if let image {
       return image
+    }
+    
+    guard let bundleIdentifier else {
+      return Self.fallbackImage
     }
 
     // The image has been queried before but since the application has been deleted.

@@ -14,26 +14,15 @@ final class FileTypeBadgeCache {
             return cached
         }
         
-        // Create icon based on type
+        // Get system icon for file type to match Finder
         let img: NSImage
         
-        if type.conforms(to: .image) {
-            img = NSImage(systemSymbolName: "photo", accessibilityDescription: "Image")!
-        } else if type == .rtf || type == .rtfd {
-            img = NSImage(systemSymbolName: "doc.richtext", accessibilityDescription: "Rich Text")!
-        } else if type == .plainText || type == .utf8PlainText || type == .utf16PlainText {
-            img = NSImage(systemSymbolName: "doc.plaintext", accessibilityDescription: "Plain Text")!
-        } else if type.identifier == "net.daringfireball.markdown" || type.identifier == "public.markdown" {
-            img = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "Markdown")!
-        } else if type.conforms(to: .text) {
-            img = NSImage(systemSymbolName: "doc.text", accessibilityDescription: "Text")!
+        // Try to get icon using preferred filename extension first
+        if let ext = type.preferredFilenameExtension {
+            img = NSWorkspace.shared.icon(forFileType: ext)
         } else {
-            // Fallback to workspace icon for the file extension
-            if let ext = type.preferredFilenameExtension {
-                img = NSWorkspace.shared.icon(forFileType: ext)
-            } else {
-                img = NSImage(systemSymbolName: "doc", accessibilityDescription: "Document")!
-            }
+            // Fall back to using the UTType identifier directly
+            img = NSWorkspace.shared.icon(forFileType: type.identifier)
         }
         
         // Resize to standard badge size
