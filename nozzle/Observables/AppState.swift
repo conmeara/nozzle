@@ -315,11 +315,11 @@ class AppState {
     var mediaContentItems: [ContentItem] = []
     
     for item in selectedContentItems {
-      if item.imageData != nil || item.fileURL != nil {
-        // Treat items with images or files as media
+      if item.imageData != nil || (item.fileURL != nil && !item.isText) {
+        // Treat items with images or non-text files as media
         mediaContentItems.append(item)
       } else {
-        // Treat everything else as text
+        // Treat everything else as text (including text files)
         textContentItems.append(item)
       }
     }
