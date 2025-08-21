@@ -63,8 +63,8 @@ final class FSEventsStream {
                 
                 let stream = Unmanaged<FSEventsStream>.fromOpaque(info).takeUnretainedValue()
                 
-                // Safely convert C arrays to Swift
-                let pathsPointer = unsafeBitCast(eventPaths, to: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>.self)
+                // Convert the paths CFArray to Swift array
+                let pathsArray = unsafeBitCast(eventPaths, to: NSArray.self) as! [String]
                 let flagsBuffer = UnsafeBufferPointer(start: eventFlags, count: Int(numEvents))
                 let idsBuffer = UnsafeBufferPointer(start: eventIds, count: Int(numEvents))
                 
@@ -73,13 +73,13 @@ final class FSEventsStream {
                 
                 for i in 0..<Int(numEvents) {
                     // Bounds checking
-                    guard i < flagsBuffer.count,
-                          i < idsBuffer.count,
-                          let pathPtr = pathsPointer[i] else { 
+                    guard i < pathsArray.count,
+                          i < flagsBuffer.count,
+                          i < idsBuffer.count else { 
                         continue 
                     }
                     
-                    let path = String(cString: pathPtr)
+                    let path = pathsArray[i]
                     
                     events.append(Event(
                         path: path,

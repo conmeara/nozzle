@@ -6,11 +6,11 @@ import CoreServices
 
 @Observable @MainActor
 final class FileSystemSource: ContentSource {
-    let id: String
+    nonisolated(unsafe) let id: String  // Need nonisolated access for event persistence
     let name: String
     let icon: NSImage
     let type: ContentSourceType = .folder
-    private let folderURL: URL
+    nonisolated(unsafe) private let folderURL: URL  // Need nonisolated access for FSEvents
     private var cachedItems: [ContentItem] = []
     
     var isMonitoring: Bool = false
