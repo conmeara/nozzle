@@ -96,6 +96,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       contentManager.registerSource(source)
       Task {
         await source.refresh()
+        source.startMonitoring()
       }
     }
 
@@ -116,6 +117,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   func applicationWillTerminate(_ notification: Notification) {
     if Defaults[.clearOnQuit] {
       AppState.shared.history.clear()
+    }
+    
+    // Stop monitoring all folder sources
+    let contentManager = ContentManager.shared
+    for source in contentManager.getAllSources() {
+      if let fileSource = source as? FileSystemSource {
+        fileSource.stopMonitoring()
+      }
     }
   }
 

@@ -386,9 +386,10 @@ struct ContentView: View {
       let source = FileSystemSource(folderURL: url)
       contentManager.registerSource(source)
       
-      // Refresh the source content
+      // Refresh the source content and start monitoring
       Task {
         await source.refresh()
+        source.startMonitoring()
       }
       
       // Switch to the new tab

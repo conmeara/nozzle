@@ -15,6 +15,9 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
     public let htmlData: Data?
     public let plainText: String?
     
+    // File identity for stable tracking across renames (FSEvents)
+    public let fileIdentity: Data?
+    
     // UI state (kept here so Universal views don't mutate external state)
     public var isSelected: Bool = false
     public var isVisible: Bool = true
@@ -30,6 +33,7 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
         rtfData: Data? = nil,
         htmlData: Data? = nil,
         plainText: String? = nil,
+        fileIdentity: Data? = nil,
         isSelected: Bool = false,
         isVisible: Bool = true
     ) {
@@ -43,6 +47,7 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
         self.rtfData = rtfData
         self.htmlData = htmlData
         self.plainText = plainText
+        self.fileIdentity = fileIdentity
         self.isSelected = isSelected
         self.isVisible = isVisible
     }
