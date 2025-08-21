@@ -1,5 +1,6 @@
 import AppKit
 import Observation
+import UniformTypeIdentifiers
 
 @Observable @MainActor
 final class UniversalItemDecorator: Identifiable, Hashable {
@@ -14,6 +15,13 @@ final class UniversalItemDecorator: Identifiable, Hashable {
     }
     var isVisible: Bool {
         didSet { base.isVisible = isVisible }
+    }
+    
+    // Type badge for file items
+    var typeBadgeImage: ApplicationImage? {
+        guard let type = base.fileUTType else { return nil }
+        let nsImage = FileTypeBadgeCache.shared.icon(for: type)
+        return ApplicationImage(bundleIdentifier: nil, image: nsImage)
     }
     
     init(_ item: ContentItem) {

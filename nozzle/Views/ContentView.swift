@@ -207,102 +207,11 @@ struct ContentView: View {
             if appState.showPreviewPane {
               Divider()
               
-              // Preview pane content
-              VStack(alignment: .leading, spacing: 0) {
-                if let item = appState.previewItem {
-                  ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                      // Image preview
-                      if let image = item.thumbnailImage {
-                        HStack {
-                          Spacer()
-                          Image(nsImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(maxHeight: 200)
-                            .cornerRadius(6)
-                          Spacer()
-                        }
-                        .padding(.top, 8)
-                      }
-                      
-                      // Text content
-                      if !item.text.isEmpty && item.thumbnailImage == nil {
-                        Text(item.text)
-                          .font(.system(size: 13))
-                          .textSelection(.enabled)
-                          .lineLimit(nil)
-                          .multilineTextAlignment(.leading)
-                          .frame(maxWidth: .infinity, alignment: .leading)
-                          .padding(.horizontal, 12)
-                      }
-                      
-                      // Metadata section
-                      VStack(alignment: .leading, spacing: 6) {
-                        Divider()
-                          .padding(.horizontal, 12)
-                        
-                        // Application info
-                        if let app = item.application {
-                          HStack(spacing: 4) {
-                            Image(nsImage: item.applicationImage.nsImage)
-                              .resizable()
-                              .frame(width: 16, height: 16)
-                            Text(app)
-                              .font(.system(size: 11))
-                              .foregroundColor(.secondary)
-                          }
-                          .padding(.horizontal, 12)
-                        }
-                        
-                        // Copy times
-                        HStack {
-                          Text("First copied:")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                          Text(item.item.firstCopiedAt.formatted())
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal, 12)
-                        
-                        HStack {
-                          Text("Last copied:")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                          Text(item.item.lastCopiedAt.formatted())
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal, 12)
-                        
-                        // Copy count
-                        HStack {
-                          Text("Copied:")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                          Text("\(item.item.numberOfCopies) time(s)")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal, 12)
-                      }
-                      .padding(.vertical, 8)
-                    }
-                    .padding(.top, 8)
-                  }
-                } else {
-                  // No selection placeholder
-                  VStack {
-                    Spacer()
-                    Text("Select an item to preview")
-                      .font(.system(size: 13))
-                      .foregroundColor(.secondary)
-                    Spacer()
-                  }
-                  .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-              }
+              // Use the new multi-source preview pane
+              PreviewPaneView(
+                clipboardItem: appState.previewItem,
+                fileItem: contentManager.focusedContentItem
+              )
               .frame(width: 350)
             }
           }

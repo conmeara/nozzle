@@ -117,13 +117,22 @@ final class FileSystemSource: ContentSource {
             let fm = FileManager.default
             guard let urls = try? fm.contentsOfDirectory(
                 at: folderURL,
-                includingPropertiesForKeys: [.contentModificationDateKey, .isDirectoryKey],
+                includingPropertiesForKeys: [.contentModificationDateKey, .isDirectoryKey, .fileSizeKey, .contentTypeKey],
                 options: [.skipsHiddenFiles]
             ) else { return [] }
             
             let items = urls.compactMap { url -> ContentItem? in
                 let snap = FileIdentity.snapshot(for: url)
                 guard !snap.isDirectory else { return nil }
+                
+                // Resolve UTType and filter to text & images only
+                let type = Self.resolvedType(for: url)
+                guard let type, type.conforms(to: .text) || type.conforms(to: .image) else {
+                    return nil
+                }
+                
+                // Get file size
+                let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize.flatMap(Int64.init)
                 
                 let stableIdString = "\(url.absoluteString):\(snap.modDate.timeIntervalSince1970)"
                 let hash = SHA256.hash(data: Data(stableIdString.utf8))
@@ -140,7 +149,9 @@ final class FileSystemSource: ContentSource {
                     sourceId: "folder:\(folderURL.path)",
                     fileURL: url,
                     plainText: url.path,
-                    fileIdentity: snap.identity
+                    fileIdentity: snap.identity,
+                    uniformTypeIdentifier: type.identifier,
+                    fileSize: fileSize
                 )
             }
             
@@ -157,6 +168,23 @@ final class FileSystemSource: ContentSource {
             $0.title.localizedCaseInsensitiveContains(query) ||
             ($0.plainText ?? "").localizedCaseInsensitiveContains(query)
         }
+    }
+}
+
+// MARK: - UTType Resolution
+
+extension FileSystemSource {
+    nonisolated static func resolvedType(for url: URL) -> UTType? {
+        // Try to get type from resource values first
+        if let vals = try? url.resourceValues(forKeys: [.contentTypeKey]),
+           let t = vals.contentType {
+            return t
+        }
+        // Fall back to extension-based detection
+        if let t = UTType(filenameExtension: url.pathExtension) {
+            return t
+        }
+        return nil
     }
 }
 
@@ -242,6 +270,20 @@ extension FileSystemSource {
                 let snap = FileIdentity.snapshot(for: url)
                 guard !snap.isDirectory else { continue }
                 
+                // Resolve UTType and filter
+                let type = Self.resolvedType(for: url)
+                guard let type, type.conforms(to: .text) || type.conforms(to: .image) else {
+                    // If the file doesn't match our filter but exists in cache, remove it
+                    if let idx = indexByPath[path] {
+                        cachedItems.remove(at: idx)
+                        mutated = true
+                    }
+                    continue
+                }
+                
+                // Get file size
+                let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize.flatMap(Int64.init)
+                
                 // Try to find by identity first (rename/move)
                 if let identity = snap.identity, let idx = indexByIdentity[identity] {
                     // Update existing item in place (title, url, timestamp)
@@ -255,6 +297,8 @@ extension FileSystemSource {
                         fileURL: url,
                         plainText: url.path,
                         fileIdentity: identity,
+                        uniformTypeIdentifier: type.identifier,
+                        fileSize: fileSize,
                         isSelected: item.isSelected,
                         isVisible: item.isVisible
                     )
@@ -273,6 +317,8 @@ extension FileSystemSource {
                         fileURL: url,
                         plainText: url.path,
                         fileIdentity: snap.identity,
+                        uniformTypeIdentifier: type.identifier,
+                        fileSize: fileSize,
                         isSelected: item.isSelected,
                         isVisible: item.isVisible
                     )
@@ -296,7 +342,9 @@ extension FileSystemSource {
                         sourceId: self.id,
                         fileURL: url,
                         plainText: url.path,
-                        fileIdentity: snap.identity
+                        fileIdentity: snap.identity,
+                        uniformTypeIdentifier: type.identifier,
+                        fileSize: fileSize
                     )
                     cachedItems.insert(newItem, at: 0) // temp prepend
                     mutated = true

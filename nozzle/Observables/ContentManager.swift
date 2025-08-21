@@ -12,8 +12,15 @@ final class ContentManager {
     // Phase 2: Centralized selection
     private(set) var selectedItemIds: Set<UUID> = []
     
+    // Preview focus tracking
+    private(set) var focusedItemId: UUID?
+    
     var selectedItems: [ContentItem] {
         allItems.filter { selectedItemIds.contains($0.id) }
+    }
+    
+    var focusedContentItem: ContentItem? {
+        allItems.first { $0.id == focusedItemId }
     }
     
     var allItems: [ContentItem] {
@@ -45,6 +52,10 @@ final class ContentManager {
     
     func isSelected(_ id: UUID) -> Bool {
         selectedItemIds.contains(id)
+    }
+    
+    func focus(_ id: UUID?) {
+        focusedItemId = id
     }
     
     private func syncClipboardSelection(_ id: UUID) {

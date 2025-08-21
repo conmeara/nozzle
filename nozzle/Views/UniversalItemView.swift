@@ -8,7 +8,7 @@ struct UniversalItemView: View {
     var body: some View {
         ListItemView(
             id: item.id,
-            appIcon: nil,                        // optional: resolve by UTType/app owner later
+            appIcon: item.typeBadgeImage,        // Show file type badge
             image: nil,                          // optional: lightweight thumbs in Phase 2
             accessoryImage: nil,
             attributedTitle: nil,
@@ -30,6 +30,8 @@ struct UniversalItemView: View {
                 // Optionally close the popup after copy
                 appState.popup.close()
             } else {
+                // Update focus for preview
+                contentManager.focus(item.id)
                 // Toggle selection using centralized system
                 contentManager.toggleSelection(item.id)
                 item.isSelected = contentManager.isSelected(item.id)
@@ -39,6 +41,8 @@ struct UniversalItemView: View {
         .onHover { hovering in
             if hovering {
                 appState.selectWithoutScrolling(item.id)
+                // Update focus for preview on hover
+                contentManager.focus(item.id)
             }
         }
     }

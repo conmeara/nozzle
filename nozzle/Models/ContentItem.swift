@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import UniformTypeIdentifiers
 
 public struct ContentItem: Identifiable, Hashable, Sendable {
     public let id: UUID
@@ -18,6 +19,10 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
     // File identity for stable tracking across renames (FSEvents)
     public let fileIdentity: Data?
     
+    // File metadata
+    public let uniformTypeIdentifier: String?
+    public let fileSize: Int64?
+    
     // UI state (kept here so Universal views don't mutate external state)
     public var isSelected: Bool = false
     public var isVisible: Bool = true
@@ -34,6 +39,8 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
         htmlData: Data? = nil,
         plainText: String? = nil,
         fileIdentity: Data? = nil,
+        uniformTypeIdentifier: String? = nil,
+        fileSize: Int64? = nil,
         isSelected: Bool = false,
         isVisible: Bool = true
     ) {
@@ -48,7 +55,38 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
         self.htmlData = htmlData
         self.plainText = plainText
         self.fileIdentity = fileIdentity
+        self.uniformTypeIdentifier = uniformTypeIdentifier
+        self.fileSize = fileSize
         self.isSelected = isSelected
         self.isVisible = isVisible
+    }
+}
+
+// MARK: - UTType Helpers
+extension ContentItem {
+    var fileUTType: UTType? {
+        uniformTypeIdentifier.flatMap(UTType.init)
+    }
+    
+    var isImage: Bool {
+        fileUTType?.conforms(to: .image) == true
+    }
+    
+    var isText: Bool {
+        fileUTType?.conforms(to: .text) == true
+    }
+    
+    var isRTF: Bool {
+        fileUTType == .rtf || fileUTType == .rtfd
+    }
+    
+    var isMarkdown: Bool {
+        fileUTType?.identifier == "net.daringfireball.markdown" ||
+        fileUTType?.identifier == "public.markdown" ||
+        fileUTType?.preferredFilenameExtension == "md"
+    }
+    
+    var isPlainText: Bool {
+        fileUTType == .plainText || fileUTType == .utf8PlainText || fileUTType == .utf16PlainText
     }
 }

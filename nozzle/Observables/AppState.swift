@@ -423,14 +423,31 @@ class AppState {
     
     // Add each item preserving its formatting
     for item in items {
-      if let rtfData = item.rtfData,
-         let attributedString = NSAttributedString(rtf: rtfData, documentAttributes: nil) {
-        combined.append(attributedString)
-      } else if let htmlData = item.htmlData,
-                let attributedString = NSAttributedString(html: htmlData, documentAttributes: nil) {
-        combined.append(attributedString)
-      } else if let text = item.plainText {
-        combined.append(NSAttributedString(string: text))
+      // Check if this is a file-backed text item that needs lazy loading
+      if item.sourceType == .folder && item.isText && item.fileURL != nil {
+        // Lazy load text file content
+        let (rtfData, htmlData, plainText) = TextFileFormatter.loadAll(from: item.fileURL!, type: item.fileUTType)
+        
+        if let rtfData = rtfData,
+           let attributedString = NSAttributedString(rtf: rtfData, documentAttributes: nil) {
+          combined.append(attributedString)
+        } else if let htmlData = htmlData,
+                  let attributedString = NSAttributedString(html: htmlData, documentAttributes: nil) {
+          combined.append(attributedString)
+        } else if !plainText.isEmpty {
+          combined.append(NSAttributedString(string: plainText))
+        }
+      } else {
+        // Use existing content for clipboard items
+        if let rtfData = item.rtfData,
+           let attributedString = NSAttributedString(rtf: rtfData, documentAttributes: nil) {
+          combined.append(attributedString)
+        } else if let htmlData = item.htmlData,
+                  let attributedString = NSAttributedString(html: htmlData, documentAttributes: nil) {
+          combined.append(attributedString)
+        } else if let text = item.plainText {
+          combined.append(NSAttributedString(string: text))
+        }
       }
       combined.append(NSAttributedString(string: "\n"))
     }
