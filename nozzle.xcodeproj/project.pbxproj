@@ -141,6 +141,10 @@
 		F57274792E57C02C003A9299 /* PreviewPaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274762E57C02C003A9299 /* PreviewPaneView.swift */; };
 		F572747A2E57C02C003A9299 /* ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274752E57C02C003A9299 /* ImagePreviewView.swift */; };
 		F572747B2E57C02C003A9299 /* TextFileEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274772E57C02C003A9299 /* TextFileEditorView.swift */; };
+		F572747F2E58F854003A9299 /* WrappingAttributedTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572747E2E58F854003A9299 /* WrappingAttributedTextView.swift */; };
+		F57274802E58F854003A9299 /* TransparentTextEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572747D2E58F854003A9299 /* TransparentTextEditor.swift */; };
+		F57274812E58F854003A9299 /* PreviewSurfaceStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572747C2E58F854003A9299 /* PreviewSurfaceStyle.swift */; };
+		F57274832E58F866003A9299 /* AutoSaveController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274822E58F866003A9299 /* AutoSaveController.swift */; };
 		F5C88D252DE55BA500EF8FA3 /* PromptHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */; };
 /* End PBXBuildFile section */
 
@@ -525,6 +529,10 @@
 		F57274752E57C02C003A9299 /* ImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreviewView.swift; sourceTree = "<group>"; };
 		F57274762E57C02C003A9299 /* PreviewPaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewPaneView.swift; sourceTree = "<group>"; };
 		F57274772E57C02C003A9299 /* TextFileEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextFileEditorView.swift; sourceTree = "<group>"; };
+		F572747C2E58F854003A9299 /* PreviewSurfaceStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewSurfaceStyle.swift; sourceTree = "<group>"; };
+		F572747D2E58F854003A9299 /* TransparentTextEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransparentTextEditor.swift; sourceTree = "<group>"; };
+		F572747E2E58F854003A9299 /* WrappingAttributedTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrappingAttributedTextView.swift; sourceTree = "<group>"; };
+		F57274822E58F866003A9299 /* AutoSaveController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoSaveController.swift; sourceTree = "<group>"; };
 		F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptHeaderView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -822,6 +830,7 @@
 		F57274722E57C00B003A9299 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				F57274822E58F866003A9299 /* AutoSaveController.swift */,
 				F57274702E57C00B003A9299 /* FileTypeBadgeCache.swift */,
 				F57274712E57C00B003A9299 /* TextFileFormatter.swift */,
 			);
@@ -831,6 +840,9 @@
 		F57274782E57C02C003A9299 /* Preview */ = {
 			isa = PBXGroup;
 			children = (
+				F572747C2E58F854003A9299 /* PreviewSurfaceStyle.swift */,
+				F572747D2E58F854003A9299 /* TransparentTextEditor.swift */,
+				F572747E2E58F854003A9299 /* WrappingAttributedTextView.swift */,
 				F57274752E57C02C003A9299 /* ImagePreviewView.swift */,
 				F57274762E57C02C003A9299 /* PreviewPaneView.swift */,
 				F57274772E57C02C003A9299 /* TextFileEditorView.swift */,
@@ -1095,6 +1107,7 @@
 				DAC929D7297A0E8B00814F19 /* NSPasteboard.PasteboardType+Types.swift in Sources */,
 				DA9C3C472C20B91D0056795D /* String+Identifiable.swift in Sources */,
 				DAA365E72C4C57E600A394F8 /* KeyEquivalent+Keys.swift in Sources */,
+				F57274832E58F866003A9299 /* AutoSaveController.swift in Sources */,
 				F57274792E57C02C003A9299 /* PreviewPaneView.swift in Sources */,
 				F572747A2E57C02C003A9299 /* ImagePreviewView.swift in Sources */,
 				F572747B2E57C02C003A9299 /* TextFileEditorView.swift in Sources */,
@@ -1147,6 +1160,9 @@
 				2F1A79C02C6DFB7800C98EBD /* SearchVisibility.swift in Sources */,
 				DAA072DD2C41C61F006DDFD2 /* FooterItemView.swift in Sources */,
 				DA3EAE0C2AE30F7500F39108 /* NSApplication+Windows.swift in Sources */,
+				F572747F2E58F854003A9299 /* WrappingAttributedTextView.swift in Sources */,
+				F57274802E58F854003A9299 /* TransparentTextEditor.swift in Sources */,
+				F57274812E58F854003A9299 /* PreviewSurfaceStyle.swift in Sources */,
 				DAFE2DDA268A521B00990986 /* String+Shortened.swift in Sources */,
 				DAC14124232367B200FCFA30 /* Search.swift in Sources */,
 				DA0FFA2A2C8D100C00A66C97 /* ModifierFlags+Description.swift in Sources */,

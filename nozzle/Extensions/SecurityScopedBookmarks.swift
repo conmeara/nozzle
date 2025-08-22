@@ -6,7 +6,7 @@ enum Bookmarks {
     
     static func store(url: URL) throws {
         let bookmarkData = try url.bookmarkData(
-            options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess],
+            options: [.withSecurityScope],  // Remove read-only restriction for editing
             includingResourceValuesForKeys: nil,
             relativeTo: nil
         )
@@ -35,6 +35,12 @@ enum Bookmarks {
             }
             return nil
         }
+    }
+    
+    // Check if a URL has write access through security-scoped bookmarks
+    static func hasWriteAccess(for url: URL) -> Bool {
+        let parentURL = url.deletingLastPathComponent()
+        return parentURL.startAccessingSecurityScopedResource()
     }
     
     static func remove(url: URL) {

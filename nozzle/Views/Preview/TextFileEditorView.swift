@@ -1,14 +1,18 @@
 import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
+import Combine
 
 struct TextFileEditorView: View {
     let item: ContentItem
+    @Environment(ContentManager.self) private var contentManager
     @State private var content: String = ""
     @State private var attributedContent: NSAttributedString?
-    @State private var isDirty = false
+    @State private var savedAt: Date?
+    @State private var autosave: AutoSaveController?
     @State private var loadError = false
     @State private var saveError: String?
+    @State private var cancellables = Set<AnyCancellable>()
     
     private var textKind: TextKind {
         if item.isRTF {
@@ -23,18 +27,24 @@ struct TextFileEditorView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            HStack {
-                Image(systemName: iconForTextKind(textKind))
-                    .foregroundColor(.secondary)
+            HStack(spacing: 8) {
+                Image(nsImage: item.fileUTType.map { FileTypeBadgeCache.shared.icon(for: $0) } ?? NSImage(systemSymbolName: "doc", accessibilityDescription: nil)!)
+                    .resizable()
+                    .frame(width: 16, height: 16)
                 Text(item.title)
-                    .font(.headline)
+                    .font(.callout)
                     .lineLimit(1)
-                if isDirty {
-                    Circle()
-                        .fill(Color.orange)
-                        .frame(width: 8, height: 8)
-                }
+                    .truncationMode(.middle)
+                
                 Spacer()
+                
+                if let savedAt {
+                    Text("Saved • \(RelativeDateTimeFormatter().localizedString(for: savedAt, relativeTo: .now))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .transition(.opacity)
+                }
+                
                 Text(textKind.displayName)
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -45,7 +55,7 @@ struct TextFileEditorView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(Color(NSColor.controlBackgroundColor))
+            .previewSurfaceStyle()
             
             Divider()
             
@@ -63,27 +73,28 @@ struct TextFileEditorView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(NSColor.textBackgroundColor))
             } else {
-                TextEditorBridge(
+                TransparentTextEditor(
                     text: $content,
-                    attributedText: $attributedContent,
-                    isDirty: $isDirty,
-                    textKind: textKind,
-                    fileURL: item.fileURL
+                    onChange: { _ in
+                        autosave?.schedule()
+                    },
+                    onCommit: {
+                        Task { await autosave?.saveNow() }
+                    },
+                    isRichText: textKind == .rtf
                 )
-                .background(Color(NSColor.textBackgroundColor))
+                .previewSurfaceStyle()
                 .contextMenu {
-                    if isDirty {
-                        Button("Save") {
-                            save()
-                        }
-                        .keyboardShortcut("s", modifiers: .command)
-                        
-                        Button("Revert") {
-                            loadContent()
-                        }
-                        
-                        Divider()
+                    Button("Save Now") {
+                        Task { await autosave?.saveNow() }
                     }
+                    .keyboardShortcut("s", modifiers: .command)
+                    
+                    Button("Revert") {
+                        loadContent()
+                    }
+                    
+                    Divider()
                     
                     Button("Copy as Plain Text") {
                         let pasteboard = NSPasteboard.general
@@ -136,9 +147,36 @@ struct TextFileEditorView: View {
         }
         .onAppear {
             loadContent()
+            setupAutosave()
+            setupFocusMonitoring()
         }
         .onChange(of: item.id) { _, _ in
+            Task { await autosave?.saveNow() }
             loadContent()
+            setupAutosave()
+        }
+        .onChange(of: contentManager.focusedItemId) { _, newFocus in
+            if newFocus != item.id {
+                Task { await autosave?.saveNow() }
+                // Resume sorting when focus leaves
+                if let source = contentManager.sources[item.sourceId] as? FileSystemSource {
+                    source.suspendResort(for: nil, enabled: false)
+                }
+            } else {
+                // Suspend sorting while editing
+                if let source = contentManager.sources[item.sourceId] as? FileSystemSource {
+                    source.suspendResort(for: item.id, enabled: true)
+                }
+            }
+        }
+        .onDisappear {
+            Task { await autosave?.saveNow() }
+            autosave?.cancel()
+            cancellables.removeAll()
+            // Resume sorting on disappear
+            if let source = contentManager.sources[item.sourceId] as? FileSystemSource {
+                source.suspendResort(for: nil, enabled: false)
+            }
         }
     }
     
@@ -156,7 +194,6 @@ struct TextFileEditorView: View {
                         await MainActor.run {
                             self.attributedContent = attributed
                             self.content = attributed.string
-                            self.isDirty = false
                             self.loadError = false
                         }
                     }
@@ -164,7 +201,6 @@ struct TextFileEditorView: View {
                     let text = try String(contentsOf: url, encoding: .utf8)
                     await MainActor.run {
                         self.content = text
-                        self.isDirty = false
                         self.loadError = false
                     }
                 }
@@ -176,24 +212,26 @@ struct TextFileEditorView: View {
         }
     }
     
-    private func save() {
+    private func setupAutosave() {
         guard let url = item.fileURL else { return }
         
-        do {
-            if textKind == .rtf, let attributed = attributedContent {
-                let data = try attributed.data(
-                    from: NSRange(location: 0, length: attributed.length),
-                    documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
-                )
-                try data.write(to: url)
-            } else {
-                try content.write(to: url, atomically: true, encoding: .utf8)
-            }
-            isDirty = false
-            saveError = nil
-        } catch {
-            saveError = "Failed to save: \(error.localizedDescription)"
+        autosave = AutoSaveController(
+            url: url,
+            utType: item.fileUTType,
+            content: $content
+        )
+        autosave?.onSaved = { 
+            savedAt = Date()
         }
+    }
+    
+    private func setupFocusMonitoring() {
+        // Listen for app deactivation to save immediately
+        NotificationCenter.default.publisher(for: NSApplication.willResignActiveNotification)
+            .sink { _ in
+                Task { await autosave?.saveNow() }
+            }
+            .store(in: &cancellables)
     }
     
     private func iconForTextKind(_ kind: TextKind) -> String {
@@ -219,84 +257,17 @@ enum TextKind {
     }
 }
 
-// MARK: - NSTextView Bridge
+// MARK: - Utilities
 
-struct TextEditorBridge: NSViewRepresentable {
-    @Binding var text: String
-    @Binding var attributedText: NSAttributedString?
-    @Binding var isDirty: Bool
-    let textKind: TextKind
-    let fileURL: URL?
-    
-    func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSTextView.scrollableTextView()
-        let textView = scrollView.documentView as! NSTextView
-        
-        textView.delegate = context.coordinator
-        textView.isAutomaticQuoteSubstitutionEnabled = false
-        textView.isAutomaticTextReplacementEnabled = false
-        textView.allowsUndo = true
-        
-        // Configure based on text kind
-        switch textKind {
-        case .rtf:
-            textView.isRichText = true
-            textView.importsGraphics = false
-            textView.usesInspectorBar = false
-        case .plain, .markdown:
-            textView.isRichText = false
-            textView.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
-        }
-        
-        // Set initial content
-        if textKind == .rtf, let attributed = attributedText {
-            textView.textStorage?.setAttributedString(attributed)
-        } else {
-            textView.string = text
-        }
-        
-        return scrollView
-    }
-    
-    func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        let textView = scrollView.documentView as! NSTextView
-        
-        // Only update if not currently editing
-        if !context.coordinator.isUpdating {
-            if textKind == .rtf, let attributed = attributedText {
-                if textView.attributedString() != attributed {
-                    textView.textStorage?.setAttributedString(attributed)
-                }
-            } else {
-                if textView.string != text {
-                    textView.string = text
-                }
-            }
-        }
-    }
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, NSTextViewDelegate {
-        var parent: TextEditorBridge
-        var isUpdating = false
-        
-        init(_ parent: TextEditorBridge) {
-            self.parent = parent
-        }
-        
-        func textDidChange(_ notification: Notification) {
-            guard let textView = notification.object as? NSTextView else { return }
-            
-            isUpdating = true
-            parent.text = textView.string
-            if parent.textKind == .rtf {
-                parent.attributedText = textView.attributedString()
-            }
-            parent.isDirty = true
-            isUpdating = false
-        }
+extension TextFileEditorView {
+    var relativeDateFormatter: RelativeDateTimeFormatter {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter
     }
 }
+
+
+// MARK: - NSTextView Bridge (removed, using TransparentTextEditor instead)
+
+// The TextEditorBridge struct has been removed as we now use TransparentTextEditor

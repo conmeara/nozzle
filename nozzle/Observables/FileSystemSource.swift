@@ -42,6 +42,9 @@ final class FileSystemSource: ContentSource {
     private var indexByIdentity: [Data: Int] = [:]
     private var indexByPath: [String: Int] = [:]
     
+    // Resort suspension for stable editing
+    private var suspendResortItemId: UUID?
+    
     init(folderURL: URL) {
         self.folderURL = folderURL
         self.id = "folder:\(folderURL.path)"
@@ -362,9 +365,19 @@ extension FileSystemSource {
             // Rebuild index and resort by timestamp (newest first)
             rebuildIndexes()
             if needsResort {
-                cachedItems.sort { $0.timestamp > $1.timestamp }
+                // Check if we should suspend resort for editing stability
+                if let suspended = suspendResortItemId,
+                   cachedItems.contains(where: { $0.id == suspended }) {
+                    // Defer resort until editing ends
+                } else {
+                    cachedItems.sort { $0.timestamp > $1.timestamp }
+                }
             }
         }
+    }
+    
+    func suspendResort(for id: UUID?, enabled: Bool) {
+        suspendResortItemId = enabled ? id : nil
     }
     
     private func rebuildIndexes() {

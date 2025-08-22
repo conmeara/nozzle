@@ -24,7 +24,7 @@ struct ImagePreviewView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(Color(NSColor.controlBackgroundColor))
+            .previewSurfaceStyle()
             
             Divider()
             
@@ -37,7 +37,7 @@ struct ImagePreviewView: View {
                         .frame(maxHeight: 600)
                         .padding()
                 }
-                .background(Color(NSColor.textBackgroundColor))
+                .previewSurfaceStyle()
                 .contextMenu {
                     Button("Copy Image") {
                         let pasteboard = NSPasteboard.general
@@ -67,12 +67,12 @@ struct ImagePreviewView: View {
                     Spacer()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(NSColor.textBackgroundColor))
+                .previewSurfaceStyle()
             } else {
                 ProgressView()
                     .progressViewStyle(.circular)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(NSColor.textBackgroundColor))
+                    .previewSurfaceStyle()
             }
         }
         .onAppear {
