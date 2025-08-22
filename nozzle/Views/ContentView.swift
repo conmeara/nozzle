@@ -117,10 +117,24 @@ struct ContentView: View {
               
               // Dynamic tabs from sources
               ForEach(contentManager.getAllSources(), id: \.id) { src in
-                TabButton(title: src.name, isSelected: selectedTab == src.id) {
-                  selectedTab = src.id
-                  contentManager.activeSourceId = src.id
-                }
+                TabButton(
+                  title: src.name,
+                  isSelected: selectedTab == src.id,
+                  showCloseButton: src.type == .folder,
+                  action: {
+                    selectedTab = src.id
+                    contentManager.activeSourceId = src.id
+                  },
+                  onClose: src.type == .folder ? {
+                    // Remove the folder source
+                    contentManager.removeSource(src.id)
+                    
+                    // Update selected tab if we just removed the active one
+                    if selectedTab == src.id {
+                      selectedTab = "clipboard"
+                    }
+                  } : nil
+                )
               }
               
               // "+" to add a folder source
@@ -312,22 +326,57 @@ struct ContentView: View {
 struct TabButton: View {
   let title: String
   let isSelected: Bool
+  let showCloseButton: Bool
   let action: () -> Void
+  let onClose: (() -> Void)?
+  
+  @State private var isHovering = false
+  
+  init(title: String, isSelected: Bool, showCloseButton: Bool = false, action: @escaping () -> Void, onClose: (() -> Void)? = nil) {
+    self.title = title
+    self.isSelected = isSelected
+    self.showCloseButton = showCloseButton
+    self.action = action
+    self.onClose = onClose
+  }
   
   var body: some View {
-    Button(action: action) {
-      Text(title)
-        .font(.system(size: 13, weight: .regular))
-        .foregroundColor(isSelected ? .primary : .secondary)
-        .opacity(isSelected ? 1.0 : 0.8)
+    HStack(spacing: 4) {
+      Button(action: action) {
+        HStack(spacing: 4) {
+          Text(title)
+            .font(.system(size: 13, weight: .regular))
+            .foregroundColor(isSelected ? .primary : .secondary)
+            .opacity(isSelected ? 1.0 : 0.8)
+          
+          // Close button that appears on hover
+          if showCloseButton && isHovering {
+            Button(action: {
+              onClose?()
+            }) {
+              Image(systemName: "xmark")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.secondary)
+                .opacity(0.7)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .transition(.opacity.combined(with: .scale))
+          }
+        }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(
           RoundedRectangle(cornerRadius: 4)
             .fill(isSelected ? Color(NSColor.controlAccentColor).opacity(0.2) : Color(NSColor.quaternaryLabelColor))
         )
+      }
+      .buttonStyle(PlainButtonStyle())
     }
-    .buttonStyle(PlainButtonStyle())
+    .onHover { hovering in
+      withAnimation(.easeInOut(duration: 0.15)) {
+        isHovering = hovering
+      }
+    }
   }
 }
 

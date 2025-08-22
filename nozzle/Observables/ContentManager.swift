@@ -76,6 +76,44 @@ final class ContentManager {
         }
     }
     
+    // Removal
+    func removeSource(_ sourceId: String) {
+        guard let source = sources[sourceId] else { return }
+        
+        // Stop monitoring before removal
+        source.stopMonitoring()
+        
+        // Remove from storage
+        sources.removeValue(forKey: sourceId)
+        orderedSourceIds.removeAll { $0 == sourceId }
+        
+        // Clear any selections from this source
+        let sourceItems = source.items
+        for item in sourceItems {
+            selectedItemIds.remove(item.id)
+        }
+        
+        // If this was the active source, switch to clipboard
+        if activeSourceId == sourceId {
+            activeSourceId = "clipboard"
+        }
+        
+        // Clean up focused item if it was from this source
+        if let focusedId = focusedItemId,
+           sourceItems.contains(where: { $0.id == focusedId }) {
+            focusedItemId = nil
+        }
+        
+        // For folder sources, also remove the bookmark
+        if source.type == .folder,
+           let fileSystemSource = source as? FileSystemSource {
+            // Extract folder URL from source ID
+            let folderPath = String(sourceId.dropFirst("folder:".count))
+            let folderURL = URL(fileURLWithPath: folderPath)
+            Bookmarks.remove(url: folderURL)
+        }
+    }
+    
     // Lookup
     func getAllSources() -> [any ContentSource] {
         orderedSourceIds.compactMap { sources[$0] }

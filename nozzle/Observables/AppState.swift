@@ -16,7 +16,7 @@ class AppState {
   var isPromptMode: Bool = true  // Default to prompt mode
   var promptText: String = ""
   var isSearchMode: Bool = false  // Track search mode separately
-  private var preservedSelections: Set<HistoryItem> = []
+  private var preservedSelections: Set<UUID> = []
   
   // Preview pane state management
   var showPreviewPane: Bool = Defaults[.showPreviewPane] {
@@ -277,13 +277,13 @@ class AppState {
   
   func preserveCurrentSelections() {
     // Store currently selected items
-    preservedSelections = Set(history.selectedItems.map { $0.item })
+    preservedSelections = Set(history.selectedItems.map { $0.id })
   }
   
   func restorePreservedSelections() {
     // Restore selections from preserved set
     for decorator in history.items {
-      if preservedSelections.contains(decorator.item) {
+      if preservedSelections.contains(decorator.id) {
         decorator.isSelected = true
       }
     }
