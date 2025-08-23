@@ -330,8 +330,6 @@ struct TabButton: View {
   let action: () -> Void
   let onClose: (() -> Void)?
   
-  @State private var isHovering = false
-  
   init(title: String, isSelected: Bool, showCloseButton: Bool = false, action: @escaping () -> Void, onClose: (() -> Void)? = nil) {
     self.title = title
     self.isSelected = isSelected
@@ -348,33 +346,28 @@ struct TabButton: View {
             .font(.system(size: 13, weight: .regular))
             .foregroundColor(isSelected ? .primary : .secondary)
             .opacity(isSelected ? 1.0 : 0.8)
-          
-          // Close button that appears on hover
-          if showCloseButton && isHovering {
-            Button(action: {
-              onClose?()
-            }) {
-              Image(systemName: "xmark")
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(.secondary)
-                .opacity(0.7)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .transition(.opacity.combined(with: .scale))
-          }
+            .lineLimit(1)
+            .truncationMode(.tail)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(
           RoundedRectangle(cornerRadius: 4)
-            .fill(isSelected ? Color(NSColor.controlAccentColor).opacity(0.2) : Color(NSColor.quaternaryLabelColor))
+            .fill(
+              isSelected
+                ? Color(NSColor.controlAccentColor).opacity(0.20)
+                : Color(NSColor.quaternaryLabelColor)
+            )
         )
       }
       .buttonStyle(PlainButtonStyle())
-    }
-    .onHover { hovering in
-      withAnimation(.easeInOut(duration: 0.15)) {
-        isHovering = hovering
+      // Right-click context menu for deletable tabs
+      .contextMenu {
+        if showCloseButton {
+          Button(action: { onClose?() }) {
+            Label("Close Tab", systemImage: "xmark")
+          }
+        }
       }
     }
   }
