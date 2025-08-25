@@ -35,9 +35,7 @@ struct PreviewPaneView: View {
                 }
             } else if let fileItem = fileItem {
                 // Route to appropriate file preview
-                if fileItem.isImage {
-                    ImagePreviewView(item: fileItem)
-                } else if fileItem.isText {
+                if fileItem.isText {
                     // Plain text preview for files
                     PlainTextPreview(
                         text: FileContentExtractor.extractPlainText(from: fileItem),
