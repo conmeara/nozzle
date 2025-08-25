@@ -128,11 +128,8 @@ final class FileSystemSource: ContentSource {
                 let snap = FileIdentity.snapshot(for: url)
                 guard !snap.isDirectory else { return nil }
                 
-                // Resolve UTType and filter to text & images only
+                // Accept all file types (not just text & images)
                 let type = Self.resolvedType(for: url)
-                guard let type, type.conforms(to: .text) || type.conforms(to: .image) else {
-                    return nil
-                }
                 
                 // Get file size
                 let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize.flatMap(Int64.init)
@@ -153,7 +150,7 @@ final class FileSystemSource: ContentSource {
                     fileURL: url,
                     plainText: url.path,
                     fileIdentity: snap.identity,
-                    uniformTypeIdentifier: type.identifier,
+                    uniformTypeIdentifier: type?.identifier,
                     fileSize: fileSize
                 )
             }
@@ -273,10 +270,10 @@ extension FileSystemSource {
                 let snap = FileIdentity.snapshot(for: url)
                 guard !snap.isDirectory else { continue }
                 
-                // Resolve UTType and filter
+                // Accept all file types
                 let type = Self.resolvedType(for: url)
-                guard let type, type.conforms(to: .text) || type.conforms(to: .image) else {
-                    // If the file doesn't match our filter but exists in cache, remove it
+                if type == nil {
+                    // If we can't determine the file type but it exists in cache, remove it
                     if let idx = indexByPath[path] {
                         cachedItems.remove(at: idx)
                         mutated = true
@@ -300,7 +297,7 @@ extension FileSystemSource {
                         fileURL: url,
                         plainText: url.path,
                         fileIdentity: identity,
-                        uniformTypeIdentifier: type.identifier,
+                        uniformTypeIdentifier: type?.identifier,
                         fileSize: fileSize,
                         isSelected: item.isSelected,
                         isVisible: item.isVisible
@@ -320,7 +317,7 @@ extension FileSystemSource {
                         fileURL: url,
                         plainText: url.path,
                         fileIdentity: snap.identity,
-                        uniformTypeIdentifier: type.identifier,
+                        uniformTypeIdentifier: type?.identifier,
                         fileSize: fileSize,
                         isSelected: item.isSelected,
                         isVisible: item.isVisible
@@ -346,7 +343,7 @@ extension FileSystemSource {
                         fileURL: url,
                         plainText: url.path,
                         fileIdentity: snap.identity,
-                        uniformTypeIdentifier: type.identifier,
+                        uniformTypeIdentifier: type?.identifier,
                         fileSize: fileSize
                     )
                     cachedItems.insert(newItem, at: 0) // temp prepend

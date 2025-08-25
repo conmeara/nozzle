@@ -51,6 +51,9 @@ struct PreviewPaneView: View {
                             fileSize: fileItem.fileSize
                         )
                     )
+                } else if let fileURL = fileItem.fileURL {
+                    // QuickLook preview for all other file types
+                    QuickLookPreview(url: fileURL)
                 } else {
                     EmptyPreviewView()
                 }

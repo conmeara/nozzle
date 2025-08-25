@@ -143,6 +143,7 @@
 		F572747B2E57C02C003A9299 /* PlainTextPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274772E57C02C003A9299 /* PlainTextPreview.swift */; };
 		F572747F2E58F854003A9299 /* FileContentExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572747E2E58F854003A9299 /* FileContentExtractor.swift */; };
 		F57274812E58F854003A9299 /* PreviewSurfaceStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572747C2E58F854003A9299 /* PreviewSurfaceStyle.swift */; };
+		F5758AFF2E5D176C00FC0F19 /* QuickLookPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758AFE2E5D176C00FC0F19 /* QuickLookPreview.swift */; };
 		F5C88D252DE55BA500EF8FA3 /* PromptHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */; };
 /* End PBXBuildFile section */
 
@@ -529,6 +530,7 @@
 		F57274772E57C02C003A9299 /* PlainTextPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainTextPreview.swift; sourceTree = "<group>"; };
 		F572747C2E58F854003A9299 /* PreviewSurfaceStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewSurfaceStyle.swift; sourceTree = "<group>"; };
 		F572747E2E58F854003A9299 /* FileContentExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileContentExtractor.swift; sourceTree = "<group>"; };
+		F5758AFE2E5D176C00FC0F19 /* QuickLookPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookPreview.swift; sourceTree = "<group>"; };
 		F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptHeaderView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -836,6 +838,7 @@
 		F57274782E57C02C003A9299 /* Preview */ = {
 			isa = PBXGroup;
 			children = (
+				F5758AFE2E5D176C00FC0F19 /* QuickLookPreview.swift */,
 				F572747C2E58F854003A9299 /* PreviewSurfaceStyle.swift */,
 				F57274752E57C02C003A9299 /* ImagePreviewView.swift */,
 				F57274762E57C02C003A9299 /* PreviewPaneView.swift */,
@@ -1098,6 +1101,7 @@
 				F57274672E56722D003A9299 /* UniversalListView.swift in Sources */,
 				DA13D7DC2C1A223E00FA9E23 /* HistoryItemAppEntity.swift in Sources */,
 				DA555F122CF155A8009608BD /* WrappingTextView.swift in Sources */,
+				F5758AFF2E5D176C00FC0F19 /* QuickLookPreview.swift in Sources */,
 				DAC929D7297A0E8B00814F19 /* NSPasteboard.PasteboardType+Types.swift in Sources */,
 				DA9C3C472C20B91D0056795D /* String+Identifiable.swift in Sources */,
 				DAA365E72C4C57E600A394F8 /* KeyEquivalent+Keys.swift in Sources */,
