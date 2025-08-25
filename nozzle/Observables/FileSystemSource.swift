@@ -13,6 +13,9 @@ final class FileSystemSource: ContentSource {
     nonisolated(unsafe) private let folderURL: URL  // Need nonisolated access for FSEvents
     private var cachedItems: [ContentItem] = []
     
+    // Folder expansion state
+    private var expansionState: FolderExpansionState
+    
     var isMonitoring: Bool = false
     var searchQuery: String = ""
     
@@ -50,6 +53,7 @@ final class FileSystemSource: ContentSource {
         self.id = "folder:\(folderURL.path)"
         self.name = folderURL.lastPathComponent
         self.icon = NSWorkspace.shared.icon(forFile: folderURL.path)
+        self.expansionState = FolderExpansionState(sourceId: "folder:\(folderURL.path)")
         self.eventCoalescer = Throttler(minimumDelay: 0.15, queue: .main)
     }
     
@@ -115,52 +119,129 @@ final class FileSystemSource: ContentSource {
     }
     
     func refresh() async {
-        // Scan directory off main thread
-        let task = Task.detached { [folderURL] () -> [ContentItem] in
+        // Build hierarchical structure starting from root
+        let hierarchicalItems = await buildHierarchicalItems(at: folderURL, depth: 0, parentPath: nil)
+        self.cachedItems = hierarchicalItems
+        self.rebuildIndexes()
+    }
+    
+    private func buildHierarchicalItems(at url: URL, depth: Int, parentPath: String?) async -> [ContentItem] {
+        let task = Task.detached { () -> [ContentItem] in
             let fm = FileManager.default
             guard let urls = try? fm.contentsOfDirectory(
-                at: folderURL,
+                at: url,
                 includingPropertiesForKeys: [.contentModificationDateKey, .isDirectoryKey, .fileSizeKey, .contentTypeKey],
                 options: [.skipsHiddenFiles]
             ) else { return [] }
             
-            let items = urls.compactMap { url -> ContentItem? in
-                let snap = FileIdentity.snapshot(for: url)
-                guard !snap.isDirectory else { return nil }
-                
-                // Accept all file types (not just text & images)
-                let type = Self.resolvedType(for: url)
-                
-                // Get file size
-                let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize.flatMap(Int64.init)
-                
-                let stableIdString = "\(url.absoluteString):\(snap.modDate.timeIntervalSince1970)"
+            var items: [ContentItem] = []
+            let sourceId = "folder:\(self.folderURL.path)"
+            
+            // Separate folders and files
+            var folders: [URL] = []
+            var files: [URL] = []
+            
+            for itemURL in urls {
+                let snap = FileIdentity.snapshot(for: itemURL)
+                if snap.isDirectory {
+                    folders.append(itemURL)
+                } else {
+                    files.append(itemURL)
+                }
+            }
+            
+            // Sort folders first, then files
+            folders.sort { $0.lastPathComponent.localizedCompare($1.lastPathComponent) == .orderedAscending }
+            files.sort { $0.lastPathComponent.localizedCompare($1.lastPathComponent) == .orderedAscending }
+            
+            // Add folders
+            for folderURL in folders {
+                let snap = FileIdentity.snapshot(for: folderURL)
+                let stableIdString = "\(folderURL.absoluteString):\(snap.modDate.timeIntervalSince1970)"
                 let hash = SHA256.hash(data: Data(stableIdString.utf8))
                 let hashString = hash.compactMap { String(format: "%02x", $0) }.joined()
                 let truncatedHash = String(hashString.prefix(32))
                 let formattedHash = truncatedHash.inserting("-", at: [8, 12, 16, 20])
                 let uuid = UUID(uuidString: formattedHash) ?? UUID()
                 
-                return ContentItem(
+                let folderItem = ContentItem(
                     id: uuid,
-                    title: url.lastPathComponent,
+                    title: folderURL.lastPathComponent,
                     timestamp: snap.modDate,
                     sourceType: .folder,
-                    sourceId: "folder:\(folderURL.path)",
-                    fileURL: url,
-                    plainText: url.path,
+                    sourceId: sourceId,
+                    fileURL: folderURL,
+                    plainText: folderURL.path,
                     fileIdentity: snap.identity,
-                    uniformTypeIdentifier: type?.identifier,
-                    fileSize: fileSize
+                    isFolder: true,
+                    depth: depth,
+                    parentPath: parentPath
                 )
+                items.append(folderItem)
             }
             
-            return items.sorted { $0.timestamp > $1.timestamp }
+            // Add files
+            for fileURL in files {
+                let snap = FileIdentity.snapshot(for: fileURL)
+                let type = Self.resolvedType(for: fileURL)
+                let fileSize = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]))?.fileSize.flatMap(Int64.init)
+                
+                let stableIdString = "\(fileURL.absoluteString):\(snap.modDate.timeIntervalSince1970)"
+                let hash = SHA256.hash(data: Data(stableIdString.utf8))
+                let hashString = hash.compactMap { String(format: "%02x", $0) }.joined()
+                let truncatedHash = String(hashString.prefix(32))
+                let formattedHash = truncatedHash.inserting("-", at: [8, 12, 16, 20])
+                let uuid = UUID(uuidString: formattedHash) ?? UUID()
+                
+                let fileItem = ContentItem(
+                    id: uuid,
+                    title: fileURL.lastPathComponent,
+                    timestamp: snap.modDate,
+                    sourceType: .folder,
+                    sourceId: sourceId,
+                    fileURL: fileURL,
+                    plainText: fileURL.path,
+                    fileIdentity: snap.identity,
+                    uniformTypeIdentifier: type?.identifier,
+                    fileSize: fileSize,
+                    isFolder: false,
+                    depth: depth,
+                    parentPath: parentPath
+                )
+                items.append(fileItem)
+            }
+            
+            return items
         }
         
-        let items = await task.value
-        self.cachedItems = items
-        self.rebuildIndexes()
+        let rootItems = await task.value
+        var allItems: [ContentItem] = []
+        
+        for item in rootItems {
+            allItems.append(item)
+            
+            // If it's a folder and should be expanded, add its children
+            if item.isFolder,
+               let folderURL = item.fileURL,
+               depth < 3 { // Max depth limit
+                
+                // Check if this folder is expanded
+                let shouldExpand = await MainActor.run {
+                    return self.expansionState.isExpanded(folderURL.path)
+                }
+                
+                if shouldExpand {
+                    let childItems = await buildHierarchicalItems(
+                        at: folderURL,
+                        depth: depth + 1,
+                        parentPath: folderURL.path
+                    )
+                    allItems.append(contentsOf: childItems)
+                }
+            }
+        }
+        
+        return allItems
     }
     
     func search(query: String) -> [ContentItem] {
@@ -168,6 +249,17 @@ final class FileSystemSource: ContentSource {
             $0.title.localizedCaseInsensitiveContains(query) ||
             ($0.plainText ?? "").localizedCaseInsensitiveContains(query)
         }
+    }
+    
+    // MARK: - Folder expansion methods
+    
+    func toggleFolderExpansion(at path: String) async {
+        expansionState.toggleExpansion(path)
+        await refresh()
+    }
+    
+    func isFolderExpanded(at path: String) -> Bool {
+        expansionState.isExpanded(path)
     }
 }
 
@@ -267,108 +359,18 @@ extension FileSystemSource {
             let url = URL(fileURLWithPath: path)
             
             if FileIdentity.exists(at: path) {
-                let snap = FileIdentity.snapshot(for: url)
-                guard !snap.isDirectory else { continue }
-                
-                // Accept all file types
-                let type = Self.resolvedType(for: url)
-                if type == nil {
-                    // If we can't determine the file type but it exists in cache, remove it
-                    if let idx = indexByPath[path] {
-                        cachedItems.remove(at: idx)
-                        mutated = true
-                    }
-                    continue
+                // For now, refresh the entire hierarchy on any change
+                // This is simpler and safer for the initial implementation
+                Task { @MainActor in
+                    await self.refresh()
                 }
-                
-                // Get file size
-                let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize.flatMap(Int64.init)
-                
-                // Try to find by identity first (rename/move)
-                if let identity = snap.identity, let idx = indexByIdentity[identity] {
-                    // Update existing item in place (title, url, timestamp)
-                    let item = cachedItems[idx]
-                    let newItem = ContentItem(
-                        id: item.id, // keep stable UI id
-                        title: url.lastPathComponent,
-                        timestamp: snap.modDate,
-                        sourceType: .folder,
-                        sourceId: item.sourceId,
-                        fileURL: url,
-                        plainText: url.path,
-                        fileIdentity: identity,
-                        uniformTypeIdentifier: type?.identifier,
-                        fileSize: fileSize,
-                        isSelected: item.isSelected,
-                        isVisible: item.isVisible
-                    )
-                    cachedItems[idx] = newItem
-                    needsResort = true
-                    mutated = true
-                } else if let idx = indexByPath[path] {
-                    // Update existing file by path (modified)
-                    let item = cachedItems[idx]
-                    let newItem = ContentItem(
-                        id: item.id,
-                        title: url.lastPathComponent,
-                        timestamp: snap.modDate,
-                        sourceType: .folder,
-                        sourceId: item.sourceId,
-                        fileURL: url,
-                        plainText: url.path,
-                        fileIdentity: snap.identity,
-                        uniformTypeIdentifier: type?.identifier,
-                        fileSize: fileSize,
-                        isSelected: item.isSelected,
-                        isVisible: item.isVisible
-                    )
-                    cachedItems[idx] = newItem
-                    needsResort = true
-                    mutated = true
-                } else {
-                    // New file: insert
-                    let stableIdString = "\(url.absoluteString):\(snap.modDate.timeIntervalSince1970)"
-                    let hash = SHA256.hash(data: Data(stableIdString.utf8))
-                    let hashString = hash.compactMap { String(format: "%02x", $0) }.joined()
-                    let truncatedHash = String(hashString.prefix(32))
-                    let formattedHash = truncatedHash.inserting("-", at: [8, 12, 16, 20])
-                    let uuid = UUID(uuidString: formattedHash) ?? UUID()
-                    
-                    let newItem = ContentItem(
-                        id: uuid,
-                        title: url.lastPathComponent,
-                        timestamp: snap.modDate,
-                        sourceType: .folder,
-                        sourceId: self.id,
-                        fileURL: url,
-                        plainText: url.path,
-                        fileIdentity: snap.identity,
-                        uniformTypeIdentifier: type?.identifier,
-                        fileSize: fileSize
-                    )
-                    cachedItems.insert(newItem, at: 0) // temp prepend
-                    mutated = true
-                }
+                return
             } else {
-                // File deleted: try to drop by path
-                if let idx = indexByPath[path] {
-                    cachedItems.remove(at: idx)
-                    mutated = true
+                // File deleted: refresh entire hierarchy
+                Task { @MainActor in
+                    await self.refresh()
                 }
-            }
-        }
-        
-        if mutated {
-            // Rebuild index and resort by timestamp (newest first)
-            rebuildIndexes()
-            if needsResort {
-                // Check if we should suspend resort for editing stability
-                if let suspended = suspendResortItemId,
-                   cachedItems.contains(where: { $0.id == suspended }) {
-                    // Defer resort until editing ends
-                } else {
-                    cachedItems.sort { $0.timestamp > $1.timestamp }
-                }
+                return
             }
         }
     }

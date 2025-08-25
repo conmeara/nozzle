@@ -23,6 +23,11 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
     public let uniformTypeIdentifier: String?
     public let fileSize: Int64?
     
+    // Hierarchical folder support
+    public let isFolder: Bool
+    public let depth: Int
+    public let parentPath: String?
+    
     // UI state (kept here so Universal views don't mutate external state)
     public var isSelected: Bool = false
     public var isVisible: Bool = true
@@ -41,6 +46,9 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
         fileIdentity: Data? = nil,
         uniformTypeIdentifier: String? = nil,
         fileSize: Int64? = nil,
+        isFolder: Bool = false,
+        depth: Int = 0,
+        parentPath: String? = nil,
         isSelected: Bool = false,
         isVisible: Bool = true
     ) {
@@ -57,6 +65,9 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
         self.fileIdentity = fileIdentity
         self.uniformTypeIdentifier = uniformTypeIdentifier
         self.fileSize = fileSize
+        self.isFolder = isFolder
+        self.depth = depth
+        self.parentPath = parentPath
         self.isSelected = isSelected
         self.isVisible = isVisible
     }

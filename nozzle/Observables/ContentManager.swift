@@ -35,11 +35,54 @@ final class ContentManager {
     
     // Selection management
     func toggleSelection(_ id: UUID) {
-        if selectedItemIds.remove(id) == nil {
+        let wasSelected = selectedItemIds.contains(id)
+        
+        if wasSelected {
+            selectedItemIds.remove(id)
+            // If it's a folder, also deselect all its children
+            deselectFolderChildren(id)
+        } else {
             selectedItemIds.insert(id)
+            // If it's a folder, also select all its visible children
+            selectFolderChildren(id)
         }
+        
         // Bridge to clipboard selection if needed
         syncClipboardSelection(id)
+    }
+    
+    private func selectFolderChildren(_ folderId: UUID) {
+        guard let folderItem = allItems.first(where: { $0.id == folderId }),
+              folderItem.isFolder,
+              let folderPath = folderItem.fileURL?.path else { return }
+        
+        // Select all visible children of this folder
+        for item in allItems {
+            if item.parentPath == folderPath {
+                selectedItemIds.insert(item.id)
+                // Recursively select nested folder children
+                if item.isFolder {
+                    selectFolderChildren(item.id)
+                }
+            }
+        }
+    }
+    
+    private func deselectFolderChildren(_ folderId: UUID) {
+        guard let folderItem = allItems.first(where: { $0.id == folderId }),
+              folderItem.isFolder,
+              let folderPath = folderItem.fileURL?.path else { return }
+        
+        // Deselect all children of this folder
+        for item in allItems {
+            if item.parentPath == folderPath {
+                selectedItemIds.remove(item.id)
+                // Recursively deselect nested folder children
+                if item.isFolder {
+                    deselectFolderChildren(item.id)
+                }
+            }
+        }
     }
     
     func clearSelection() {
