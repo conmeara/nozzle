@@ -21,6 +21,18 @@ struct FolderTreeItemView: View {
         16.0  // Standard chevron button width
     }
     
+    private var selectionState: (isSelected: Bool, symbol: String) {
+        let folderSelectionState = contentManager.getFolderSelectionState(item.id)
+        switch folderSelectionState {
+        case .none:
+            return (false, "checkmark.circle.fill")
+        case .all:
+            return (true, "checkmark.circle.fill") 
+        case .partial:
+            return (true, "minus.circle.fill")
+        }
+    }
+    
     var body: some View {
         HStack(spacing: 0) {
             // Indentation for depth - chevron appears at start of indent level
@@ -48,7 +60,8 @@ struct FolderTreeItemView: View {
                 accessoryImage: nil,
                 attributedTitle: nil,
                 shortcuts: [],
-                isSelected: item.isSelected
+                isSelected: selectionState.isSelected,
+                selectionSymbol: selectionState.symbol
             ) {
                 Text(verbatim: item.title)
                     .lineLimit(1)
@@ -67,7 +80,6 @@ struct FolderTreeItemView: View {
                     // Focus and selection
                     contentManager.focus(item.id)
                     contentManager.toggleSelection(item.id)
-                    item.isSelected = contentManager.isSelected(item.id)
                     appState.updateFooterItemVisibility()
                 }
             }

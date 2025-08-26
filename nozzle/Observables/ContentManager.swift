@@ -1,6 +1,12 @@
 import AppKit
 import Observation
 
+enum FolderSelectionState {
+    case none     // No children selected
+    case partial  // Some children selected
+    case all      // All children selected
+}
+
 @Observable @MainActor
 final class ContentManager {
     static let shared = ContentManager()
@@ -16,7 +22,43 @@ final class ContentManager {
     private(set) var focusedItemId: UUID?
     
     var selectedItems: [ContentItem] {
-        allItems.filter { selectedItemIds.contains($0.id) }
+        var items = allItems.filter { selectedItemIds.contains($0.id) }
+        
+        // Add parent folders when their children are selected
+        var parentFolders: [ContentItem] = []
+        
+        for selectedItem in items {
+            if let parentPath = selectedItem.parentPath {
+                // Find the parent folder
+                if let parentFolder = allItems.first(where: { 
+                    $0.isFolder && $0.fileURL?.path == parentPath 
+                }) {
+                    // Add parent if not already selected explicitly and not already in our list
+                    if !selectedItemIds.contains(parentFolder.id) && 
+                       !parentFolders.contains(where: { $0.id == parentFolder.id }) {
+                        parentFolders.append(parentFolder)
+                    }
+                }
+            }
+        }
+        
+        // Combine selected items and their parent folders, with parents first
+        let result = parentFolders + items
+        
+        // Sort to ensure logical order: parents before children
+        return result.sorted { first, second in
+            // If one is parent of the other, parent comes first
+            if let firstPath = first.fileURL?.path,
+               second.parentPath == firstPath {
+                return true // first is parent of second
+            }
+            if let secondPath = second.fileURL?.path,
+               first.parentPath == secondPath {
+                return false // second is parent of first
+            }
+            // Otherwise maintain original timestamp order
+            return first.timestamp > second.timestamp
+        }
     }
     
     var focusedContentItem: ContentItem? {
@@ -35,20 +77,62 @@ final class ContentManager {
     
     // Selection management
     func toggleSelection(_ id: UUID) {
-        let wasSelected = selectedItemIds.contains(id)
-        
-        if wasSelected {
-            selectedItemIds.remove(id)
-            // If it's a folder, also deselect all its children
-            deselectFolderChildren(id)
+        // Check if this is a folder and handle specially
+        if let folderItem = allItems.first(where: { $0.id == id }), folderItem.isFolder {
+            toggleFolderSelection(id)
         } else {
-            selectedItemIds.insert(id)
-            // If it's a folder, also select all its visible children
-            selectFolderChildren(id)
+            // Regular item selection
+            let wasSelected = selectedItemIds.contains(id)
+            if wasSelected {
+                selectedItemIds.remove(id)
+            } else {
+                selectedItemIds.insert(id)
+            }
+            // Bridge to clipboard selection if needed
+            syncClipboardSelection(id)
         }
+    }
+    
+    private func toggleFolderSelection(_ folderId: UUID) {
+        guard let folderItem = allItems.first(where: { $0.id == folderId }),
+              folderItem.isFolder,
+              let folderPath = folderItem.fileURL?.path else { return }
         
-        // Bridge to clipboard selection if needed
-        syncClipboardSelection(id)
+        let children = allItems.filter { $0.parentPath == folderPath }
+        let currentState = getFolderSelectionState(folderId)
+        
+        
+        switch currentState {
+        case .none:
+            // No children selected - select everything
+            if children.isEmpty {
+                // Collapsed folder - select the folder itself
+                selectedItemIds.insert(folderId)
+            } else {
+                // Expanded folder - select all children
+                selectFolderChildren(folderId)
+            }
+            
+        case .partial:
+            // Some children selected - deselect everything
+            if children.isEmpty {
+                // Collapsed folder - deselect the folder itself
+                selectedItemIds.remove(folderId)
+            } else {
+                // Expanded folder - deselect all children
+                deselectFolderChildren(folderId)
+            }
+            
+        case .all:
+            // Everything selected - deselect everything
+            if children.isEmpty {
+                // Collapsed folder - deselect the folder itself
+                selectedItemIds.remove(folderId)
+            } else {
+                // Expanded folder - deselect all children
+                deselectFolderChildren(folderId)
+            }
+        }
     }
     
     private func selectFolderChildren(_ folderId: UUID) {
@@ -66,6 +150,9 @@ final class ContentManager {
                 }
             }
         }
+        
+        // Also select the folder itself (for consistency when expanding/collapsing)
+        selectedItemIds.insert(folderId)
     }
     
     private func deselectFolderChildren(_ folderId: UUID) {
@@ -83,6 +170,9 @@ final class ContentManager {
                 }
             }
         }
+        
+        // Also deselect the folder itself
+        selectedItemIds.remove(folderId)
     }
     
     func clearSelection() {
@@ -97,8 +187,46 @@ final class ContentManager {
         selectedItemIds.contains(id)
     }
     
+    func getFolderSelectionState(_ folderId: UUID) -> FolderSelectionState {
+        guard let folderItem = allItems.first(where: { $0.id == folderId }),
+              folderItem.isFolder,
+              let folderPath = folderItem.fileURL?.path else { return .none }
+        
+        // Get all visible children of this folder
+        let children = allItems.filter { $0.parentPath == folderPath }
+        
+        // If folder is collapsed (no visible children), check if folder itself is selected
+        if children.isEmpty {
+            return selectedItemIds.contains(folderId) ? .all : .none
+        }
+        
+        // For expanded folders, calculate based on children selection
+        let selectedChildren = children.filter { selectedItemIds.contains($0.id) }
+        
+        if selectedChildren.count == 0 {
+            return .none
+        } else if selectedChildren.count == children.count {
+            return .all
+        } else {
+            return .partial
+        }
+    }
+    
     func focus(_ id: UUID?) {
         focusedItemId = id
+    }
+    
+    // Called after folder expansion to handle selected folder states
+    func handleFolderExpansion(_ folderPath: String) {
+        // Find the folder by path
+        guard let folderItem = allItems.first(where: { 
+            $0.isFolder && $0.fileURL?.path == folderPath 
+        }) else { return }
+        
+        // If the folder itself is selected, select all its newly visible children
+        if selectedItemIds.contains(folderItem.id) {
+            selectFolderChildren(folderItem.id)
+        }
     }
     
     private func syncClipboardSelection(_ id: UUID) {

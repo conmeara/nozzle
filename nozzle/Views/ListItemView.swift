@@ -11,6 +11,7 @@ struct ListItemView<Title: View>: View {
   var isSelected: Bool
   var help: LocalizedStringKey?
   var showCheckbox: Bool = true
+  var selectionSymbol: String = "checkmark.circle.fill"
   @ViewBuilder var title: () -> Title
 
   @Default(.showApplicationIcons) private var showIcons
@@ -71,7 +72,7 @@ struct ListItemView<Title: View>: View {
             }
           } else if isSelected {
             // Show round checkbox when item is selected
-            Image(systemName: "checkmark.circle.fill")
+            Image(systemName: selectionSymbol)
               .font(.system(size: 14))
               .foregroundColor(.white)
               .opacity(0.8)

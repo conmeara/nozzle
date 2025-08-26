@@ -11,7 +11,7 @@ final class UniversalItemDecorator: Identifiable, Hashable {
     // Derived UI
     var title: String { base.title }
     var isSelected: Bool {
-        didSet { base.isSelected = isSelected }
+        ContentManager.shared.isSelected(id)
     }
     var isVisible: Bool {
         didSet { base.isVisible = isVisible }
@@ -28,7 +28,6 @@ final class UniversalItemDecorator: Identifiable, Hashable {
         self.id = item.id
         self.base = item
         self.sourceId = item.sourceId
-        self.isSelected = item.isSelected
         self.isVisible = item.isVisible
     }
     

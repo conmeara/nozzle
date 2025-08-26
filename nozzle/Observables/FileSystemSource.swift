@@ -254,8 +254,14 @@ final class FileSystemSource: ContentSource {
     // MARK: - Folder expansion methods
     
     func toggleFolderExpansion(at path: String) async {
+        let wasExpanded = expansionState.isExpanded(path)
         expansionState.toggleExpansion(path)
         await refresh()
+        
+        // If we just expanded a folder, handle any selection state
+        if !wasExpanded && expansionState.isExpanded(path) {
+            ContentManager.shared.handleFolderExpansion(path)
+        }
     }
     
     func isFolderExpanded(at path: String) -> Bool {

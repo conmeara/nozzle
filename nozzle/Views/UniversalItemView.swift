@@ -47,7 +47,6 @@ struct UniversalItemView: View {
                             contentManager.focus(item.id)
                             // Toggle selection using centralized system
                             contentManager.toggleSelection(item.id)
-                            item.isSelected = contentManager.isSelected(item.id)
                             appState.updateFooterItemVisibility()
                         }
                     }
