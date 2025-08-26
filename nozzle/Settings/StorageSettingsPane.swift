@@ -119,7 +119,7 @@ struct StorageSettingsPane: View {
 
       Settings.Section(label: { Text("Prompts Folder") }) {
         HStack {
-          Text(promptsFolderPath ?? "Default (~/Library/Application Support/Nozzle/Prompts)")
+          Text(promptsFolderPath ?? "Default (App Container/Library/Application Support/nozzle/Prompts)")
             .lineLimit(1)
             .truncationMode(.middle)
             .foregroundStyle(.secondary)
