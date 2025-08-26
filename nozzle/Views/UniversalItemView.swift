@@ -60,5 +60,26 @@ struct UniversalItemView: View {
                 }
             }
         }
+        .contextMenu {
+            if item.base.sourceId == "prompts", let url = item.base.fileURL {
+                Button("Apply to input") {
+                    (contentManager.sources["prompts"] as? PromptsSource)?.applyPrompt(at: url)
+                    appState.isSearchMode = false
+                }
+                Divider()
+                Button("Copy") {
+                    item.copyToClipboard()
+                }
+                Button("Reveal in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([url])
+                }
+                Button("Duplicate") {
+                    (contentManager.sources["prompts"] as? PromptsSource)?.duplicatePrompt(at: url)
+                }
+                Button("Delete", role: .destructive) {
+                    (contentManager.sources["prompts"] as? PromptsSource)?.deletePrompt(at: url)
+                }
+            }
+        }
     }
 }

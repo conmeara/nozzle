@@ -90,6 +90,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Register clipboard source
     contentManager.registerSource(ClipboardSource())
     
+    // Register Prompts source
+    registerPromptsSource()
+    
     // Restore folder sources from bookmarks
     for url in Bookmarks.resolveAll() {
       let source = FileSystemSource(folderURL: url)
@@ -126,6 +129,39 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         fileSource.stopMonitoring()
       }
     }
+  }
+
+  @MainActor
+  private func registerPromptsSource() {
+    // Resolve or create default folder
+    let folderURL: URL = {
+      if let data = Defaults[.promptsFolderBookmark] {
+        var isStale = false
+        if let url = try? URL(resolvingBookmarkData: data,
+                              options: [.withSecurityScope],
+                              relativeTo: nil,
+                              bookmarkDataIsStale: &isStale),
+           !isStale {
+          _ = url.startAccessingSecurityScopedResource()
+          return url
+        }
+      }
+      
+      let def = PromptsSource.defaultFolder()
+      // Store bookmark so it persists
+      if let bd = try? def.bookmarkData(options: [.withSecurityScope],
+                                        includingResourceValuesForKeys: nil,
+                                        relativeTo: nil) {
+        Defaults[.promptsFolderBookmark] = bd
+        Defaults[.promptsFolderPath] = def.path
+      }
+      _ = def.startAccessingSecurityScopedResource()
+      return def
+    }()
+
+    let prompts = PromptsSource(folderURL: folderURL)
+    ContentManager.shared.registerSource(prompts)
+    prompts.startMonitoring()
   }
 
   private func migrateUserDefaults() {

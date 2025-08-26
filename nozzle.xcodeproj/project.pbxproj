@@ -124,6 +124,8 @@
 		DAFE2DDA268A521B00990986 /* String+Shortened.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFE2DD9268A521A00990986 /* String+Shortened.swift */; };
 		DAFE2DE9268A9B1B00990986 /* HistoryItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFE2DE8268A9B1B00990986 /* HistoryItemTests.swift */; };
 		DAFEF0B8249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFEF0B7249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift */; };
+		F55A77CA2E5E37F50039E760 /* PromptsSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A77C92E5E37F50039E760 /* PromptsSource.swift */; };
+		F55A77CC2E5E38000039E760 /* PromptEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A77CB2E5E38000039E760 /* PromptEditorView.swift */; };
 		F57274592E56720D003A9299 /* ContentSourceType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274582E56720D003A9299 /* ContentSourceType.swift */; };
 		F572745A2E56720D003A9299 /* ContentSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274572E56720D003A9299 /* ContentSource.swift */; };
 		F572745B2E56720D003A9299 /* ContentItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274562E56720D003A9299 /* ContentItem.swift */; };
@@ -512,6 +514,8 @@
 		DAFE2DD9268A521A00990986 /* String+Shortened.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Shortened.swift"; sourceTree = "<group>"; };
 		DAFE2DE8268A9B1B00990986 /* HistoryItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItemTests.swift; sourceTree = "<group>"; };
 		DAFEF0B7249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyboardShortcuts.Name+Shortcuts.swift"; sourceTree = "<group>"; };
+		F55A77C92E5E37F50039E760 /* PromptsSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptsSource.swift; sourceTree = "<group>"; };
+		F55A77CB2E5E38000039E760 /* PromptEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEditorView.swift; sourceTree = "<group>"; };
 		F57274562E56720D003A9299 /* ContentItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentItem.swift; sourceTree = "<group>"; };
 		F57274572E56720D003A9299 /* ContentSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSource.swift; sourceTree = "<group>"; };
 		F57274582E56720D003A9299 /* ContentSourceType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSourceType.swift; sourceTree = "<group>"; };
@@ -705,6 +709,7 @@
 		DA3BCB902C3EEC1000B01BC1 /* Observables */ = {
 			isa = PBXGroup;
 			children = (
+				F55A77C92E5E37F50039E760 /* PromptsSource.swift */,
 				F5758B002E5D228200FC0F19 /* FolderExpansionState.swift */,
 				F572745C2E56721F003A9299 /* ClipboardSource.swift */,
 				F572745D2E56721F003A9299 /* ContentManager.swift */,
@@ -842,6 +847,7 @@
 		F57274782E57C02C003A9299 /* Preview */ = {
 			isa = PBXGroup;
 			children = (
+				F55A77CB2E5E38000039E760 /* PromptEditorView.swift */,
 				F5758AFE2E5D176C00FC0F19 /* QuickLookPreview.swift */,
 				F572747C2E58F854003A9299 /* PreviewSurfaceStyle.swift */,
 				F57274762E57C02C003A9299 /* PreviewPaneView.swift */,
@@ -1125,6 +1131,7 @@
 				DA555F082CF0F994009608BD /* ApplicationImageCache.swift in Sources */,
 				DA44C5E42C1C858400819834 /* StorageSettingsPane.swift in Sources */,
 				DA05B5142C234DCF006980FE /* HistoryItemContent.swift in Sources */,
+				F55A77CA2E5E37F50039E760 /* PromptsSource.swift in Sources */,
 				F572746E2E56B882003A9299 /* FileIdentity.swift in Sources */,
 				F572746F2E56B882003A9299 /* FSEventsStream.swift in Sources */,
 				DAA072D32C40A961006DDFD2 /* Color+Random.swift in Sources */,
@@ -1163,6 +1170,7 @@
 				DA3EAE0C2AE30F7500F39108 /* NSApplication+Windows.swift in Sources */,
 				F572747F2E58F854003A9299 /* FileContentExtractor.swift in Sources */,
 				F57274812E58F854003A9299 /* PreviewSurfaceStyle.swift in Sources */,
+				F55A77CC2E5E38000039E760 /* PromptEditorView.swift in Sources */,
 				DAFE2DDA268A521B00990986 /* String+Shortened.swift in Sources */,
 				DAC14124232367B200FCFA30 /* Search.swift in Sources */,
 				DA0FFA2A2C8D100C00A66C97 /* ModifierFlags+Description.swift in Sources */,

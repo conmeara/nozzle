@@ -137,9 +137,16 @@ struct ContentView: View {
                 )
               }
               
-              // "+" to add a folder source
+              // "+" to open Prompts or add folder (shift+click)
               TabButton(title: "+", isSelected: false) {
-                openFolderPickerAndRegister()
+                if NSApp.currentEvent?.modifierFlags.contains(.shift) == true {
+                  openFolderPickerAndRegister()
+                } else {
+                  // Open Prompts tab but keep current mode (search or prompt)
+                  selectedTab = "prompts"
+                  contentManager.activeSourceId = "prompts"
+                  inputFocused = true
+                }
               }
             }
             
@@ -252,6 +259,10 @@ struct ContentView: View {
           appState.isKeyboardNavigating = true
         }
       }
+    }
+    .onChange(of: contentManager.activeSourceId) { _, newSourceId in
+      // Sync selectedTab when activeSourceId changes (e.g., from "/" shortcut)
+      selectedTab = newSourceId
     }
     .onMouseMove {
       // Only set to false if it was true (avoid constant updates)

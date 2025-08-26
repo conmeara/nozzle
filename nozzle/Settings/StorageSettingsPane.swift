@@ -58,6 +58,7 @@ struct StorageSettingsPane: View {
 
   @Default(.size) private var size
   @Default(.sortBy) private var sortBy
+  @Default(.promptsFolderPath) private var promptsFolderPath
 
   @State private var viewModel = ViewModel()
 
@@ -114,6 +115,45 @@ struct StorageSettingsPane: View {
         .labelsHidden()
         .frame(width: 160)
         .help(Text("SortByTooltip", tableName: "StorageSettings"))
+      }
+
+      Settings.Section(label: { Text("Prompts Folder") }) {
+        HStack {
+          Text(promptsFolderPath ?? "Default (~/Library/Application Support/Nozzle/Prompts)")
+            .lineLimit(1)
+            .truncationMode(.middle)
+            .foregroundStyle(.secondary)
+            .controlSize(.small)
+          Spacer()
+          Button("Choose…") {
+            let p = NSOpenPanel()
+            p.canChooseDirectories = true
+            p.canChooseFiles = false
+            p.allowsMultipleSelection = false
+            p.prompt = "Use Folder"
+            if p.runModal() == .OK, let url = p.url {
+              _ = url.startAccessingSecurityScopedResource()
+              if let bd = try? url.bookmarkData(options: [.withSecurityScope],
+                                                includingResourceValuesForKeys: nil,
+                                                relativeTo: nil) {
+                Defaults[.promptsFolderBookmark] = bd
+                Defaults[.promptsFolderPath] = url.path
+              }
+
+              // Re-register source to point at the new folder
+              if let old = ContentManager.shared.sources["prompts"] as? PromptsSource {
+                old.stopMonitoring()
+                ContentManager.shared.removeSource("prompts")
+              }
+              let prompts = PromptsSource(folderURL: url)
+              ContentManager.shared.registerSource(prompts)
+              prompts.startMonitoring()
+            }
+          }
+        }
+        Text("Location where prompt templates are stored")
+          .controlSize(.small)
+          .foregroundStyle(.gray)
       }
     }
   }

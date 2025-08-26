@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 struct PreviewPaneView: View {
     let clipboardItem: HistoryItemDecorator?
@@ -35,7 +36,12 @@ struct PreviewPaneView: View {
                 }
             } else if let fileItem = fileItem {
                 // Route to appropriate file preview
-                if fileItem.isText {
+                if fileItem.sourceId == "prompts",
+                   fileItem.fileURL != nil,
+                   (fileItem.isText || fileItem.isMarkdown || fileItem.uniformTypeIdentifier == UTType.plainText.identifier) {
+                    // Editable preview for prompt files
+                    PromptEditorView(item: fileItem)
+                } else if fileItem.isText {
                     // Plain text preview for files
                     PlainTextPreview(
                         text: FileContentExtractor.extractPlainText(from: fileItem),
