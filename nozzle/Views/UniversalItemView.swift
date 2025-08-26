@@ -13,10 +13,10 @@ struct UniversalItemView: View {
             } else {
                 // Use regular file view with indentation
                 HStack(spacing: 0) {
-                    // Indentation for depth
+                    // Indentation for depth - files align with folder content 
                     if item.base.depth > 0 {
                         Spacer()
-                            .frame(width: CGFloat(item.base.depth) * 16.0)
+                            .frame(width: CGFloat(item.base.depth) * 24.0)  // Increased from 20 to 24 for more child indentation
                     }
                     
                     ListItemView(

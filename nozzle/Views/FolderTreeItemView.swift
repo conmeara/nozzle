@@ -14,18 +14,22 @@ struct FolderTreeItemView: View {
     }
     
     private var indentationWidth: CGFloat {
-        CGFloat(item.base.depth) * 16.0
+        CGFloat(item.base.depth) * 24.0  // Increased to match child file indentation
+    }
+    
+    private var chevronWidth: CGFloat {
+        16.0  // Standard chevron button width
     }
     
     var body: some View {
         HStack(spacing: 0) {
-            // Indentation for depth
+            // Indentation for depth - chevron appears at start of indent level
             if item.base.depth > 0 {
                 Spacer()
-                    .frame(width: indentationWidth)
+                    .frame(width: indentationWidth - chevronWidth)
             }
             
-            // Expansion triangle
+            // Expansion triangle - positioned at start of indent level
             Button(action: toggleExpansion) {
                 Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                     .font(.system(size: 12, weight: .medium))
@@ -33,7 +37,8 @@ struct FolderTreeItemView: View {
                     .frame(width: 12, height: 12)
             }
             .buttonStyle(.plain)
-            .padding(.trailing, 4)
+            .frame(width: chevronWidth)
+            .padding(.trailing, 2)  // Reduced from 4 to 2 to bring folder closer
             
             // Use existing ListItemView for consistent styling
             ListItemView(
