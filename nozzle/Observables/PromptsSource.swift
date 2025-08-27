@@ -30,6 +30,29 @@ final class PromptsSource: ContentSource {
         var base = inner.items
             .filter { !$0.isFolder }
             .filter { $0.isText || $0.isMarkdown || $0.uniformTypeIdentifier == UTType.plainText.identifier }
+            .map { item in
+                // Map to normalize sourceId to "prompts" for proper routing
+                ContentItem(
+                    id: item.id,
+                    title: item.title,
+                    timestamp: item.timestamp,
+                    sourceType: item.sourceType,
+                    sourceId: "prompts", // Normalize to "prompts" for preview routing
+                    fileURL: item.fileURL,
+                    imageData: item.imageData,
+                    rtfData: item.rtfData,
+                    htmlData: item.htmlData,
+                    plainText: item.plainText,
+                    fileIdentity: item.fileIdentity,
+                    uniformTypeIdentifier: item.uniformTypeIdentifier,
+                    fileSize: item.fileSize,
+                    isFolder: item.isFolder,
+                    depth: item.depth,
+                    parentPath: item.parentPath,
+                    isSelected: item.isSelected,
+                    isVisible: item.isVisible
+                )
+            }
 
         if searchQuery.hasPrefix("/") {
             base.insert(commandItem(title: "/new – New empty prompt", command: .new), at: 0)

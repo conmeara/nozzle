@@ -157,12 +157,9 @@ final class FileSystemSource: ContentSource {
             // Add folders
             for folderURL in folders {
                 let snap = FileIdentity.snapshot(for: folderURL)
-                let stableIdString = "\(folderURL.absoluteString):\(snap.modDate.timeIntervalSince1970)"
-                let hash = SHA256.hash(data: Data(stableIdString.utf8))
-                let hashString = hash.compactMap { String(format: "%02x", $0) }.joined()
-                let truncatedHash = String(hashString.prefix(32))
-                let formattedHash = truncatedHash.inserting("-", at: [8, 12, 16, 20])
-                let uuid = UUID(uuidString: formattedHash) ?? UUID()
+                // Derive a stable UUID from the file identity when available;
+                // fall back to absolute path for determinism (not mod date).
+                let uuid = Self.makeStableUUID(identity: snap.identity, fallbackPath: folderURL.absoluteString)
                 
                 let folderItem = ContentItem(
                     id: uuid,
@@ -186,12 +183,8 @@ final class FileSystemSource: ContentSource {
                 let type = Self.resolvedType(for: fileURL)
                 let fileSize = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]))?.fileSize.flatMap(Int64.init)
                 
-                let stableIdString = "\(fileURL.absoluteString):\(snap.modDate.timeIntervalSince1970)"
-                let hash = SHA256.hash(data: Data(stableIdString.utf8))
-                let hashString = hash.compactMap { String(format: "%02x", $0) }.joined()
-                let truncatedHash = String(hashString.prefix(32))
-                let formattedHash = truncatedHash.inserting("-", at: [8, 12, 16, 20])
-                let uuid = UUID(uuidString: formattedHash) ?? UUID()
+                // Use stable identity-based UUID to prevent ID churn on save.
+                let uuid = Self.makeStableUUID(identity: snap.identity, fallbackPath: fileURL.absoluteString)
                 
                 let fileItem = ContentItem(
                     id: uuid,
@@ -272,6 +265,22 @@ final class FileSystemSource: ContentSource {
 // MARK: - UTType Resolution
 
 extension FileSystemSource {
+    // Generate a deterministic UUID from a file identity if present, otherwise from a stable string (path).
+    nonisolated static func makeStableUUID(identity: Data?, fallbackPath: String) -> UUID {
+        if let identity {
+            let hash = SHA256.hash(data: identity)
+            let hex = hash.compactMap { String(format: "%02x", $0) }.joined()
+            let truncated = String(hex.prefix(32))
+            let formatted = truncated.inserting("-", at: [8, 12, 16, 20])
+            if let uuid = UUID(uuidString: formatted) { return uuid }
+        }
+        // Fallback: deterministic hash of absolute path (stable across saves)
+        let hash = SHA256.hash(data: Data(fallbackPath.utf8))
+        let hex = hash.compactMap { String(format: "%02x", $0) }.joined()
+        let truncated = String(hex.prefix(32))
+        let formatted = truncated.inserting("-", at: [8, 12, 16, 20])
+        return UUID(uuidString: formatted) ?? UUID()
+    }
     nonisolated static func resolvedType(for url: URL) -> UTType? {
         // Try to get type from resource values first
         if let vals = try? url.resourceValues(forKeys: [.contentTypeKey]),
