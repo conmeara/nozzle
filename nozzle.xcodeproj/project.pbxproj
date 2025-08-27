@@ -148,6 +148,11 @@
 		F5758B012E5D228200FC0F19 /* FolderExpansionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758B002E5D228200FC0F19 /* FolderExpansionState.swift */; };
 		F5758B032E5D228F00FC0F19 /* FolderTreeItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758B022E5D228F00FC0F19 /* FolderTreeItemView.swift */; };
 		F5C88D252DE55BA500EF8FA3 /* PromptHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */; };
+        F5F0C0012EE0000000000001 /* PromptChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0002EE0000000000001 /* PromptChip.swift */; };
+        F5F0C0032EE0000000000002 /* PromptChipsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0022EE0000000000002 /* PromptChipsStore.swift */; };
+        F5F0C0052EE0000000000003 /* PromptChipsBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0042EE0000000000003 /* PromptChipsBarView.swift */; };
+        F5F0C0072EE0000000000004 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0062EE0000000000004 /* FlowLayout.swift */; };
+        F5F0C00A2EE0000000000006 /* HistoryItem+Hashable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0082EE0000000000005 /* HistoryItem+Hashable.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -526,6 +531,7 @@
 		F57274642E56722D003A9299 /* UniversalItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniversalItemView.swift; sourceTree = "<group>"; };
 		F57274652E56722D003A9299 /* UniversalListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniversalListView.swift; sourceTree = "<group>"; };
 		F57274682E567244003A9299 /* SecurityScopedBookmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityScopedBookmarks.swift; sourceTree = "<group>"; };
+		F5F0C0082EE0000000000005 /* HistoryItem+Hashable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HistoryItem+Hashable.swift"; sourceTree = "<group>"; };
 		F572746B2E56B882003A9299 /* FileIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileIdentity.swift; sourceTree = "<group>"; };
 		F572746C2E56B882003A9299 /* FSEventsStream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FSEventsStream.swift; sourceTree = "<group>"; };
 		F57274702E57C00B003A9299 /* FileTypeBadgeCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTypeBadgeCache.swift; sourceTree = "<group>"; };
@@ -538,6 +544,10 @@
 		F5758B002E5D228200FC0F19 /* FolderExpansionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderExpansionState.swift; sourceTree = "<group>"; };
 		F5758B022E5D228F00FC0F19 /* FolderTreeItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderTreeItemView.swift; sourceTree = "<group>"; };
 		F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptHeaderView.swift; sourceTree = "<group>"; };
+        F5F0C0002EE0000000000001 /* PromptChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChip.swift; sourceTree = "<group>"; };
+        F5F0C0022EE0000000000002 /* PromptChipsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChipsStore.swift; sourceTree = "<group>"; };
+        F5F0C0042EE0000000000003 /* PromptChipsBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChipsBarView.swift; sourceTree = "<group>"; };
+        F5F0C0062EE0000000000004 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -577,6 +587,7 @@
 			isa = PBXGroup;
 			children = (
 				F57274682E567244003A9299 /* SecurityScopedBookmarks.swift */,
+				F5F0C0082EE0000000000005 /* HistoryItem+Hashable.swift */,
 				DA19691B2C3F3EAC00258481 /* Collection+Surrounding.swift */,
 				DAA072D22C40A961006DDFD2 /* Color+Random.swift */,
 				DA13D7D12C19F91B00FA9E23 /* Defaults.Keys+Names.swift */,
@@ -598,6 +609,7 @@
 				DA181176247D14DA00066D55 /* Settings.PaneIdentifier+Panes.swift */,
 				DA9C3C462C20B91D0056795D /* String+Identifiable.swift */,
 				DAFE2DD9268A521A00990986 /* String+Shortened.swift */,
+                F5F0C0022EE0000000000002 /* PromptChipsStore.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -618,6 +630,7 @@
 				F57274582E56720D003A9299 /* ContentSourceType.swift */,
 				DA05B5132C234DCF006980FE /* HistoryItem.swift */,
 				DA05B5122C234DCF006980FE /* HistoryItemContent.swift */,
+                F5F0C0002EE0000000000001 /* PromptChip.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -677,6 +690,8 @@
 				DA1969172C3F327500258481 /* SearchFieldView.swift */,
 				DA1969182CF327500258481 /* UnifiedInputFieldView.swift */,
 				DA555F112CF155A2009608BD /* WrappingTextView.swift */,
+                F5F0C0042EE0000000000003 /* PromptChipsBarView.swift */,
+                F5F0C0062EE0000000000004 /* FlowLayout.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -1184,6 +1199,11 @@
 				DAE28500232257D20080E394 /* ColorImage.swift in Sources */,
 				DA7A753E26A52F0F00DC16EF /* NSImage+Names.swift in Sources */,
 				DA20FA782B082E1A00056DD5 /* NSSound+Named.swift in Sources */,
+				F5F0C0072EE0000000000004 /* FlowLayout.swift in Sources */,
+				F5F0C0052EE0000000000003 /* PromptChipsBarView.swift in Sources */,
+				F5F0C0032EE0000000000002 /* PromptChipsStore.swift in Sources */,
+				F5F0C0012EE0000000000001 /* PromptChip.swift in Sources */,
+				F5F0C00A2EE0000000000006 /* HistoryItem+Hashable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

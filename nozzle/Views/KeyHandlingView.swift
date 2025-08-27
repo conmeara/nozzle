@@ -48,6 +48,19 @@ struct KeyHandlingView<Content: View>: View {
           }
         }
         
+        // Handle Command+Backspace to remove all prompt chips (prompt mode only)
+        if let event = NSApp.currentEvent {
+          let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock)
+          let isDelete = event.keyCode == UInt16(Key.delete.QWERTYKeyCode)
+            || Sauce.shared.key(for: Int(event.keyCode)) == .delete
+          if modifierFlags == .command && isDelete && !appState.isSearchMode {
+            if !appState.promptChips.isEmpty {
+              appState.removeAllPromptChips()
+              return .handled
+            }
+          }
+        }
+
         switch KeyChord(NSApp.currentEvent) {
         case .clearSelection:
           appState.clearSelectionAndPrompt()

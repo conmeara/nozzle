@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct FolderTreeItemView: View {
     @Bindable var item: UniversalItemDecorator
@@ -93,8 +94,8 @@ struct FolderTreeItemView: View {
     }
     
     private var folderIcon: ApplicationImage? {
-        // Use folder icon instead of file type badge
-        let folderImage = NSWorkspace.shared.icon(forFileType: "public.folder")
+        // Use folder icon via modern UTType-based API
+        let folderImage = NSWorkspace.shared.icon(for: .folder)
         return ApplicationImage(bundleIdentifier: nil, image: folderImage)
     }
     

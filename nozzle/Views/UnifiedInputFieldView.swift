@@ -100,6 +100,7 @@ struct UnifiedInputFieldView: View {
          let url = first.fileURL,
          !(first.uniformTypeIdentifier?.hasPrefix("org.nozzle.command.") ?? false) {
         (contentManager.sources["prompts"] as? PromptsSource)?.applyPrompt(at: url)
+        appState.addPromptChip(url: url)
         // Switch to prompt mode so the user can keep editing the input
         appState.isSearchMode = false
         appState.updateFooterItemVisibility()

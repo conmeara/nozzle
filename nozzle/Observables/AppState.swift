@@ -2,6 +2,7 @@ import AppKit
 import Defaults
 import Foundation
 import Settings
+import UniformTypeIdentifiers
 
 @Observable @MainActor
 class AppState {
@@ -17,6 +18,18 @@ class AppState {
   var promptText: String = ""
   var isSearchMode: Bool = false  // Track search mode separately
   private var preservedSelections: Set<UUID> = []
+  
+  // Prompt chips state
+  var promptChips: [PromptChip] = [] {
+    didSet {
+      PromptChipsStore.save(promptChips)
+      updateFooterItemVisibility()
+      popup.needsResize = true
+    }
+  }
+  
+  // Notification to request focusing the input field from subviews
+  static let focusInputNotification = Notification.Name("nozzle.focusInput")
   
   // Preview pane state management
   var showPreviewPane: Bool = Defaults[.showPreviewPane] {
@@ -91,6 +104,8 @@ class AppState {
     history = History.shared
     footer = Footer()
     popup = Popup()
+    // Restore prompt chips
+    promptChips = PromptChipsStore.load()
   }
 
   @MainActor
@@ -247,7 +262,8 @@ class AppState {
       let hasSelected = !contentManager.selectedItems.isEmpty
       
       // Show this item only if we have selected items or prompt text
-      let hasContent = hasSelected || !promptText.isEmpty
+      let hasChips = !promptChips.isEmpty
+      let hasContent = hasSelected || hasChips || !promptText.isEmpty
       pasteItem.isVisible = hasContent
     }
   }
@@ -341,8 +357,8 @@ class AppState {
     hasClipboardItems: Bool
   ) {
     // Step 1: Combine and paste all text content as one operation
-    if !textItems.isEmpty || !promptText.isEmpty {
-      let (rtf, html, plain) = combinedFormattedContent(from: textItems, promptText: promptText)
+    if !textItems.isEmpty || !promptText.isEmpty || !promptChips.isEmpty {
+      let (rtf, html, plain) = combinedFormattedContent(from: textItems, promptText: promptText, chips: promptChips)
       Clipboard.shared.copyFormattedText(rtf: rtf, html: html, plain: plain)
       
       // Wait for clipboard update, then paste
@@ -406,19 +422,38 @@ class AppState {
       // Restore prompt text
       self.promptText = promptText
       
-      // Phase 2: Selection is handled by ContentManager, no need to restore individual selections
+      // Phase 2: Selection is handled by ContentManager
       
       // Update footer visibility
       self.updateFooterItemVisibility()
     }
   }
   
-  private func combinedFormattedContent(from items: [ContentItem], promptText: String) -> (rtf: Data?, html: Data?, plain: String) {
+  private func combinedFormattedContent(from items: [ContentItem], promptText: String, chips: [PromptChip]) -> (rtf: Data?, html: Data?, plain: String) {
     let combined = NSMutableAttributedString()
     
     // Add prompt as plain text if present
     if !promptText.isEmpty {
       combined.append(NSAttributedString(string: promptText + "\n"))
+    }
+    
+    // Add chips content labeled <prompt i>
+    if !chips.isEmpty {
+      for (index, chip) in chips.enumerated() {
+        let heading = "<prompt \(index + 1)>\n"
+        combined.append(NSAttributedString(string: heading))
+        let (rtfData, htmlData, plainText) = TextFileFormatter.loadAll(from: chip.url, type: UTType(filenameExtension: chip.url.pathExtension))
+        if let rtfData = rtfData,
+           let attributedString = NSAttributedString(rtf: rtfData, documentAttributes: nil) {
+          combined.append(attributedString)
+        } else if let htmlData = htmlData,
+                  let attributedString = NSAttributedString(html: htmlData, documentAttributes: nil) {
+          combined.append(attributedString)
+        } else if !plainText.isEmpty {
+          combined.append(NSAttributedString(string: plainText))
+        }
+        combined.append(NSAttributedString(string: "\n"))
+      }
     }
     
     // Add each item preserving its formatting
@@ -471,4 +506,23 @@ class AppState {
     return (rtf: rtfData, html: htmlData, plain: plainText)
   }
   
+  // MARK: - Prompt chips helpers
+
+  func addPromptChip(url: URL) {
+    let chip = PromptChip(url: url)
+    promptChips.append(chip)
+  }
+
+  func removePromptChip(id: UUID) {
+    promptChips.removeAll { $0.id == id }
+  }
+
+  func removeAllPromptChips() {
+    promptChips.removeAll()
+  }
+
+  func requestFocusInput() {
+    NotificationCenter.default.post(name: Self.focusInputNotification, object: nil)
+  }
+
 }

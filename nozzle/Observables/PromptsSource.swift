@@ -139,14 +139,8 @@ final class PromptsSource: ContentSource {
     }
 
     func deletePrompt(at url: URL) {
-        do {
-            try NSWorkspace.shared.recycle([url], completionHandler: { result, error in 
-                // Handle result if needed
-            })
-            Task { @MainActor in await inner.refresh() }
-        } catch {
-            NSSound.beep()
-        }
+        NSWorkspace.shared.recycle([url]) { _, _ in }
+        Task { @MainActor in await inner.refresh() }
     }
 
     func reveal(_ url: URL) {

@@ -15,29 +15,35 @@ struct ContentView: View {
     VStack(alignment: .leading, spacing: 0) {
       KeyHandlingView(searchQuery: $appState.history.searchQuery, searchFocused: $inputFocused) {
         VStack(spacing: 0) {
-          // Input field at the top
-          UnifiedInputFieldView(
-            query: appState.isSearchMode
-              ? Binding(
-                  get: {
-                    contentManager.activeSourceId == "clipboard"
-                      ? appState.history.searchQuery
-                      : (contentManager.sources[contentManager.activeSourceId]?.searchQuery ?? "")
-                  },
-                  set: { newValue in
-                    if contentManager.activeSourceId == "clipboard" {
-                      appState.history.searchQuery = newValue
-                    } else {
-                      contentManager.sources[contentManager.activeSourceId]?.searchQuery = newValue
+          // Header: chips (prompt mode only), input field, and controls with tabs
+          VStack(spacing: 0) {
+            if !appState.isSearchMode {
+              PromptChipsBarView()
+            }
+
+            // Input field at the top
+            UnifiedInputFieldView(
+              query: appState.isSearchMode
+                ? Binding(
+                    get: {
+                      contentManager.activeSourceId == "clipboard"
+                        ? appState.history.searchQuery
+                        : (contentManager.sources[contentManager.activeSourceId]?.searchQuery ?? "")
+                    },
+                    set: { newValue in
+                      if contentManager.activeSourceId == "clipboard" {
+                        appState.history.searchQuery = newValue
+                      } else {
+                        contentManager.sources[contentManager.activeSourceId]?.searchQuery = newValue
+                      }
                     }
-                  }
-                )
-              : $appState.promptText,
-            isSearchMode: appState.isSearchMode,
-            isFocused: $inputFocused
-          )
-          .padding(.top, 4)
-          .padding(.bottom, 4)
+                  )
+                : $appState.promptText,
+              isSearchMode: appState.isSearchMode,
+              isFocused: $inputFocused
+            )
+            .padding(.top, 4)
+            .padding(.bottom, 4)
           .onChange(of: appState.isSearchMode) { _, newValue in
             // Clear search when switching to prompt mode
             if !newValue {
@@ -56,22 +62,32 @@ struct ContentView: View {
             }
           }
           
-          // Controls and tab buttons row
-          HStack(spacing: 0) {
+            // Controls and tab buttons row
+            HStack(spacing: 0) {
             // Icon group with tight spacing
             HStack(spacing: 6) {
               // Mode icon (search or plus) that switches mode on click
               Button(action: {
-                appState.isSearchMode.toggle()
-                inputFocused = true
+                if appState.isSearchMode {
+                  // In search mode, this acts as a switch to prompt mode
+                  appState.isSearchMode = false
+                  inputFocused = true
+                } else {
+                  // In prompt mode, use this plus to open Prompts for selection
+                  selectedTab = "prompts"
+                  contentManager.activeSourceId = "prompts"
+                  inputFocused = true
+                }
               }) {
                 Image(systemName: appState.isSearchMode ? "magnifyingglass" : "plus.circle")
                   .font(.system(size: 14))
-                  .foregroundColor(.secondary)
-                  .opacity(0.8)
+                  .foregroundColor(
+                    appState.isSearchMode ? .secondary : (contentManager.activeSourceId == "prompts" ? Color(NSColor.controlAccentColor) : .secondary)
+                  )
+                  .opacity(0.9)
               }
               .buttonStyle(PlainButtonStyle())
-              .help(appState.isSearchMode ? "Switch to prompt mode" : "Switch to search mode")
+              .help(appState.isSearchMode ? "Switch to prompt mode" : "Open Prompts")
               
               // Microphone button (only in prompt mode)
               if !appState.isSearchMode {
@@ -170,9 +186,10 @@ struct ContentView: View {
               .buttonStyle(PlainButtonStyle())
               .help("Clear")
             }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
           }
-          .padding(.horizontal, 8)
-          .padding(.vertical, 4)
           .background {
             GeometryReader { geo in
               Color.clear
@@ -284,6 +301,10 @@ struct ContentView: View {
          window.identifier == NSUserInterfaceItemIdentifier(bundleIdentifier) {
         scenePhase = .active
       }
+    }
+    // Re-focus input when requested (e.g., after selecting a prompt)
+    .onReceive(NotificationCenter.default.publisher(for: AppState.focusInputNotification)) { _ in
+      inputFocused = true
     }
     .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) {
       if let window = $0.object as? NSWindow,

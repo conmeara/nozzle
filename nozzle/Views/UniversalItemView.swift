@@ -43,11 +43,24 @@ struct UniversalItemView: View {
                             // Optionally close the popup after copy
                             appState.popup.close()
                         } else {
-                            // Update focus for preview
-                            contentManager.focus(item.id)
-                            // Toggle selection using centralized system
-                            contentManager.toggleSelection(item.id)
-                            appState.updateFooterItemVisibility()
+                            // Special handling for Prompts: add as chip instead of aggregated selection
+                            if item.base.sourceId == "prompts",
+                               !(item.base.uniformTypeIdentifier?.hasPrefix("org.nozzle.command.") ?? false),
+                               let url = item.base.fileURL {
+                                appState.addPromptChip(url: url)
+                                contentManager.activeSourceId = "prompts"
+                                // Focus for preview and align hover/selection
+                                contentManager.focus(item.id)
+                                appState.selectWithoutScrolling(item.id)
+                                appState.updateFooterItemVisibility()
+                                appState.requestFocusInput()
+                            } else {
+                                // Update focus for preview
+                                contentManager.focus(item.id)
+                                // Toggle selection using centralized system
+                                contentManager.toggleSelection(item.id)
+                                appState.updateFooterItemVisibility()
+                            }
                         }
                     }
                     .onHover { hovering in
@@ -64,6 +77,7 @@ struct UniversalItemView: View {
             if item.base.sourceId == "prompts", let url = item.base.fileURL {
                 Button("Apply to input") {
                     (contentManager.sources["prompts"] as? PromptsSource)?.applyPrompt(at: url)
+                    appState.addPromptChip(url: url)
                     appState.isSearchMode = false
                 }
                 Divider()

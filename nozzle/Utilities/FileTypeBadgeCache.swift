@@ -14,16 +14,8 @@ final class FileTypeBadgeCache {
             return cached
         }
         
-        // Get system icon for file type to match Finder
-        let img: NSImage
-        
-        // Try to get icon using preferred filename extension first
-        if let ext = type.preferredFilenameExtension {
-            img = NSWorkspace.shared.icon(forFileType: ext)
-        } else {
-            // Fall back to using the UTType identifier directly
-            img = NSWorkspace.shared.icon(forFileType: type.identifier)
-        }
+        // Get system icon for content type (modern API)
+        let img: NSImage = NSWorkspace.shared.icon(for: type)
         
         // Resize to standard badge size
         let badgeSize = NSSize(width: 16, height: 16)
