@@ -6,11 +6,11 @@ import CoreServices
 
 @Observable @MainActor
 final class FileSystemSource: ContentSource {
-    nonisolated(unsafe) let id: String  // Need nonisolated access for event persistence
+    nonisolated let id: String  // Need nonisolated access for event persistence
     let name: String
     let icon: NSImage
     let type: ContentSourceType = .folder
-    nonisolated(unsafe) private let folderURL: URL  // Need nonisolated access for FSEvents
+    nonisolated private let folderURL: URL  // Need nonisolated access for FSEvents
     private var cachedItems: [ContentItem] = []
     
     // Folder expansion state
@@ -367,12 +367,7 @@ extension FileSystemSource {
         let paths = pendingPaths
         pendingPaths.removeAll()
         
-        var mutated = false
-        var needsResort = false
-        
         for path in paths {
-            let url = URL(fileURLWithPath: path)
-            
             if FileIdentity.exists(at: path) {
                 // For now, refresh the entire hierarchy on any change
                 // This is simpler and safer for the initial implementation

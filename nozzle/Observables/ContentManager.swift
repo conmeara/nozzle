@@ -22,7 +22,7 @@ final class ContentManager {
     private(set) var focusedItemId: UUID?
     
     var selectedItems: [ContentItem] {
-        var items = allItems.filter { selectedItemIds.contains($0.id) }
+        let items = allItems.filter { selectedItemIds.contains($0.id) }
         
         // Add parent folders when their children are selected
         var parentFolders: [ContentItem] = []
@@ -177,8 +177,8 @@ final class ContentManager {
     
     func clearSelection() {
         selectedItemIds.removeAll()
-        // Also clear clipboard selection
-        if let clipboardSource = sources["clipboard"] as? ClipboardSource {
+        // Also clear clipboard selection (boolean test only)
+        if sources["clipboard"] is ClipboardSource {
             History.shared.items.forEach { $0.isSelected = false }
         }
     }
@@ -276,8 +276,7 @@ final class ContentManager {
         }
         
         // For folder sources, also remove the bookmark
-        if source.type == .folder,
-           let fileSystemSource = source as? FileSystemSource {
+        if source.type == .folder {
             // Extract folder URL from source ID
             let folderPath = String(sourceId.dropFirst("folder:".count))
             let folderURL = URL(fileURLWithPath: folderPath)
