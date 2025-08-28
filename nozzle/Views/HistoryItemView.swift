@@ -49,7 +49,10 @@ struct HistoryItemView: View {
       accessoryImage: item.thumbnailImage != nil ? nil : ColorImage.from(item.title),
       attributedTitle: item.attributedTitle,
       shortcuts: item.shortcuts,
-      isSelected: item.isSelected
+      isSelected: item.isSelected,
+      selectionSymbol: (contentManager.isExample(item.id) ? "pencil.circle" : "checkmark.circle.fill"),
+      selectionSymbolColor: (contentManager.isExample(item.id) ? .yellow : .white),
+      selectionBackgroundColor: (contentManager.isExample(item.id) ? .yellow : nil)
     ) {
       Text(verbatim: item.title)
     }
@@ -75,9 +78,16 @@ struct HistoryItemView: View {
       let copyButtonAreaWidth: CGFloat = 60
       let isCopyButtonClick = location.x > (frameWidth - copyButtonAreaWidth)
       
-      if isCopyButtonClick && !item.isSelected {
-        // Copy button clicked - copy to clipboard
-        copyItemToClipboard()
+      if isCopyButtonClick {
+        if !item.isSelected {
+          // Copy button clicked - copy to clipboard
+          copyItemToClipboard()
+        } else if contentManager.canToggleExample(item.id) {
+          // Toggle example state when clicking the selected checkmark area
+          contentManager.toggleExample(item.id)
+        } else {
+          // Not textual; ignore toggle (keep selected as context)
+        }
       } else if NSEvent.modifierFlags.contains(.command) {
         // Command-click: immediate paste
         appState.history.select(item)

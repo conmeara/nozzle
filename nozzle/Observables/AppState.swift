@@ -309,10 +309,11 @@ class AppState {
   
   @MainActor
   func performCombinedPaste() {
-    // Phase 2: Use centralized selection from ContentManager
-    let selectedContentItems = contentManager.selectedItems
+    // Use centralized selection from ContentManager, split into context and examples
+    let contextSelectedItems = contentManager.selectedContextItems
+    let exampleSelectedItems = contentManager.selectedExampleItems
     let hasPrompt = !promptText.isEmpty
-    let hasSelectedItems = !selectedContentItems.isEmpty
+    let hasSelectedItems = !(contextSelectedItems.isEmpty && exampleSelectedItems.isEmpty)
     
     guard hasPrompt || hasSelectedItems else { return }
     
@@ -320,7 +321,7 @@ class AppState {
     let currentPromptText = promptText
     
     // Enable multi-paste mode to prevent clipboard monitoring (only for clipboard items)
-    let hasClipboardItems = selectedContentItems.contains { $0.sourceType == .clipboard }
+    let hasClipboardItems = (contextSelectedItems + exampleSelectedItems).contains { $0.sourceType == .clipboard }
     if hasClipboardItems {
       Clipboard.shared.setMultiPasteMode(true)
     }
@@ -328,24 +329,18 @@ class AppState {
     // Close the popup immediately for better UX
     popup.close()
     
-    // Separate text items from media items
-    var textContentItems: [ContentItem] = []
-    var mediaContentItems: [ContentItem] = []
-    
-    for item in selectedContentItems {
-      if item.imageData != nil || (item.fileURL != nil && !item.isText) {
-        // Treat items with images or non-text files as media
-        mediaContentItems.append(item)
-      } else {
-        // Treat everything else as text (including text files)
-        textContentItems.append(item)
-      }
-    }
+    // Separate text items from media items, preserving context vs examples
+    let contextTextItems = contextSelectedItems.filter { !($0.imageData != nil || ($0.fileURL != nil && !$0.isText)) }
+    let exampleTextItems = exampleSelectedItems.filter { !($0.imageData != nil || ($0.fileURL != nil && !$0.isText)) }
+    let contextMediaItems = contextSelectedItems.filter { $0.imageData != nil || ($0.fileURL != nil && !$0.isText) }
+    let exampleMediaItems = exampleSelectedItems.filter { $0.imageData != nil || ($0.fileURL != nil && !$0.isText) }
     
     // Execute the paste operations
     executeCombinedPaste(
-      textItems: textContentItems,
-      mediaItems: mediaContentItems,
+      contextTextItems: contextTextItems,
+      exampleTextItems: exampleTextItems,
+      contextMediaItems: contextMediaItems,
+      exampleMediaItems: exampleMediaItems,
       promptText: currentPromptText,
       hasClipboardItems: hasClipboardItems
     )
@@ -353,14 +348,16 @@ class AppState {
   
   @MainActor
   private func executeCombinedPaste(
-    textItems: [ContentItem],
-    mediaItems: [ContentItem],
+    contextTextItems: [ContentItem],
+    exampleTextItems: [ContentItem],
+    contextMediaItems: [ContentItem],
+    exampleMediaItems: [ContentItem],
     promptText: String,
     hasClipboardItems: Bool
   ) {
     // Step 1: Combine and paste all text content as one operation
-    if !textItems.isEmpty || !promptText.isEmpty || !promptChips.isEmpty {
-      let (rtf, html, plain) = combinedFormattedContent(from: textItems, promptText: promptText, chips: promptChips)
+    if !contextTextItems.isEmpty || !exampleTextItems.isEmpty || !promptText.isEmpty || !promptChips.isEmpty {
+      let (rtf, html, plain) = combinedFormattedContent(contextItems: contextTextItems, exampleItems: exampleTextItems, promptText: promptText, chips: promptChips)
       Clipboard.shared.copyFormattedText(rtf: rtf, html: html, plain: plain)
       
       // Wait for clipboard update, then paste
@@ -369,12 +366,15 @@ class AppState {
         
         // Step 2: After text is pasted, paste media items sequentially
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-          self.pasteMediaItems(mediaItems, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems)
+          // Paste context media first, then example media to preserve order
+          let allMedia = contextMediaItems + exampleMediaItems
+          self.pasteMediaItems(allMedia, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems)
         }
       }
     } else {
       // No text content, just paste media items
-      pasteMediaItems(mediaItems, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems)
+      let allMedia = contextMediaItems + exampleMediaItems
+      pasteMediaItems(allMedia, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems)
     }
   }
   
@@ -431,7 +431,7 @@ class AppState {
     }
   }
   
-  private func combinedFormattedContent(from items: [ContentItem], promptText: String, chips: [PromptChip]) -> (rtf: Data?, html: Data?, plain: String) {
+  private func combinedFormattedContent(contextItems: [ContentItem], exampleItems: [ContentItem], promptText: String, chips: [PromptChip]) -> (rtf: Data?, html: Data?, plain: String) {
     let combined = NSMutableAttributedString()
     
     // Add prompt as plain text if present
@@ -458,8 +458,8 @@ class AppState {
       }
     }
     
-    // Add each item preserving its formatting
-    for item in items {
+    // Helper to append a single item's content
+    func appendItem(_ item: ContentItem) {
       // Check if this is a file-backed text item that needs lazy loading
       if item.sourceType == .folder && item.isText && item.fileURL != nil {
         // Lazy load text file content
@@ -486,7 +486,92 @@ class AppState {
           combined.append(NSAttributedString(string: text))
         }
       }
-      combined.append(NSAttributedString(string: "\n"))
+    }
+    
+    // Helpers to expand folders into textual descendants and filter non-text
+    func textualDescendants(of folder: ContentItem) -> [ContentItem] {
+      guard folder.isFolder, let baseURL = folder.fileURL else { return [] }
+      var results: [ContentItem] = []
+      let fm = FileManager.default
+      if let enumerator = fm.enumerator(at: baseURL, includingPropertiesForKeys: [.isDirectoryKey, .contentTypeKey, .contentModificationDateKey, .fileSizeKey], options: [.skipsHiddenFiles]) {
+        for case let url as URL in enumerator {
+          do {
+            let vals = try url.resourceValues(forKeys: [.isDirectoryKey, .contentTypeKey, .contentModificationDateKey, .fileSizeKey])
+            if vals.isDirectory == true { continue }
+            let type = FileSystemSource.resolvedType(for: url)
+            // Consider textual if UTType conforms to .text, or is RTF/HTML/Markdown
+            let isMarkdown = (type?.identifier == "net.daringfireball.markdown" || type?.identifier == "public.markdown" || type?.preferredFilenameExtension == "md")
+            let isTextual = (type?.conforms(to: .text) == true) || type == .rtf || type == .rtfd || type == .html || isMarkdown
+            guard isTextual else { continue }
+            // Create a minimal ephemeral ContentItem for paste composition
+            let id = FileSystemSource.makeStableUUID(identity: FileIdentity.snapshot(for: url).identity, fallbackPath: url.absoluteString)
+            let item = ContentItem(
+              id: id,
+              title: url.lastPathComponent,
+              timestamp: vals.contentModificationDate ?? Date(),
+              sourceType: .folder,
+              sourceId: folder.sourceId,
+              fileURL: url,
+              imageData: nil,
+              rtfData: nil,
+              htmlData: nil,
+              plainText: nil,
+              fileIdentity: FileIdentity.snapshot(for: url).identity,
+              uniformTypeIdentifier: type?.identifier,
+              fileSize: vals.fileSize.flatMap(Int64.init),
+              isFolder: false,
+              depth: 0,
+              parentPath: nil,
+              isSelected: false,
+              isVisible: true
+            )
+            results.append(item)
+          } catch {
+            continue
+          }
+        }
+      }
+      return results
+    }
+    
+    func flattenToText(_ items: [ContentItem]) -> [ContentItem] {
+      var result: [ContentItem] = []
+      var seen: Set<UUID> = []
+      for item in items {
+        if item.isFolder {
+          for desc in textualDescendants(of: item) {
+            if !seen.contains(desc.id) {
+              seen.insert(desc.id)
+              result.append(desc)
+            }
+          }
+        } else {
+          // Keep only textual items
+          let isTextual = (item.sourceType == .folder && item.isText) || item.plainText != nil || item.rtfData != nil || item.htmlData != nil
+          if isTextual, !seen.contains(item.id) {
+            seen.insert(item.id)
+            result.append(item)
+          }
+        }
+      }
+      return result
+    }
+    
+    let flatContextItems = flattenToText(contextItems)
+    let flatExampleItems = flattenToText(exampleItems)
+    
+    // Add context items wrapped in <context> tags (context above examples)
+    for item in flatContextItems {
+      combined.append(NSAttributedString(string: "<context>\n"))
+      appendItem(item)
+      combined.append(NSAttributedString(string: "\n</context>\n"))
+    }
+    
+    // Add example items wrapped in <example> tags
+    for item in flatExampleItems {
+      combined.append(NSAttributedString(string: "<example>\n"))
+      appendItem(item)
+      combined.append(NSAttributedString(string: "\n</example>\n"))
     }
     
     // Return all formats - pasteboard will use the best available

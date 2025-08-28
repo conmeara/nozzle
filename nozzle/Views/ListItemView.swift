@@ -12,6 +12,8 @@ struct ListItemView<Title: View>: View {
   var help: LocalizedStringKey?
   var showCheckbox: Bool = true
   var selectionSymbol: String = "checkmark.circle.fill"
+  var selectionSymbolColor: Color = .white
+  var selectionBackgroundColor: Color? = nil
   @ViewBuilder var title: () -> Title
 
   @Default(.showApplicationIcons) private var showIcons
@@ -74,7 +76,7 @@ struct ListItemView<Title: View>: View {
             // Show round checkbox when item is selected
             Image(systemName: selectionSymbol)
               .font(.system(size: 14))
-              .foregroundColor(.white)
+              .foregroundColor(selectionSymbolColor)
               .opacity(0.8)
               .frame(maxWidth: .infinity, alignment: .trailing)
           } else if isHovering {
@@ -110,7 +112,7 @@ struct ListItemView<Title: View>: View {
     .foregroundStyle(.primary)
     .background {
       if isSelected {
-        Color(NSColor.controlAccentColor).opacity(0.25)  // Subtle accent color for selection
+        (selectionBackgroundColor ?? Color(NSColor.controlAccentColor)).opacity(0.25)  // Subtle accent color for selection
       } else if shouldShowHoverBackground {
         Color(NSColor.quaternaryLabelColor).opacity(0.5)  // Hover background
       } else {

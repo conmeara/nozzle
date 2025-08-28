@@ -23,6 +23,10 @@ struct FolderTreeItemView: View {
     }
     
     private var selectionState: (isSelected: Bool, symbol: String) {
+        // If marked as example, override UI to reflect example state
+        if contentManager.isExample(item.id) {
+            return (true, "pencil.circle")
+        }
         let folderSelectionState = contentManager.getFolderSelectionState(item.id)
         switch folderSelectionState {
         case .none:
@@ -62,7 +66,9 @@ struct FolderTreeItemView: View {
                 attributedTitle: nil,
                 shortcuts: [],
                 isSelected: selectionState.isSelected,
-                selectionSymbol: selectionState.symbol
+                selectionSymbol: selectionState.symbol,
+                selectionSymbolColor: (contentManager.isExample(item.id) ? .yellow : .white),
+                selectionBackgroundColor: (contentManager.isExample(item.id) ? .yellow : nil)
             ) {
                 Text(verbatim: item.title)
                     .lineLimit(1)
@@ -74,9 +80,16 @@ struct FolderTreeItemView: View {
                 let frameWidth: CGFloat = 300
                 
                 if location.x > (frameWidth - copyAreaThreshold) {
-                    // Copy folder path
-                    item.copyToClipboard()
-                    appState.popup.close()
+                    if !contentManager.isSelected(item.id) {
+                        // Copy folder path when not selected
+                        item.copyToClipboard()
+                        appState.popup.close()
+                    } else if contentManager.canToggleExample(item.id) {
+                        // Toggle example state for textual-only folders
+                        contentManager.toggleExample(item.id)
+                    } else {
+                        // Ignore toggle for non-textual folders
+                    }
                 } else {
                     // Focus and selection
                     contentManager.focus(item.id)

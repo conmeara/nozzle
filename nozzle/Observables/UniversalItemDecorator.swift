@@ -13,6 +13,9 @@ final class UniversalItemDecorator: Identifiable, Hashable {
     var isSelected: Bool {
         ContentManager.shared.isSelected(id)
     }
+    var isExample: Bool {
+        ContentManager.shared.isExample(id)
+    }
     var isVisible: Bool {
         didSet { base.isVisible = isVisible }
     }

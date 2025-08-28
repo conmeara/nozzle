@@ -26,7 +26,10 @@ struct UniversalItemView: View {
                         accessoryImage: nil,
                         attributedTitle: nil,
                         shortcuts: [],                       // no numbered shortcuts for file sources in Phase 1
-                        isSelected: item.isSelected
+                        isSelected: item.isSelected,
+                        selectionSymbol: (item.isExample ? "pencil.circle" : "checkmark.circle.fill"),
+                        selectionSymbolColor: (item.isExample ? .yellow : .white),
+                        selectionBackgroundColor: (item.isExample ? .yellow : nil)
                     ) {
                         Text(verbatim: item.title)
                             .lineLimit(1)
@@ -38,10 +41,17 @@ struct UniversalItemView: View {
                         let frameWidth: CGFloat = 300  // Approximate width
                         
                         if location.x > (frameWidth - copyAreaThreshold) {
-                            // Copy action
-                            item.copyToClipboard()
-                            // Optionally close the popup after copy
-                            appState.popup.close()
+                            if !item.isSelected {
+                                // Copy action
+                                item.copyToClipboard()
+                                // Optionally close the popup after copy
+                                appState.popup.close()
+                            } else if contentManager.canToggleExample(item.id) {
+                                // Toggle example state when clicking the selected checkmark area
+                                contentManager.toggleExample(item.id)
+                            } else {
+                                // Not textual; ignore toggle
+                            }
                         } else {
                             // Special handling for Prompts: add as chip instead of aggregated selection
                             if item.base.sourceId == "prompts",

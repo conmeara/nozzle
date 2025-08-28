@@ -208,10 +208,10 @@ struct ContentView: View {
               )
               .frame(minWidth: 300)
             } else if contentManager.activeSourceId == "aggregated" {
-              // Phase 2: Aggregated view showing selected items from all sources
-              let selectedItems = contentManager.selectedItems
-                .map(UniversalItemDecorator.init)
-              if selectedItems.isEmpty {
+              // Aggregated view showing selected items from all sources, split into Context and Examples
+              let contextItems = contentManager.selectedContextItems.map(UniversalItemDecorator.init)
+              let exampleItems = contentManager.selectedExampleItems.map(UniversalItemDecorator.init)
+              if contextItems.isEmpty && exampleItems.isEmpty {
                 VStack {
                   Spacer()
                   Text("No items selected")
@@ -224,7 +224,7 @@ struct ContentView: View {
                 }
                 .frame(minWidth: 300)
               } else {
-                UniversalListView(items: selectedItems)
+                AggregatedListView(contextItems: contextItems, exampleItems: exampleItems)
                   .frame(minWidth: 300)
               }
             } else {

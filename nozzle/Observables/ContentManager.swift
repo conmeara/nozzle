@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 import Observation
 
 enum FolderSelectionState {
@@ -19,6 +20,8 @@ final class ContentManager {
     
     // Phase 2: Centralized selection
     private(set) var selectedItemIds: Set<UUID> = []
+    // Subset of selected items that are marked as examples
+    private(set) var exampleItemIds: Set<UUID> = []
     
     // Preview focus tracking
     private(set) var focusedItemId: UUID?
@@ -63,6 +66,15 @@ final class ContentManager {
         }
     }
     
+    // Convenience: selected items split into context vs examples
+    var selectedContextItems: [ContentItem] {
+        selectedItems.filter { !exampleItemIds.contains($0.id) }
+    }
+    
+    var selectedExampleItems: [ContentItem] {
+        selectedItems.filter { exampleItemIds.contains($0.id) }
+    }
+    
     var focusedContentItem: ContentItem? {
         allItems.first { $0.id == focusedItemId }
     }
@@ -87,6 +99,8 @@ final class ContentManager {
             let wasSelected = selectedItemIds.contains(id)
             if wasSelected {
                 selectedItemIds.remove(id)
+                // Clear example state if deselected
+                exampleItemIds.remove(id)
             } else {
                 selectedItemIds.insert(id)
             }
@@ -146,6 +160,8 @@ final class ContentManager {
         for item in allItems {
             if item.parentPath == folderPath {
                 selectedItemIds.insert(item.id)
+                // Children are selected as context by default (not examples)
+                exampleItemIds.remove(item.id)
                 // Recursively select nested folder children
                 if item.isFolder {
                     selectFolderChildren(item.id)
@@ -155,6 +171,7 @@ final class ContentManager {
         
         // Also select the folder itself (for consistency when expanding/collapsing)
         selectedItemIds.insert(folderId)
+        exampleItemIds.remove(folderId)
     }
     
     private func deselectFolderChildren(_ folderId: UUID) {
@@ -166,6 +183,8 @@ final class ContentManager {
         for item in allItems {
             if item.parentPath == folderPath {
                 selectedItemIds.remove(item.id)
+                // Remove example flag when deselecting children
+                exampleItemIds.remove(item.id)
                 // Recursively deselect nested folder children
                 if item.isFolder {
                     deselectFolderChildren(item.id)
@@ -175,10 +194,12 @@ final class ContentManager {
         
         // Also deselect the folder itself
         selectedItemIds.remove(folderId)
+        exampleItemIds.remove(folderId)
     }
     
     func clearSelection() {
         selectedItemIds.removeAll()
+        exampleItemIds.removeAll()
         // Also clear clipboard selection (boolean test only)
         if sources["clipboard"] is ClipboardSource {
             History.shared.items.forEach { $0.isSelected = false }
@@ -264,6 +285,7 @@ final class ContentManager {
         let sourceItems = source.items
         for item in sourceItems {
             selectedItemIds.remove(item.id)
+            exampleItemIds.remove(item.id)
         }
         
         // If this was the active source, switch to clipboard
@@ -298,5 +320,113 @@ final class ContentManager {
     // Search
     func searchAcrossAllSources(query: String) -> [ContentItem] {
         sources.values.flatMap { $0.search(query: query) }
+    }
+    
+    // MARK: - Example state
+    func isExample(_ id: UUID) -> Bool {
+        exampleItemIds.contains(id)
+    }
+    
+    func toggleExample(_ id: UUID) {
+        // Only allow toggling example state for selected, textual items
+        guard canToggleExample(id) else { return }
+        guard let item = allItems.first(where: { $0.id == id }) else { return }
+        if exampleItemIds.contains(id) {
+            // Turning OFF example: clear on folder and its descendants
+            exampleItemIds.remove(id)
+            if item.isFolder {
+                let childIDs = descendantTextItemIDs(for: item)
+                for cid in childIDs {
+                    exampleItemIds.remove(cid)
+                }
+            }
+        } else {
+            // Turning ON example
+            exampleItemIds.insert(id)
+            if item.isFolder {
+                // Select and mark all textual descendants as examples (even if collapsed)
+                let childIDs = descendantTextItemIDs(for: item)
+                for cid in childIDs {
+                    selectedItemIds.insert(cid)
+                    exampleItemIds.insert(cid)
+                }
+            }
+        }
+    }
+    
+    // Collect all textual descendant file UUIDs for a folder item by scanning the filesystem
+    private func descendantTextItemIDs(for folder: ContentItem) -> [UUID] {
+        guard folder.isFolder, let baseURL = folder.fileURL else { return [] }
+        let fileURLs = self.enumerateDescendantFiles(at: baseURL)
+        var ids: [UUID] = []
+        for url in fileURLs {
+            if isTextURL(url) {
+                let id = stableUUID(for: url)
+                ids.append(id)
+            }
+        }
+        return ids
+    }
+    
+    // File enumeration helpers
+    private func enumerateDescendantFiles(at baseURL: URL) -> [URL] {
+        var results: [URL] = []
+        let fm = FileManager.default
+        if let enumerator = fm.enumerator(at: baseURL, includingPropertiesForKeys: [.isDirectoryKey, .contentTypeKey], options: [.skipsHiddenFiles]) {
+            for case let url as URL in enumerator {
+                do {
+                    let vals = try url.resourceValues(forKeys: [.isDirectoryKey])
+                    if vals.isDirectory == true { continue }
+                    results.append(url)
+                } catch {
+                    continue
+                }
+            }
+        }
+        return results
+    }
+    
+    private func isTextURL(_ url: URL) -> Bool {
+        let type = FileSystemSource.resolvedType(for: url)
+        if type?.conforms(to: .text) == true { return true }
+        if type == .rtf || type == .rtfd || type == .html { return true }
+        // Markdown special cases
+        if type?.identifier == "net.daringfireball.markdown" ||
+           type?.identifier == "public.markdown" ||
+           type?.preferredFilenameExtension == "md" { return true }
+        return false
+    }
+    
+    private func stableUUID(for url: URL) -> UUID {
+        let snap = FileIdentity.snapshot(for: url)
+        return FileSystemSource.makeStableUUID(identity: snap.identity, fallbackPath: url.absoluteString)
+    }
+    
+    func canToggleExample(_ id: UUID) -> Bool {
+        guard selectedItemIds.contains(id),
+              let item = allItems.first(where: { $0.id == id }) else { return false }
+        
+        if item.isFolder {
+            // Allow folder examples only if all descendant files are textual and there is at least one file
+            guard let baseURL = item.fileURL else { return false }
+            let files = enumerateDescendantFiles(at: baseURL)
+            let textual = files.filter { isTextURL($0) }
+            guard !files.isEmpty else { return false }
+            return files.count == textual.count
+        }
+        
+        // Disallow media or non-text files as examples
+        if item.imageData != nil { return false }
+        if let _ = item.fileURL, !item.isText { return false }
+        
+        // Text files are allowed; general files only if UTType is text
+        if let _ = item.fileURL {
+            return item.isText
+        }
+        // Clipboard/memory items: require textual content
+        if item.plainText != nil { return true }
+        if item.rtfData != nil { return true }
+        if item.htmlData != nil { return true }
+        return false
     }
 }
