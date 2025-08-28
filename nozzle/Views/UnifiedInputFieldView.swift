@@ -104,6 +104,8 @@ struct UnifiedInputFieldView: View {
         // Switch to prompt mode so the user can keep editing the input
         appState.isSearchMode = false
         appState.updateFooterItemVisibility()
+        // Return to previous tab after choosing a prompt
+        contentManager.activeSourceId = contentManager.lastNonPromptsSourceId
         // Keep the popup open; user can press ⏎ again to paste combined
       }
       return

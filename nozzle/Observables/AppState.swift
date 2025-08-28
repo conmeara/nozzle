@@ -27,6 +27,8 @@ class AppState {
       popup.needsResize = true
     }
   }
+  // The chip that should be highlighted as active (only set on chip click)
+  var activePromptChipId: UUID?
   
   // Notification to request focusing the input field from subviews
   static let focusInputNotification = Notification.Name("nozzle.focusInput")

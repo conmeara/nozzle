@@ -48,12 +48,16 @@ struct UniversalItemView: View {
                                !(item.base.uniformTypeIdentifier?.hasPrefix("org.nozzle.command.") ?? false),
                                let url = item.base.fileURL {
                                 appState.addPromptChip(url: url)
+                                // Keep preview focused on this prompt
+                                let previous = contentManager.lastNonPromptsSourceId
                                 contentManager.activeSourceId = "prompts"
                                 // Focus for preview and align hover/selection
                                 contentManager.focus(item.id)
                                 appState.selectWithoutScrolling(item.id)
                                 appState.updateFooterItemVisibility()
                                 appState.requestFocusInput()
+                                // Return to the previous tab after adding the chip
+                                contentManager.activeSourceId = previous
                             } else {
                                 // Update focus for preview
                                 contentManager.focus(item.id)

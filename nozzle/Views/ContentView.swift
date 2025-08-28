@@ -70,10 +70,11 @@ struct ContentView: View {
               Button(action: {
                 if appState.isSearchMode {
                   // In search mode, this acts as a switch to prompt mode
-                  appState.isSearchMode = false
-                  inputFocused = true
+                    appState.isSearchMode = false
+                    inputFocused = true
                 } else {
                   // In prompt mode, use this plus to open Prompts for selection
+                  contentManager.lastNonPromptsSourceId = contentManager.activeSourceId == "prompts" ? contentManager.lastNonPromptsSourceId : contentManager.activeSourceId
                   selectedTab = "prompts"
                   contentManager.activeSourceId = "prompts"
                   inputFocused = true
@@ -131,8 +132,8 @@ struct ContentView: View {
                 contentManager.activeSourceId = "aggregated"
               }
               
-              // Dynamic tabs from sources
-              ForEach(contentManager.getAllSources(), id: \.id) { src in
+              // Dynamic tabs from sources (exclude Prompts)
+              ForEach(contentManager.getAllSources().filter { $0.id != "prompts" }, id: \.id) { src in
                 TabButton(
                   title: src.name,
                   isSelected: selectedTab == src.id,
@@ -153,16 +154,9 @@ struct ContentView: View {
                 )
               }
               
-              // "+" to open Prompts or add folder (shift+click)
+              // "+" to add folder source
               TabButton(title: "+", isSelected: false) {
-                if NSApp.currentEvent?.modifierFlags.contains(.shift) == true {
-                  openFolderPickerAndRegister()
-                } else {
-                  // Open Prompts tab but keep current mode (search or prompt)
-                  selectedTab = "prompts"
-                  contentManager.activeSourceId = "prompts"
-                  inputFocused = true
-                }
+                openFolderPickerAndRegister()
               }
             }
             

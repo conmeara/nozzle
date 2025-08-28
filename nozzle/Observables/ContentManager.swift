@@ -14,6 +14,8 @@ final class ContentManager {
     private(set) var sources: [String: any ContentSource] = [:]
     private(set) var orderedSourceIds: [String] = []
     var activeSourceId: String = "clipboard"   // default tab
+    // Remember the last non-Prompts source so we can return after picking a prompt
+    var lastNonPromptsSourceId: String = "clipboard"
     
     // Phase 2: Centralized selection
     private(set) var selectedItemIds: Set<UUID> = []
