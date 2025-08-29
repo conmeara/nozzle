@@ -11,32 +11,13 @@
             "id": "499f95c375e9eb5f",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Layout/Lists.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "Lists"
-            }
-          },
-          {
-            "id": "7b63d16304e71ba7",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Nozzle v3 plan.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Nozzle v3 plan"
+              "title": "New tab"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -184,37 +165,53 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "7b63d16304e71ba7",
+  "active": "499f95c375e9eb5f",
   "lastOpenFiles": [
-    "Layout/Lists.md",
+    "SystemLanguageModel.md",
+    "SpeechAnalyzer.md",
+    "Speech.md",
+    "Speech/AssetInventory.md",
+    "Speech/Speech.md",
+    "Speech/SpeechAnalyzer.md",
+    "Speech/SystemLanguageModel.md",
+    "Generating content and performing tasks with Foundation Models.md",
+    "Foundation Models/Generating content and performing tasks with Foundation Models.md",
+    "Apple Intelligence/BringingAdvancedSpeechToTextCapabilitiesToYourApp",
+    "Apple Intelligence/AddingIntelligentAppFeaturesWithGenerativeModels",
+    "Apple Intelligence",
+    "nozzle-v3-architecture.md",
     "Nozzle v3 plan.md",
-    "nozzle-architecture-evolution.md",
-    "UI_REDESIGN_SESSION.md",
-    "Multi-Source/Multi-Source Implementation Plan for Nozzle.md",
-    "Multi-Source/unified-ui-implementation-results.md",
-    "Multi-Source/phase2-implementation-results.md",
-    "Multi-Source/multi-source-architecture-plan.md",
-    "Multi-Source/implementation-results.md",
-    "Multi-Source/Recommendation from ChatGPT.md",
-    "Multi-Source/Goal.md",
-    "Multi-Source Implementation Plan for Nozzle.md",
-    "Multi-Source/nozzle-architecture-evolution.md",
-    "Multi-Source",
-    "Layout/Custom layout.md",
-    "Layout/Layout adjustments.md",
-    "Layout/Divider.md",
-    "Layout/Spacer.md",
-    "Layout/ZStack.md",
-    "Layout/LazyVGrid.md",
-    "Layout/LazyHGrid.md",
+    "Liquid Glass/Liquid Glass.md",
+    "Liquid Glass/Landmarks Building an app with Liquid Glass.md",
+    "Liquid Glass/Adopting Liquid Glass.md",
+    "Layout/sectionHeaders.md",
+    "Layout/sectionFooters.md",
+    "Layout/init(alignmentspacingpinnedViewscontent).md",
+    "Layout/init(alignmentspacingpinnedViewscontent) 1.md",
+    "Layout/init(alignmentspacingcontent).md",
+    "Layout/init(alignmentspacingcontent) 1.md",
+    "Layout/init(alignmenthorizontalSpacingverticalSpacingcontent).md",
+    "Layout/init(alignmentcontent).md",
     "Layout/gridColumnAlignment(_).md",
     "Layout/gridCellUnsizedAxes(_).md",
-    "Layout/gridCellAnchor(_).md",
     "Layout/gridCellColumns(_).md",
-    "Layout/init(alignmentcontent).md",
-    "Layout/init(alignmenthorizontalSpacingverticalSpacingcontent).md",
-    "Layout",
-    "Liquid Glass",
-    "Layout"
+    "Layout/gridCellAnchor(_).md",
+    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/docs",
+    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/untitled folder",
+    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/SwiftTranscriptionSampleApp.xcodeproj/project.xcworkspace/xcuserdata/conmeara.xcuserdatad/UserInterfaceState.xcuserstate",
+    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/SwiftTranscriptionSampleApp.xcodeproj/project.xcworkspace/xcuserdata/conmeara.xcuserdatad",
+    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/SwiftTranscriptionSampleApp.xcodeproj/project.xcworkspace/xcuserdata",
+    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/SwiftTranscriptionSampleApp.xcodeproj/xcuserdata/conmeara.xcuserdatad/xcschemes/xcschememanagement.plist",
+    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/SwiftTranscriptionSampleApp.xcodeproj/xcuserdata/conmeara.xcuserdatad/xcschemes",
+    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1012-thumb.imageset/1012-thumb@2x.jpg",
+    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1021-thumb.imageset/1021-thumb@2x.jpg",
+    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1019-thumb.imageset/1019-thumb@2x.jpg",
+    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1018-thumb.imageset/1018-thumb@2x.jpg",
+    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1017-thumb.imageset/1017-thumb@2x.jpg",
+    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1016-thumb.imageset/1016-thumb@2x.jpg",
+    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1015-thumb.imageset/1015-thumb@2x.jpg",
+    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1014-thumb.imageset/1014-thumb@2x.jpg",
+    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1011-thumb.imageset/1011-thumb@2x.jpg",
+    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1010-thumb.imageset/1010-thumb@2x.jpg"
   ]
 }
