@@ -26,6 +26,9 @@ enum KeyChord: CaseIterable {
   static var togglePromptModeKey: Key? { Sauce.shared.key(shortcut: .togglePromptMode) }
   static var togglePromptModeModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .togglePromptMode)?.modifiers }
 
+  static var toggleDictationKey: Key? { Sauce.shared.key(shortcut: .toggleDictation) }
+  static var toggleDictationModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .toggleDictation)?.modifiers }
+
   case clearHistory
   case clearHistoryAll
   case clearSearch
@@ -44,6 +47,7 @@ enum KeyChord: CaseIterable {
   case close
   case togglePreview
   case togglePromptMode
+  case toggleDictation
   case toggleSelection
   case unknown
 
@@ -121,6 +125,8 @@ enum KeyChord: CaseIterable {
       self = .togglePreview
     case (KeyChord.togglePromptModeKey, KeyChord.togglePromptModeModifiers):
       self = .togglePromptMode
+    case (KeyChord.toggleDictationKey, KeyChord.toggleDictationModifiers):
+      self = .toggleDictation
     case (.tab, []):
       self = .toggleSelection
     case (_, _) where !modifierFlags.isDisjoint(with: [.command, .control, .option]):

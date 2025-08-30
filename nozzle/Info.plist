@@ -28,6 +28,10 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © Alexey Rodionov</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>nozzle needs access to your microphone for speech-to-text dictation</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>nozzle uses on-device speech recognition to transcribe audio into text</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>SUEnableDownloaderService</key>

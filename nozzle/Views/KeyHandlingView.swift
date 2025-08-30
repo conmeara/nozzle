@@ -154,6 +154,14 @@ struct KeyHandlingView<Content: View>: View {
           appState.isPromptMode = !appState.isSearchMode  // Ensure they're opposite
           searchFocused = true
           return .handled
+        case .toggleDictation:
+          Task {
+            let binding = appState.isSearchMode ? 
+              Binding(get: { appState.history.searchQuery }, set: { appState.history.searchQuery = $0 }) :
+              Binding(get: { appState.promptText }, set: { appState.promptText = $0 })
+            await DictationManager.shared.toggleDictation(for: binding)
+          }
+          return .handled
         case .toggleSelection:
           // Tab key - toggle selection
           if let item = appState.history.selectedItem {

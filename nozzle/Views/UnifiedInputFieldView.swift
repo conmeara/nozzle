@@ -8,6 +8,8 @@ struct UnifiedInputFieldView: View {
   @Environment(AppState.self) private var appState
   @Environment(ContentManager.self) private var contentManager
   
+  // Removed inline mic button to avoid duplication with controls row
+  
   private var placeholderText: String {
     if isSearchMode {
       return NSLocalizedString("search_placeholder", comment: "")
@@ -42,6 +44,7 @@ struct UnifiedInputFieldView: View {
         .onChange(of: query) { oldValue, newValue in
           handleQueryChange(oldValue: oldValue, newValue: newValue)
         }
+      
     }
     .padding(.horizontal, 8)
     .padding(.vertical, 4)
@@ -54,7 +57,7 @@ struct UnifiedInputFieldView: View {
     if oldValue.isEmpty && newValue == "/" {
       contentManager.activeSourceId = "prompts"
       // Set the search query to show slash commands
-      if var src = contentManager.sources["prompts"] {
+      if let src = contentManager.sources["prompts"] {
         src.searchQuery = newValue
       }
     }

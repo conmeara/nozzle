@@ -42,7 +42,7 @@ struct PinsSettingsPane: View {
       Table(items, selection: $selection) {
         TableColumn(Text("Key", tableName: "PinsSettings")) { item in
           PinPickerView(item: item, availablePins: availablePins)
-            .onChange(of: item.pin) {
+            .onChange(of: item.pin) { _, _ in
               availablePins = HistoryItem.availablePins
             }
         }

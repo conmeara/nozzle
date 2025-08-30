@@ -124,7 +124,7 @@ struct PromptEditorView: View {
                 load()
                 setupPresenter()
             }
-            .onChange(of: text) { _ in
+            .onChange(of: text) { _, _ in
                 if isEditing {
                     isDirty = true
                     scheduleSave()

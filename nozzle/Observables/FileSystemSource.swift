@@ -26,7 +26,7 @@ final class FileSystemSource: ContentSource {
     
     // Thread-safe pending paths storage
     private let pendingPathsLock = NSLock()
-    nonisolated(unsafe) private var _pendingPaths: Set<String> = []
+    private var _pendingPaths: Set<String> = []
     
     private var pendingPaths: Set<String> {
         get {
@@ -339,21 +339,13 @@ extension FileSystemSource {
             pathsToAdd.append(event.path)
         }
         
-        // Add paths to pending set
+        // Add paths to pending set on the main actor, then coalesce apply
         if !pathsToAdd.isEmpty {
-            pendingPathsLock.lock()
-            for path in pathsToAdd {
-                _pendingPaths.insert(path)
-            }
-            let hasPending = !_pendingPaths.isEmpty
-            pendingPathsLock.unlock()
-            
-            // Only proceed if we have pending paths
-            guard hasPending else { return }
-            
-            // Coalesce changes - schedule on main actor
             Task { @MainActor [weak self] in
-                self?.eventCoalescer.throttle {
+                guard let self else { return }
+                for path in pathsToAdd { self.pendingPaths.insert(path) }
+                guard !self.pendingPaths.isEmpty else { return }
+                self.eventCoalescer.throttle {
                     Task { @MainActor [weak self] in
                         self?.applyPending()
                     }

@@ -7,6 +7,7 @@ struct ContentView: View {
   @State private var scenePhase: ScenePhase = .background
   @State private var selectedTab = "clipboard"
   @State private var contentManager = ContentManager.shared
+  @State private var dictationManager = DictationManager.shared
 
   @FocusState private var inputFocused: Bool
   @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -93,15 +94,17 @@ struct ContentView: View {
               // Microphone button (only in prompt mode)
               if !appState.isSearchMode {
                 Button(action: {
-                  // Placeholder for future microphone functionality
+                  Task { @MainActor in
+                    await dictationManager.toggleDictation(for: $appState.promptText)
+                  }
                 }) {
-                  Image(systemName: "mic")
+                  Image(systemName: dictationManager.isRecording ? "mic.fill" : "mic")
                     .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-                    .opacity(0.8)
+                    .foregroundColor(dictationManager.isRecording ? .orange : .secondary)
+                    .opacity(dictationManager.isRecording ? 1.0 : 0.8)
                 }
                 .buttonStyle(PlainButtonStyle())
-                .help("Voice input")
+                .help(dictationManager.isRecording ? "Stop dictation (fn)" : "Start dictation (fn)")
               }
               
               

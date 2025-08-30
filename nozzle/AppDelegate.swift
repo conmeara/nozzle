@@ -227,6 +227,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     preferencesItem.target = self
     menu.addItem(preferencesItem)
     
+    // Debug menu item
+    #if DEBUG
+    menu.addItem(NSMenuItem.separator())
+    
+    let debugItem = NSMenuItem(
+      title: "🎤 Test Dictation Crash Scenarios",
+      action: #selector(testDictationCrash),
+      keyEquivalent: ""
+    )
+    debugItem.target = self
+    menu.addItem(debugItem)
+    #endif
+    
     menu.addItem(NSMenuItem.separator())
     
     let quitItem = NSMenuItem(
@@ -250,6 +263,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   @objc
   private func quitFromMenu() {
     AppState.shared.quit()
+  }
+  
+  @objc
+  private func testDictationCrash() {
+    Task {
+      await DictationManager.shared.testCrashScenarios()
+    }
   }
 
   private func synchronizeMenuIconText() {

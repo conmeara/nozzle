@@ -9,9 +9,10 @@ struct PromptHeaderView: View {
   @Environment(\.scenePhase) private var scenePhase
 
   @Default(.showTitle) private var showTitle
+  @State private var dictationManager = DictationManager.shared
 
   var body: some View {
-    HStack(alignment: .top) {
+    HStack(alignment: .top, spacing: 8) {
       ZStack(alignment: .topLeading) {
         // TextEditor for multi-line input
         TextEditor(text: $promptText)
@@ -43,6 +44,25 @@ struct PromptHeaderView: View {
           promptText = ""
         }
       }
+      
+      // Microphone button for speech-to-text
+      VStack {
+        Button(action: {
+          Task {
+            await dictationManager.toggleDictation(for: $promptText)
+          }
+        }) {
+          Image(systemName: dictationManager.isRecording ? "mic.fill" : "mic")
+            .font(.system(size: 14))
+            .foregroundColor(dictationManager.isRecording ? .orange : .secondary)
+            .opacity(dictationManager.isRecording ? 1.0 : 0.8)
+        }
+        .buttonStyle(.plain)
+        .help(dictationManager.isRecording ? "Stop dictation (fn)" : "Start dictation (fn)")
+        
+        Spacer()
+      }
+      .frame(height: 60)
     }
     .frame(height: 70) // Total height including padding
     .padding(.horizontal, 10)
