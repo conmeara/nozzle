@@ -6,10 +6,6 @@ struct PreviewPaneView: View {
     let clipboardItem: HistoryItemDecorator?
     let fileItem: ContentItem?
 
-    // Cancelable text loading for file previews to avoid blocking UI
-    @State private var loadedText: String = ""
-    @State private var isLoadingText: Bool = false
-    
     var body: some View {
         VStack(spacing: 0) {
             if let clipboardItem = clipboardItem {
@@ -46,24 +42,8 @@ struct PreviewPaneView: View {
                     // Editable preview for prompt files
                     PromptEditorView(item: fileItem)
                 } else if fileItem.isText {
-                    // Plain text preview for files with cancelable loading
-                    PlainTextPreview(
-                        text: loadedText,
-                        metadata: PlainTextPreview.PreviewMetadata(
-                            application: nil,
-                            applicationImage: nil,
-                            firstCopiedAt: nil,
-                            lastCopiedAt: nil,
-                            numberOfCopies: nil,
-                            fileName: fileItem.title,
-                            fileSize: fileItem.fileSize
-                        )
-                    )
-                    .overlay(alignment: .topLeading) {
-                        if isLoadingText {
-                            ProgressView().controlSize(.small).padding(8)
-                        }
-                    }
+                    // Async + cached text preview for files (no main-thread I/O)
+                    AsyncTextPreview(item: fileItem)
                 } else if let fileURL = fileItem.fileURL {
                     // QuickLook preview for all other file types
                     QuickLookPreview(url: fileURL)
@@ -76,21 +56,6 @@ struct PreviewPaneView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .previewSurfaceStyle()
-        // Load/cancel text preview work when focus changes
-        .task(id: fileItem?.id) {
-            // Reset state for new focus
-            loadedText = ""
-            isLoadingText = false
-            guard let item = fileItem, item.isText else { return }
-            isLoadingText = true
-            // Perform blocking IO off the main actor; inherits cancellation
-            let text: String = await Task(priority: .userInitiated) {
-                FileContentExtractor.extractPlainText(from: item)
-            }.value
-            guard !Task.isCancelled else { return }
-            loadedText = text
-            isLoadingText = false
-        }
     }
 }
 
