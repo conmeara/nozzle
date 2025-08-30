@@ -2,6 +2,7 @@ import SwiftUI
 import Foundation
 
 // Simple identity for cache keys: file identity + modDate + size
+@MainActor
 private final class TextCache {
     static let shared = TextCache()
     private let cache = NSCache<NSString, NSString>()
@@ -121,4 +122,3 @@ struct AsyncTextPreview: View {
         await loadTask?.value
     }
 }
-
