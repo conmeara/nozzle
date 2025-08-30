@@ -11,10 +11,14 @@
             "id": "499f95c375e9eb5f",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Todos.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "Todos"
             }
           }
         ]
@@ -74,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "b5120dc5ed8bb83c",
@@ -167,20 +172,25 @@
   },
   "active": "499f95c375e9eb5f",
   "lastOpenFiles": [
+    "nozzle-v3-architecture.md",
     "SystemLanguageModel.md",
     "SpeechAnalyzer.md",
     "Speech.md",
+    "Nozzle v3 plan.md",
+    "Generating content and performing tasks with Foundation Models.md",
+    "Todos.md",
+    "Speech/SystemLanguageModel copy.md",
+    "Speech/SpeechAnalyzer copy.md",
+    "Speech/Speech copy.md",
+    "Speech/SpeechAnalyzer-Troubleshooting.md",
     "Speech/AssetInventory.md",
     "Speech/Speech.md",
     "Speech/SpeechAnalyzer.md",
     "Speech/SystemLanguageModel.md",
-    "Generating content and performing tasks with Foundation Models.md",
     "Foundation Models/Generating content and performing tasks with Foundation Models.md",
     "Apple Intelligence/BringingAdvancedSpeechToTextCapabilitiesToYourApp",
     "Apple Intelligence/AddingIntelligentAppFeaturesWithGenerativeModels",
     "Apple Intelligence",
-    "nozzle-v3-architecture.md",
-    "Nozzle v3 plan.md",
     "Liquid Glass/Liquid Glass.md",
     "Liquid Glass/Landmarks Building an app with Liquid Glass.md",
     "Liquid Glass/Adopting Liquid Glass.md",
@@ -191,11 +201,6 @@
     "Layout/init(alignmentspacingcontent).md",
     "Layout/init(alignmentspacingcontent) 1.md",
     "Layout/init(alignmenthorizontalSpacingverticalSpacingcontent).md",
-    "Layout/init(alignmentcontent).md",
-    "Layout/gridColumnAlignment(_).md",
-    "Layout/gridCellUnsizedAxes(_).md",
-    "Layout/gridCellColumns(_).md",
-    "Layout/gridCellAnchor(_).md",
     "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/docs",
     "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/untitled folder",
     "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/SwiftTranscriptionSampleApp.xcodeproj/project.xcworkspace/xcuserdata/conmeara.xcuserdatad/UserInterfaceState.xcuserstate",
