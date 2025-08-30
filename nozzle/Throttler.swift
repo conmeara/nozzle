@@ -1,6 +1,7 @@
 import Foundation
 
 // Based on https://www.craftappco.com/blog/2018/5/30/simple-throttling-in-swift.
+@MainActor
 class Throttler {
   var minimumDelay: TimeInterval
 

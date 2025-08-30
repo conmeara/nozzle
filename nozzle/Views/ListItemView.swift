@@ -1,6 +1,12 @@
 import Defaults
 import SwiftUI
 
+// Shared hover throttler for clipboard hover selection (avoid static stored properties on generic types)
+@MainActor
+private enum ListItemHoverSelect {
+  static let throttler = Throttler(minimumDelay: 0.2)
+}
+
 struct ListItemView<Title: View>: View {
   var id: UUID
   var appIcon: ApplicationImage?
@@ -124,11 +130,21 @@ struct ListItemView<Title: View>: View {
       isHovering = hovering
       if hovering {
         if !appState.isKeyboardNavigating {
-          // Always update selection on hover for unified system
-          appState.selectWithoutScrolling(id)
+          // When preview pane is visible, debounce hover selection to reduce UI churn
+          if appState.showPreviewPane {
+            ListItemHoverSelect.throttler.minimumDelay = Double(Defaults[.hoverPreviewDelay]) / 1000
+            ListItemHoverSelect.throttler.throttle {
+              appState.selectWithoutScrolling(id)
+            }
+          } else {
+            appState.selectWithoutScrolling(id)
+          }
         } else {
           appState.hoverSelectionWhileKeyboardNavigating = id
         }
+      } else {
+        // Cancel any pending hover selection when leaving
+        ListItemHoverSelect.throttler.cancel()
       }
     }
     .help(help ?? "")

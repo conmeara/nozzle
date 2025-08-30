@@ -10,7 +10,8 @@ class HistoryItemDecorator: ListItemDecorator {
     return lhs.id == rhs.id
   }
 
-  nonisolated(unsafe) static var previewThrottler = Throttler(minimumDelay: Double(Defaults[.previewDelay]) / 1000)
+  // MainActor-isolated throttler for preview behavior
+  static var previewThrottler = Throttler(minimumDelay: Double(Defaults[.previewDelay]) / 1000)
   static var previewImageSize: NSSize { NSScreen.forPopup?.visibleFrame.size ?? NSSize(width: 2048, height: 1536) }
   static var thumbnailImageSize: NSSize { NSSize(width: 340, height: Defaults[.imageMaxHeight]) }
   

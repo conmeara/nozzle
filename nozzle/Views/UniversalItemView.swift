@@ -1,4 +1,11 @@
 import SwiftUI
+import Defaults
+
+@MainActor
+private extension UniversalItemView {
+    // ~200ms feels good; wire to Defaults if you want.
+    static var previewHoverThrottler = Throttler(minimumDelay: 0.2)
+}
 
 struct UniversalItemView: View {
     @Bindable var item: UniversalItemDecorator
@@ -80,8 +87,14 @@ struct UniversalItemView: View {
                     .onHover { hovering in
                         if hovering {
                             appState.selectWithoutScrolling(item.id)
-                            // Update focus for preview on hover
-                            contentManager.focus(item.id)
+                            // Debounce focus so we only preview when the pointer "dwells"
+                            UniversalItemView.previewHoverThrottler.minimumDelay = Double(Defaults[.hoverPreviewDelay]) / 1000
+                            UniversalItemView.previewHoverThrottler.throttle {
+                                // If the item is still hovered after the delay, focus it
+                                contentManager.focus(item.id)
+                            }
+                        } else {
+                            UniversalItemView.previewHoverThrottler.cancel()
                         }
                     }
                 }

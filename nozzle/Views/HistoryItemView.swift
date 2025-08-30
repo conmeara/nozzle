@@ -68,9 +68,8 @@ struct HistoryItemView: View {
       }
     )
     .onMouseMove {
-      // Update focus to this item on hover
+      // Mouse movement turns off keyboard navigation; hover will handle selection
       appState.isKeyboardNavigating = false
-      appState.selection = item.id
     }
     .onTapGesture { location in
       // Check if click is in the copy button area (right 60 pixels)

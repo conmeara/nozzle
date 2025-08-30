@@ -1,4 +1,5 @@
 import SwiftUI
+import Defaults
 import UniformTypeIdentifiers
 
 struct FolderTreeItemView: View {
@@ -100,7 +101,13 @@ struct FolderTreeItemView: View {
             .onHover { hovering in
                 if hovering {
                     appState.selectWithoutScrolling(item.id)
-                    contentManager.focus(item.id)
+                    // Debounce preview focus while pointer dwells on the folder
+                    FolderTreeItemView.previewHoverThrottler.minimumDelay = Double(Defaults[.hoverPreviewDelay]) / 1000
+                    FolderTreeItemView.previewHoverThrottler.throttle {
+                        contentManager.focus(item.id)
+                    }
+                } else {
+                    FolderTreeItemView.previewHoverThrottler.cancel()
                 }
             }
         }
@@ -120,4 +127,10 @@ struct FolderTreeItemView: View {
             await fileSystemSource.toggleFolderExpansion(at: folderPath)
         }
     }
+}
+
+@MainActor
+private extension FolderTreeItemView {
+    // ~200ms dwell prevents thrash while moving pointer across tree
+    static var previewHoverThrottler = Throttler(minimumDelay: 0.2)
 }
