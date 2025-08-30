@@ -74,10 +74,17 @@ struct ContentView: View {
                     appState.isSearchMode = false
                     inputFocused = true
                 } else {
-                  // In prompt mode, use this plus to open Prompts for selection
-                  contentManager.lastNonPromptsSourceId = contentManager.activeSourceId == "prompts" ? contentManager.lastNonPromptsSourceId : contentManager.activeSourceId
-                  selectedTab = "prompts"
-                  contentManager.activeSourceId = "prompts"
+                  // In prompt mode, toggle between Prompts and previous tab
+                  if contentManager.activeSourceId == "prompts" {
+                    // Already in prompts, return to previous tab
+                    selectedTab = contentManager.lastNonPromptsSourceId
+                    contentManager.activeSourceId = contentManager.lastNonPromptsSourceId
+                  } else {
+                    // Not in prompts, open Prompts and save current tab
+                    contentManager.lastNonPromptsSourceId = contentManager.activeSourceId
+                    selectedTab = "prompts"
+                    contentManager.activeSourceId = "prompts"
+                  }
                   inputFocused = true
                 }
               }) {
