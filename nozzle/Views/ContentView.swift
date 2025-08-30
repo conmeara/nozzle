@@ -129,8 +129,12 @@ struct ContentView: View {
             
             // Tab group with tight spacing
             HStack(spacing: 4) {
-              // Aggregated tab placeholder ("#") - Phase 2
-              TabButton(title: "#", isSelected: selectedTab == "aggregated") {
+              // Aggregated tab with icon and badge
+              TabButtonWithIcon(
+                icon: "square.stack.3d.up.badge.automatic.fill",
+                badgeCount: contentManager.selectedItems.count,
+                isSelected: selectedTab == "aggregated"
+              ) {
                 selectedTab = "aggregated"
                 contentManager.activeSourceId = "aggregated"
               }
@@ -157,10 +161,17 @@ struct ContentView: View {
                 )
               }
               
-              // "+" to add folder source
-              TabButton(title: "+", isSelected: false) {
-                openFolderPickerAndRegister()
+              // "+" menu to add folder source
+              Menu {
+                Button("Add Folder…") {
+                  openFolderPickerAndRegister()
+                }
+              } label: {
+                TabButtonLabel(title: "+", isSelected: false)
               }
+              .buttonStyle(PlainButtonStyle())
+              .menuStyle(BorderlessButtonMenuStyle())
+              .menuIndicator(.hidden)
             }
             
             Spacer()
@@ -399,6 +410,79 @@ struct TabButton: View {
         }
       }
     }
+  }
+}
+
+// Reusable tab button label for consistent styling
+struct TabButtonLabel: View {
+  let title: String
+  let isSelected: Bool
+  
+  var body: some View {
+    HStack(spacing: 4) {
+      Text(title)
+        .font(.system(size: 13, weight: .regular))
+        .foregroundColor(isSelected ? .primary : .secondary)
+        .opacity(isSelected ? 1.0 : 0.8)
+        .lineLimit(1)
+        .truncationMode(.tail)
+    }
+    .padding(.horizontal, 8)
+    .padding(.vertical, 4)
+    .background(
+      RoundedRectangle(cornerRadius: 4)
+        .fill(
+          isSelected
+            ? Color(NSColor.controlAccentColor).opacity(0.20)
+            : Color(NSColor.quaternaryLabelColor)
+        )
+    )
+  }
+}
+
+// Tab button with icon and badge count
+struct TabButtonWithIcon: View {
+  let icon: String
+  let badgeCount: Int
+  let isSelected: Bool
+  let action: () -> Void
+  
+  var body: some View {
+    Button(action: action) {
+      HStack(spacing: 4) {
+        // Use base SF Symbol with overlay badge when count > 0
+        ZStack {
+          Image(systemName: badgeCount > 0 ? "square.stack.3d.up.fill" : "square.stack.3d.up")
+            .font(.system(size: 13))
+            .foregroundColor(isSelected ? .primary : .secondary)
+            .opacity(isSelected ? 1.0 : 0.8)
+          
+          // Native SF Symbol-style badge overlay (bottom-right position)
+          if badgeCount > 0 {
+            Text(badgeCount > 99 ? "99+" : "\(badgeCount)")
+              .font(.system(size: 7, weight: .bold))
+              .foregroundColor(.white)
+              .padding(.horizontal, badgeCount > 9 ? 2.5 : 3)
+              .padding(.vertical, 1.5)
+              .background(Color(NSColor.systemGray))
+              .clipShape(Circle())
+              .offset(x: 7, y: 7)
+              .scaleEffect(0.75)
+          }
+        }
+      }
+      .padding(.horizontal, 8)
+      .padding(.vertical, 4)
+      .background(
+        RoundedRectangle(cornerRadius: 4)
+          .fill(
+            isSelected
+              ? Color(NSColor.controlAccentColor).opacity(0.20)
+              : Color(NSColor.quaternaryLabelColor)
+          )
+      )
+    }
+    .buttonStyle(PlainButtonStyle())
   }
 }
 
