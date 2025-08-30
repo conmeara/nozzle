@@ -274,17 +274,26 @@ class AppState {
     // Preserve the current hover/active selection
     let currentSelection = selection
     
-    // Clear all selected items
-    history.items.forEach { $0.isSelected = false }
+    // Clear all selected items across all sources
+    contentManager.clearSelection()
     
     // Clear preserved selections
     preservedSelections.removeAll()
     
-    // Clear prompt text
+    // Clear prompt chips and text
+    removeAllPromptChips()
+    activePromptChipId = nil
     promptText = ""
     
-    // Clear search query
-    history.searchQuery = ""
+    // Clear search query for the active source
+    if contentManager.activeSourceId == "clipboard" {
+      history.searchQuery = ""
+    } else {
+      contentManager.sources[contentManager.activeSourceId]?.searchQuery = ""
+    }
+    
+    // Update footer visibility based on cleared state
+    updateFooterItemVisibility()
     
     
     // Restore the hover/active selection
