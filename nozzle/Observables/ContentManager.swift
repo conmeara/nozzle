@@ -276,6 +276,8 @@ final class ContentManager {
         
         // Stop monitoring before removal
         source.stopMonitoring()
+        // Cleanup persisted FSEvents last-id for this source
+        UserDefaults.standard.removeObject(forKey: "FSEvents.lastId.\(source.id)")
         
         // Remove from storage
         sources.removeValue(forKey: sourceId)
@@ -301,10 +303,15 @@ final class ContentManager {
         
         // For folder sources, also remove the bookmark
         if source.type == .folder {
-            // Extract folder URL from source ID
-            let folderPath = String(sourceId.dropFirst("folder:".count))
-            let folderURL = URL(fileURLWithPath: folderPath)
-            Bookmarks.remove(url: folderURL)
+            // Prefer obtaining the exact URL from FileSystemSource
+            if let fs = source as? FileSystemSource {
+                Bookmarks.remove(url: fs.folderURL)
+            } else if sourceId.hasPrefix("folder:") {
+                // Fallback: extract folder URL from identifier pattern
+                let folderPath = String(sourceId.dropFirst("folder:".count))
+                let folderURL = URL(fileURLWithPath: folderPath)
+                Bookmarks.remove(url: folderURL)
+            }
         }
     }
     

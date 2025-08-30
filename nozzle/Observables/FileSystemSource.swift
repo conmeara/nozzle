@@ -10,7 +10,7 @@ final class FileSystemSource: ContentSource {
     let name: String
     let icon: NSImage
     let type: ContentSourceType = .folder
-    nonisolated private let folderURL: URL  // Need nonisolated access for FSEvents
+    nonisolated let folderURL: URL  // Expose for bookmark cleanup and settings
     private var cachedItems: [ContentItem] = []
     
     // Folder expansion state

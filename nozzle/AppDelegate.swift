@@ -95,6 +95,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     // Restore folder sources from bookmarks
     for url in Bookmarks.resolveAll() {
+      // Skip and clean up bookmarks that no longer exist
+      if !FileManager.default.fileExists(atPath: url.path) {
+        Bookmarks.remove(url: url)
+        continue
+      }
       let source = FileSystemSource(folderURL: url)
       contentManager.registerSource(source)
       Task {
