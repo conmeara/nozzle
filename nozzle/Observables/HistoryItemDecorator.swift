@@ -5,7 +5,7 @@ import Observation
 import Sauce
 
 @Observable @MainActor
-class HistoryItemDecorator: Identifiable, Hashable {
+class HistoryItemDecorator: ListItemDecorator {
   nonisolated static func == (lhs: HistoryItemDecorator, rhs: HistoryItemDecorator) -> Bool {
     return lhs.id == rhs.id
   }
@@ -54,6 +54,41 @@ class HistoryItemDecorator: Identifiable, Hashable {
 
   var isPinned: Bool { item.pin != nil }
   var isUnpinned: Bool { item.pin == nil }
+  
+  // Protocol conformance
+  var appIcon: ApplicationImage? { applicationImage }
+  var image: NSImage? { thumbnailImage }
+  var accessoryImage: NSImage? { thumbnailImage != nil ? nil : ColorImage.from(title) }
+  
+  func copyToClipboard() {
+    // Copy the item directly to avoid triggering clipboard monitoring
+    let pasteboard = NSPasteboard.general
+    pasteboard.clearContents()
+    
+    // Copy the item's contents to clipboard
+    let contents = item.contents
+    for content in contents {
+      guard content.type != NSPasteboard.PasteboardType.fileURL.rawValue else { continue }
+      pasteboard.setData(content.value, forType: NSPasteboard.PasteboardType(content.type))
+    }
+    
+    // Handle file URLs separately (same as Clipboard.copy logic)
+    let fileURLItems: [NSPasteboardItem] = contents.compactMap { item in
+      guard item.type == NSPasteboard.PasteboardType.fileURL.rawValue else { return nil }
+      guard let value = item.value else { return nil }
+      let pasteItem = NSPasteboardItem()
+      pasteItem.setData(value, forType: NSPasteboard.PasteboardType(item.type))
+      return pasteItem
+    }
+    pasteboard.writeObjects(fileURLItems)
+    
+    // Update clipboard sync and change count to prevent re-detection
+    Clipboard.shared.changeCount = pasteboard.changeCount
+    
+    // Update item metadata
+    item.lastCopiedAt = Date.now
+    item.numberOfCopies += 1
+  }
 
   nonisolated func hash(into hasher: inout Hasher) {
     hasher.combine(id)

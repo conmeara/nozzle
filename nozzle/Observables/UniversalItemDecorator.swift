@@ -3,7 +3,7 @@ import Observation
 import UniformTypeIdentifiers
 
 @Observable @MainActor
-final class UniversalItemDecorator: Identifiable, Hashable {
+final class UniversalItemDecorator: ListItemDecorator {
     let id: UUID
     private(set) var base: ContentItem
     let sourceId: String
@@ -26,6 +26,13 @@ final class UniversalItemDecorator: Identifiable, Hashable {
         let nsImage = FileTypeBadgeCache.shared.icon(for: type)
         return ApplicationImage(bundleIdentifier: nil, image: nsImage)
     }
+    
+    // Protocol conformance - ListItemDecorator
+    var appIcon: ApplicationImage? { typeBadgeImage }
+    var image: NSImage? { nil } // Could be enhanced with thumbnails in Phase 2
+    var accessoryImage: NSImage? { nil }
+    var attributedTitle: AttributedString? { nil }
+    var shortcuts: [KeyShortcut] { [] } // No numbered shortcuts for file sources in Phase 1
     
     init(_ item: ContentItem) {
         self.id = item.id

@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct AggregatedListView: View {
+struct SelectedItemsView: View {
     let contextItems: [UniversalItemDecorator]
     let exampleItems: [UniversalItemDecorator]
     

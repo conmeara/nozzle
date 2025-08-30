@@ -95,7 +95,6 @@
 		DA9C3C622C20E1BF0056795D /* IgnoreRegexpsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA9C3C612C20E1BF0056795D /* IgnoreRegexpsSettingsView.swift */; };
 		DA9C3C652C211B5F0056795D /* AdvancedSettingsPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA9C3C642C211B5F0056795D /* AdvancedSettingsPane.swift */; };
 		DAA072D32C40A961006DDFD2 /* Color+Random.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D22C40A961006DDFD2 /* Color+Random.swift */; };
-		DAA072D52C40AC52006DDFD2 /* HistoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D42C40AC52006DDFD2 /* HistoryListView.swift */; };
 		DAA072D72C41C574006DDFD2 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D62C41C574006DDFD2 /* AppState.swift */; };
 		DAA072D92C41C5AD006DDFD2 /* Footer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D82C41C5AD006DDFD2 /* Footer.swift */; };
 		DAA072DB2C41C5DD006DDFD2 /* FooterItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072DA2C41C5DD006DDFD2 /* FooterItem.swift */; };
@@ -134,7 +133,6 @@
 		F57274622E56721F003A9299 /* ContentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572745D2E56721F003A9299 /* ContentManager.swift */; };
 		F57274632E56721F003A9299 /* UniversalItemDecorator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572745F2E56721F003A9299 /* UniversalItemDecorator.swift */; };
 		F57274662E56722D003A9299 /* UniversalItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274642E56722D003A9299 /* UniversalItemView.swift */; };
-		F57274672E56722D003A9299 /* UniversalListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274652E56722D003A9299 /* UniversalListView.swift */; };
 		F57274692E567244003A9299 /* SecurityScopedBookmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274682E567244003A9299 /* SecurityScopedBookmarks.swift */; };
 		F572746E2E56B882003A9299 /* FileIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572746B2E56B882003A9299 /* FileIdentity.swift */; };
 		F572746F2E56B882003A9299 /* FSEventsStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572746C2E56B882003A9299 /* FSEventsStream.swift */; };
@@ -147,7 +145,7 @@
 		F5758AFF2E5D176C00FC0F19 /* QuickLookPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758AFE2E5D176C00FC0F19 /* QuickLookPreview.swift */; };
 		F5758B012E5D228200FC0F19 /* FolderExpansionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758B002E5D228200FC0F19 /* FolderExpansionState.swift */; };
 		F5758B032E5D228F00FC0F19 /* FolderTreeItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758B022E5D228F00FC0F19 /* FolderTreeItemView.swift */; };
-		F5A0B0012EE1AAAA00AAA001 /* AggregatedListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5A0B0002EE1AAAA00AAA001 /* AggregatedListView.swift */; };
+		F5A0B0012EE1AAAA00AAA001 /* SelectedItemsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5A0B0002EE1AAAA00AAA001 /* SelectedItemsView.swift */; };
 		F5C180392E622C8B007ED483 /* DictationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C180382E622C8B007ED483 /* DictationManager.swift */; };
 		F5C88D252DE55BA500EF8FA3 /* PromptHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */; };
 		F5F0C0012EE0000000000001 /* PromptChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0002EE0000000000001 /* PromptChip.swift */; };
@@ -155,6 +153,8 @@
 		F5F0C0052EE0000000000003 /* PromptChipsBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0042EE0000000000003 /* PromptChipsBarView.swift */; };
 		F5F0C0072EE0000000000004 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0062EE0000000000004 /* FlowLayout.swift */; };
 		F5F0C00A2EE0000000000006 /* HistoryItem+Hashable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0082EE0000000000005 /* HistoryItem+Hashable.swift */; };
+		F5F0C00B2EE0000000000007 /* ListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C00C2EE0000000000008 /* ListView.swift */; };
+		F5F0C00D2EE0000000000009 /* ListItemDecorator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C00E2EE000000000000A /* ListItemDecorator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -422,7 +422,6 @@
 		DA9C3C612C20E1BF0056795D /* IgnoreRegexpsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnoreRegexpsSettingsView.swift; sourceTree = "<group>"; };
 		DA9C3C642C211B5F0056795D /* AdvancedSettingsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedSettingsPane.swift; sourceTree = "<group>"; };
 		DAA072D22C40A961006DDFD2 /* Color+Random.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Random.swift"; sourceTree = "<group>"; };
-		DAA072D42C40AC52006DDFD2 /* HistoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryListView.swift; sourceTree = "<group>"; };
 		DAA072D62C41C574006DDFD2 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		DAA072D82C41C5AD006DDFD2 /* Footer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Footer.swift; sourceTree = "<group>"; };
 		DAA072DA2C41C5DD006DDFD2 /* FooterItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FooterItem.swift; sourceTree = "<group>"; };
@@ -531,7 +530,6 @@
 		F572745E2E56721F003A9299 /* FileSystemSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystemSource.swift; sourceTree = "<group>"; };
 		F572745F2E56721F003A9299 /* UniversalItemDecorator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniversalItemDecorator.swift; sourceTree = "<group>"; };
 		F57274642E56722D003A9299 /* UniversalItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniversalItemView.swift; sourceTree = "<group>"; };
-		F57274652E56722D003A9299 /* UniversalListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniversalListView.swift; sourceTree = "<group>"; };
 		F57274682E567244003A9299 /* SecurityScopedBookmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityScopedBookmarks.swift; sourceTree = "<group>"; };
 		F572746B2E56B882003A9299 /* FileIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileIdentity.swift; sourceTree = "<group>"; };
 		F572746C2E56B882003A9299 /* FSEventsStream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FSEventsStream.swift; sourceTree = "<group>"; };
@@ -544,7 +542,7 @@
 		F5758AFE2E5D176C00FC0F19 /* QuickLookPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookPreview.swift; sourceTree = "<group>"; };
 		F5758B002E5D228200FC0F19 /* FolderExpansionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderExpansionState.swift; sourceTree = "<group>"; };
 		F5758B022E5D228F00FC0F19 /* FolderTreeItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderTreeItemView.swift; sourceTree = "<group>"; };
-		F5A0B0002EE1AAAA00AAA001 /* AggregatedListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AggregatedListView.swift; sourceTree = "<group>"; };
+		F5A0B0002EE1AAAA00AAA001 /* SelectedItemsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectedItemsView.swift; sourceTree = "<group>"; };
 		F5C180382E622C8B007ED483 /* DictationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationManager.swift; sourceTree = "<group>"; };
 		F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptHeaderView.swift; sourceTree = "<group>"; };
 		F5F0C0002EE0000000000001 /* PromptChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChip.swift; sourceTree = "<group>"; };
@@ -552,6 +550,8 @@
 		F5F0C0042EE0000000000003 /* PromptChipsBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChipsBarView.swift; sourceTree = "<group>"; };
 		F5F0C0062EE0000000000004 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		F5F0C0082EE0000000000005 /* HistoryItem+Hashable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HistoryItem+Hashable.swift"; sourceTree = "<group>"; };
+		F5F0C00C2EE0000000000008 /* ListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListView.swift; sourceTree = "<group>"; };
+		F5F0C00E2EE000000000000A /* ListItemDecorator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListItemDecorator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -634,6 +634,7 @@
 				F57274582E56720D003A9299 /* ContentSourceType.swift */,
 				DA05B5132C234DCF006980FE /* HistoryItem.swift */,
 				DA05B5122C234DCF006980FE /* HistoryItemContent.swift */,
+				F5F0C00E2EE000000000000A /* ListItemDecorator.swift */,
 				F5F0C0002EE0000000000001 /* PromptChip.swift */,
 			);
 			path = Models;
@@ -675,8 +676,7 @@
 				F5758B022E5D228F00FC0F19 /* FolderTreeItemView.swift */,
 				F57274782E57C02C003A9299 /* Preview */,
 				F57274642E56722D003A9299 /* UniversalItemView.swift */,
-				F57274652E56722D003A9299 /* UniversalListView.swift */,
-				F5A0B0002EE1AAAA00AAA001 /* AggregatedListView.swift */,
+				F5A0B0002EE1AAAA00AAA001 /* SelectedItemsView.swift */,
 				F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */,
 				DAA072DE2C41C63C006DDFD2 /* ConfirmationView.swift */,
 				DA243D112C2F64820012A27F /* ContentView.swift */,
@@ -684,11 +684,11 @@
 				DAA072E02C41C6E8006DDFD2 /* FooterView.swift */,
 				DA1969192C3F369800258481 /* HeaderView.swift */,
 				DA1969112C3F0DD200258481 /* HistoryItemView.swift */,
-				DAA072D42C40AC52006DDFD2 /* HistoryListView.swift */,
 				DA19690D2C3EEFA900258481 /* KeyboardShortcutView.swift */,
 				DA19691E2C3F5F0600258481 /* KeyHandlingView.swift */,
 				DAA072E82C42C6AA006DDFD2 /* ListItemTitleView.swift */,
 				DAA072E22C41D1D5006DDFD2 /* ListItemView.swift */,
+				F5F0C00C2EE0000000000008 /* ListView.swift */,
 				DA5078982CF2676400215488 /* MouseMovedViewModifer.swift */,
 				DA5E627E2C39E53F00F4C710 /* PreviewItemView.strings */,
 				DA1969132C3F11D600258481 /* PreviewItemView.swift */,
@@ -1096,10 +1096,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F5A0B0012EE1AAAA00AAA001 /* AggregatedListView.swift in Sources */,
+				F5A0B0012EE1AAAA00AAA001 /* SelectedItemsView.swift in Sources */,
 				DA19691C2C3F3EAC00258481 /* Collection+Surrounding.swift in Sources */,
 				DA1969142C3F11D600258481 /* PreviewItemView.swift in Sources */,
-				DAA072D52C40AC52006DDFD2 /* HistoryListView.swift in Sources */,
 				DAB082962A2B7B850053E463 /* AppStoreReview.swift in Sources */,
 				2FB5BCA02CD8F73F008B33F4 /* ApplicationImage.swift in Sources */,
 				DA13D7D22C19F91B00FA9E23 /* Defaults.Keys+Names.swift in Sources */,
@@ -1129,7 +1128,6 @@
 				DA13D7DB2C1A223E00FA9E23 /* Delete.swift in Sources */,
 				DA19691F2C3F5F0600258481 /* KeyHandlingView.swift in Sources */,
 				F57274662E56722D003A9299 /* UniversalItemView.swift in Sources */,
-				F57274672E56722D003A9299 /* UniversalListView.swift in Sources */,
 				DA13D7DC2C1A223E00FA9E23 /* HistoryItemAppEntity.swift in Sources */,
 				F5C180392E622C8B007ED483 /* DictationManager.swift in Sources */,
 				DA555F122CF155A8009608BD /* WrappingTextView.swift in Sources */,
@@ -1212,6 +1210,8 @@
 				F5F0C0032EE0000000000002 /* PromptChipsStore.swift in Sources */,
 				F5F0C0012EE0000000000001 /* PromptChip.swift in Sources */,
 				F5F0C00A2EE0000000000006 /* HistoryItem+Hashable.swift in Sources */,
+				F5F0C00B2EE0000000000007 /* ListView.swift in Sources */,
+				F5F0C00D2EE0000000000009 /* ListItemDecorator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

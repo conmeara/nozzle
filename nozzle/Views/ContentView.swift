@@ -223,7 +223,8 @@ struct ContentView: View {
           HStack(spacing: 0) {
             // Content list based on active source
             if contentManager.activeSourceId == "clipboard" {
-              HistoryListView(
+              ListView(
+                historyItems: appState.history.items.filter(\.isVisible),
                 searchQuery: $appState.history.searchQuery,
                 searchFocused: $inputFocused
               )
@@ -245,14 +246,14 @@ struct ContentView: View {
                 }
                 .frame(minWidth: 300)
               } else {
-                AggregatedListView(contextItems: contextItems, exampleItems: exampleItems)
+                ListView(contextItems: contextItems, exampleItems: exampleItems)
                   .frame(minWidth: 300)
               }
             } else {
-              // Non-clipboard sources use UniversalListView
+              // Non-clipboard sources use unified ListView
               let items = contentManager.getItems(for: contentManager.activeSourceId)
                 .map(UniversalItemDecorator.init)
-              UniversalListView(items: items)
+              ListView(universalItems: items)
                 .frame(minWidth: 300)
             }
             
