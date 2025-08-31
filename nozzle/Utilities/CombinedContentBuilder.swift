@@ -4,14 +4,14 @@ import UniformTypeIdentifiers
 
 // New, non-actor utility responsible for building combined paste content off the main thread.
 enum CombinedContentBuilder {
-    /// Build combined formatted content from context, examples, prompt, and chips.
-    /// Heavy I/O and formatting work is performed off the main thread.
+    /// Build combined plain-text content from context, examples, prompt, and chips.
+    /// Heavy disk I/O is performed off the main thread.
     static func build(
         context: [ContentItem],
         examples: [ContentItem],
         prompt: String,
         chips: [PromptChip]
-    ) async -> (rtf: Data?, html: Data?, plain: String) {
+    ) async -> String {
         // Flatten items by expanding folders into textual file descendants
         let flatContext = flattenToText(context)
         let flatExamples = flattenToText(examples)
@@ -49,27 +49,24 @@ enum CombinedContentBuilder {
             pieces.append(.string("\n</example>\n"))
         }
 
-        // Resolve attributed content for .item and .chip pieces in parallel
-        let combined = NSMutableAttributedString()
-        // Wrap NSAttributedString to cross concurrency boundary safely
-        struct _AttrBox: @unchecked Sendable { let value: NSAttributedString }
-        var results: [Int: _AttrBox] = [:]
+        // Resolve plain text for .item and .chip pieces in parallel
+        struct _PlainBox: @unchecked Sendable { let value: String }
+        var results: [Int: _PlainBox] = [:]
 
-        await withTaskGroup(of: (Int, _AttrBox).self) { group in
+        await withTaskGroup(of: (Int, _PlainBox).self) { group in
             for (idx, piece) in pieces.enumerated() {
                 switch piece {
                 case .string:
-                    // Handled synchronously later
                     break
                 case .chip(let url):
                     group.addTask {
-                        let attr = attributedFromURL(url)
-                        return (idx, _AttrBox(value: attr))
+                        let s = plainFromURL(url)
+                        return (idx, _PlainBox(value: s))
                     }
                 case .item(let item):
                     group.addTask {
-                        let attr = attributedFromItem(item)
-                        return (idx, _AttrBox(value: attr))
+                        let s = plainFromItem(item)
+                        return (idx, _PlainBox(value: s))
                     }
                 }
             }
@@ -80,10 +77,11 @@ enum CombinedContentBuilder {
         }
 
         // Assemble in-order on a background thread
+        var combined = ""
         for (idx, piece) in pieces.enumerated() {
             switch piece {
             case .string(let s):
-                combined.append(NSAttributedString(string: s))
+                combined.append(s)
             case .chip, .item:
                 if let box = results[idx] {
                     combined.append(box.value)
@@ -91,21 +89,7 @@ enum CombinedContentBuilder {
             }
         }
 
-        // Convert to desired formats
-        let plain = combined.string
-        let range = NSRange(location: 0, length: combined.length)
-        let rtf: Data?
-        let html: Data?
-
-        if combined.length > 0 {
-            rtf = try? combined.data(from: range, documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf])
-            html = try? combined.data(from: range, documentAttributes: [.documentType: NSAttributedString.DocumentType.html])
-        } else {
-            rtf = nil
-            html = nil
-        }
-
-        return (rtf: rtf, html: html, plain: plain)
+        return combined
     }
 
     // MARK: - Helpers (non-actor)
@@ -186,46 +170,52 @@ enum CombinedContentBuilder {
         return results
     }
 
-    /// Build attributed string for a chip file URL.
-    private static func attributedFromURL(_ url: URL) -> NSAttributedString {
+    /// Extract plain text from a chip file URL.
+    private static func plainFromURL(_ url: URL) -> String {
         let type = UTType(filenameExtension: url.pathExtension)
-        let (rtf, html, plain) = TextFileFormatter.loadAll(from: url, type: type)
 
-        if let rtf = rtf, let attributed = NSAttributedString(rtf: rtf, documentAttributes: nil) {
-            return attributed
-        } else if let html = html, let attributed = NSAttributedString(html: html, documentAttributes: nil) {
-            return attributed
-        } else if !plain.isEmpty {
-            return NSAttributedString(string: plain)
+        // RTF/RTFD → decode attributed and take .string
+        if type?.conforms(to: .rtf) == true || type?.conforms(to: .rtfd) == true {
+            if let data = try? Data(contentsOf: url),
+               let attr = NSAttributedString(rtf: data, documentAttributes: nil) {
+                return attr.string
+            }
+            return ""
         }
-        return NSAttributedString(string: "")
+
+        // HTML → decode attributed and take .string
+        if type == .html {
+            if let data = try? Data(contentsOf: url),
+               let attr = NSAttributedString(html: data, documentAttributes: nil) {
+                return attr.string
+            }
+            return ""
+        }
+
+        // Markdown or any other textual type → read as UTF-8 string
+        if let s = try? String(contentsOf: url, encoding: .utf8) {
+            return s
+        }
+        return ""
     }
 
-    /// Build attributed string for a content item.
-    private static func attributedFromItem(_ item: ContentItem) -> NSAttributedString {
+    /// Extract plain text from a content item.
+    private static func plainFromItem(_ item: ContentItem) -> String {
         // File-backed text from folders: load lazily from disk
         if item.sourceType == .folder && item.isText, let url = item.fileURL {
-            let (rtf, html, plain) = TextFileFormatter.loadAll(from: url, type: item.fileUTType)
-            if let rtf = rtf, let attributed = NSAttributedString(rtf: rtf, documentAttributes: nil) {
-                return attributed
-            } else if let html = html, let attributed = NSAttributedString(html: html, documentAttributes: nil) {
-                return attributed
-            } else if !plain.isEmpty {
-                return NSAttributedString(string: plain)
-            }
-            return NSAttributedString(string: "")
+            return plainFromURL(url)
         }
 
         // Clipboard or already-loaded items
-        if let rtf = item.rtfData, let attributed = NSAttributedString(rtf: rtf, documentAttributes: nil) {
-            return attributed
-        }
-        if let html = item.htmlData, let attributed = NSAttributedString(html: html, documentAttributes: nil) {
-            return attributed
-        }
         if let text = item.plainText {
-            return NSAttributedString(string: text)
+            return text
         }
-        return NSAttributedString(string: "")
+        if let rtf = item.rtfData, let attr = NSAttributedString(rtf: rtf, documentAttributes: nil) {
+            return attr.string
+        }
+        if let html = item.htmlData, let attr = NSAttributedString(html: html, documentAttributes: nil) {
+            return attr.string
+        }
+        return ""
     }
 }

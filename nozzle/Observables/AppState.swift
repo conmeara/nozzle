@@ -369,14 +369,14 @@ class AppState {
     // Step 1: Combine and paste all text content as one operation (off main thread)
     if !contextTextItems.isEmpty || !exampleTextItems.isEmpty || !promptText.isEmpty || !promptChips.isEmpty {
       Task.detached { [contextTextItems, exampleTextItems, promptText, promptChips] in
-        let result = await CombinedContentBuilder.build(
+        let plain = await CombinedContentBuilder.build(
           context: contextTextItems,
           examples: exampleTextItems,
           prompt: promptText,
           chips: promptChips
         )
         await MainActor.run {
-          Clipboard.shared.copyFormattedText(rtf: result.rtf, html: result.html, plain: result.plain)
+          Clipboard.shared.copyString(plain)
           // Wait for clipboard update, then paste
           DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
             Clipboard.shared.paste()
