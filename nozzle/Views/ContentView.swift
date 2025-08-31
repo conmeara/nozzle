@@ -66,7 +66,7 @@ struct ContentView: View {
             // Controls and tab buttons row
             HStack(spacing: 0) {
             // Icon group with tight spacing
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
               // Mode icon (search or plus) that switches mode on click
               Button(action: {
                 if appState.isSearchMode {
@@ -106,9 +106,10 @@ struct ContentView: View {
                   }
                 }) {
                   Image(systemName: dictationManager.isRecording ? "mic.fill" : "mic")
-                    .font(.system(size: 14))
+                    .font(.system(size: 15))
                     .foregroundColor(dictationManager.isRecording ? .orange : .secondary)
                     .opacity(dictationManager.isRecording ? 1.0 : 0.8)
+                    .padding(.all, 2)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .help(dictationManager.isRecording ? "Stop dictation (fn)" : "Start dictation (fn)")
@@ -121,9 +122,10 @@ struct ContentView: View {
                   // Placeholder for enhance prompt functionality
                 }) {
                   Image(systemName: "sparkles")
-                    .font(.system(size: 14))
+                    .font(.system(size: 15))
                     .foregroundColor(.secondary)
                     .opacity(0.8)
+                    .padding(.all, 2)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .help("Enhance prompt")
@@ -174,7 +176,20 @@ struct ContentView: View {
                   openFolderPickerAndRegister()
                 }
               } label: {
-                TabButtonLabel(title: "+", isSelected: false)
+                HStack(spacing: 4) {
+                  Text("+")
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundColor(.secondary)
+                    .opacity(0.8)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                  RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(NSColor.quaternaryLabelColor))
+                )
               }
               .buttonStyle(PlainButtonStyle())
               .menuStyle(BorderlessButtonMenuStyle())
@@ -425,7 +440,7 @@ struct TabButton: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(
-          RoundedRectangle(cornerRadius: 4)
+          RoundedRectangle(cornerRadius: 8)
             .fill(
               isSelected
                 ? Color(NSColor.controlAccentColor).opacity(0.20)
@@ -463,7 +478,7 @@ struct TabButtonLabel: View {
     .padding(.horizontal, 8)
     .padding(.vertical, 4)
     .background(
-      RoundedRectangle(cornerRadius: 4)
+      RoundedRectangle(cornerRadius: 8)
         .fill(
           isSelected
             ? Color(NSColor.controlAccentColor).opacity(0.20)
@@ -507,7 +522,7 @@ struct TabButtonWithIcon: View {
       .padding(.horizontal, 8)
       .padding(.vertical, 4)
       .background(
-        RoundedRectangle(cornerRadius: 4)
+        RoundedRectangle(cornerRadius: 8)
           .fill(
             isSelected
               ? Color(NSColor.controlAccentColor).opacity(0.20)
@@ -527,7 +542,7 @@ struct LiquidGlassModifier: ViewModifier {
       content
     } else {
       content
-        .glassEffect(.regular, in: .rect(cornerRadius: 12))
+        .glassEffect(.regular, in: .rect(cornerRadius: DesignConstants.cornerRadius))
     }
   }
 }

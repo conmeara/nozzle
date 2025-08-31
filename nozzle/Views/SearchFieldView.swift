@@ -15,10 +15,10 @@ struct SearchFieldView: View {
     VStack(spacing: 0) {
       ZStack(alignment: .topLeading) {
         // Background and border
-        RoundedRectangle(cornerRadius: 6)
+        RoundedRectangle(cornerRadius: DesignConstants.cornerRadius)
           .fill(Color(NSColor.controlBackgroundColor))
           .overlay(
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: DesignConstants.cornerRadius)
               .stroke(Color(NSColor.separatorColor).opacity(0.5), lineWidth: 1)
           )
         

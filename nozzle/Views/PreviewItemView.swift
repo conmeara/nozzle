@@ -10,7 +10,7 @@ struct PreviewItemView: View {
         Image(nsImage: image)
           .resizable()
           .aspectRatio(contentMode: .fit)
-          .clipShape(.rect(cornerRadius: 5))
+          .clipShape(.rect(cornerRadius: DesignConstants.cornerRadius))
       } else {
         ScrollView {
           WrappingTextView {

@@ -22,9 +22,9 @@ struct PromptHeaderView: View {
           .scrollContentBackground(.hidden)
           .padding(4)
           .background(Color(NSColor.controlBackgroundColor))
-          .cornerRadius(6)
+          .cornerRadius(DesignConstants.cornerRadius)
           .overlay(
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: DesignConstants.cornerRadius)
               .stroke(Color(NSColor.separatorColor), lineWidth: 1)
           )
           .font(.system(size: 13))

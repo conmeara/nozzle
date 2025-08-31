@@ -90,7 +90,7 @@ private struct PromptChipView: View {
       Image(nsImage: chip.icon)
         .resizable()
         .frame(width: 16, height: 16)
-        .clipShape(RoundedRectangle(cornerRadius: 3))
+        .clipShape(RoundedRectangle(cornerRadius: DesignConstants.smallCornerRadius))
       Text(chip.title)
         .font(.system(size: 12))
         .foregroundColor(isActive ? .primary : .secondary)
@@ -107,7 +107,7 @@ private struct PromptChipView: View {
     .padding(.horizontal, 8)
     .padding(.vertical, 4)
     .background(
-      RoundedRectangle(cornerRadius: 8)
+      RoundedRectangle(cornerRadius: DesignConstants.cornerRadius)
         .fill(isActive ? Color(NSColor.controlAccentColor).opacity(0.20) : Color(NSColor.quaternaryLabelColor))
     )
     .onHover { hovering in

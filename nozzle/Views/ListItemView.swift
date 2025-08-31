@@ -138,7 +138,7 @@ struct ListItemView<Title: View>: View {
         Color.clear
       }
     }
-    .clipShape(.rect(cornerRadius: 4))
+    .clipShape(.rect(cornerRadius: DesignConstants.cornerRadius))
     // Any mouse movement exits keyboard navigation mode
     .onMouseMove {
       appState.isKeyboardNavigating = false
