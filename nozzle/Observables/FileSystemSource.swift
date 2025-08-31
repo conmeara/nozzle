@@ -302,7 +302,8 @@ final class FileSystemSource: ContentSource {
     func toggleFolderExpansion(at path: String) async {
         let wasExpanded = expansionState.isExpanded(path)
         expansionState.toggleExpansion(path)
-        await refresh()
+        // Localized refresh: only rebuild the slice under this folder
+        await refreshFolderSlice(at: path)
         
         // If we just expanded a folder, handle any selection state
         if !wasExpanded && expansionState.isExpanded(path) {
