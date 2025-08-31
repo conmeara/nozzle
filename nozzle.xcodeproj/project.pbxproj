@@ -148,6 +148,7 @@
 		F5A0B0012EE1AAAA00AAA001 /* SelectedItemsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5A0B0002EE1AAAA00AAA001 /* SelectedItemsView.swift */; };
 		F5C180392E622C8B007ED483 /* DictationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C180382E622C8B007ED483 /* DictationManager.swift */; };
 		F5C1805D2E63C0F3007ED483 /* AsyncTextPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C1805C2E63C0F3007ED483 /* AsyncTextPreview.swift */; };
+		F5C1805F2E63E4A5007ED483 /* CombinedContentBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C1805E2E63E4A5007ED483 /* CombinedContentBuilder.swift */; };
 		F5C88D252DE55BA500EF8FA3 /* PromptHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */; };
 		F5F0C0012EE0000000000001 /* PromptChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0002EE0000000000001 /* PromptChip.swift */; };
 		F5F0C0032EE0000000000002 /* PromptChipsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0022EE0000000000002 /* PromptChipsStore.swift */; };
@@ -546,6 +547,7 @@
 		F5A0B0002EE1AAAA00AAA001 /* SelectedItemsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectedItemsView.swift; sourceTree = "<group>"; };
 		F5C180382E622C8B007ED483 /* DictationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationManager.swift; sourceTree = "<group>"; };
 		F5C1805C2E63C0F3007ED483 /* AsyncTextPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncTextPreview.swift; sourceTree = "<group>"; };
+		F5C1805E2E63E4A5007ED483 /* CombinedContentBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedContentBuilder.swift; sourceTree = "<group>"; };
 		F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptHeaderView.swift; sourceTree = "<group>"; };
 		F5F0C0002EE0000000000001 /* PromptChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChip.swift; sourceTree = "<group>"; };
 		F5F0C0022EE0000000000002 /* PromptChipsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChipsStore.swift; sourceTree = "<group>"; };
@@ -860,6 +862,7 @@
 		F57274722E57C00B003A9299 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				F5C1805E2E63E4A5007ED483 /* CombinedContentBuilder.swift */,
 				F572747E2E58F854003A9299 /* FileContentExtractor.swift */,
 				F57274702E57C00B003A9299 /* FileTypeBadgeCache.swift */,
 				F57274712E57C00B003A9299 /* TextFileFormatter.swift */,
@@ -1123,6 +1126,7 @@
 				DA1969182C3F327500258481 /* SearchFieldView.swift in Sources */,
 				DA1969192CF327500258481 /* UnifiedInputFieldView.swift in Sources */,
 				DAE8F5D42C43262B00851CA9 /* Popup.swift in Sources */,
+				F5C1805F2E63E4A5007ED483 /* CombinedContentBuilder.swift in Sources */,
 				DA13D7DA2C1A223E00FA9E23 /* Clear.swift in Sources */,
 				F57274602E56721F003A9299 /* FileSystemSource.swift in Sources */,
 				F57274612E56721F003A9299 /* ClipboardSource.swift in Sources */,

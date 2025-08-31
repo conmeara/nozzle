@@ -366,20 +366,27 @@ class AppState {
     promptText: String,
     hasClipboardItems: Bool
   ) {
-    // Step 1: Combine and paste all text content as one operation
+    // Step 1: Combine and paste all text content as one operation (off main thread)
     if !contextTextItems.isEmpty || !exampleTextItems.isEmpty || !promptText.isEmpty || !promptChips.isEmpty {
-      let (rtf, html, plain) = combinedFormattedContent(contextItems: contextTextItems, exampleItems: exampleTextItems, promptText: promptText, chips: promptChips)
-      Clipboard.shared.copyFormattedText(rtf: rtf, html: html, plain: plain)
-      
-      // Wait for clipboard update, then paste
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
-        Clipboard.shared.paste()
-        
-        // Step 2: After text is pasted, paste media items sequentially
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-          // Paste context media first, then example media to preserve order
-          let allMedia = contextMediaItems + exampleMediaItems
-          self.pasteMediaItems(allMedia, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems)
+      Task.detached { [contextTextItems, exampleTextItems, promptText, promptChips] in
+        let result = await CombinedContentBuilder.build(
+          context: contextTextItems,
+          examples: exampleTextItems,
+          prompt: promptText,
+          chips: promptChips
+        )
+        await MainActor.run {
+          Clipboard.shared.copyFormattedText(rtf: result.rtf, html: result.html, plain: result.plain)
+          // Wait for clipboard update, then paste
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
+            Clipboard.shared.paste()
+            // Step 2: After text is pasted, paste media items sequentially
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+              // Paste context media first, then example media to preserve order
+              let allMedia = contextMediaItems + exampleMediaItems
+              self.pasteMediaItems(allMedia, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems)
+            }
+          }
         }
       }
     } else {
@@ -440,168 +447,6 @@ class AppState {
       // Update footer visibility
       self.updateFooterItemVisibility()
     }
-  }
-  
-  private func combinedFormattedContent(contextItems: [ContentItem], exampleItems: [ContentItem], promptText: String, chips: [PromptChip]) -> (rtf: Data?, html: Data?, plain: String) {
-    let combined = NSMutableAttributedString()
-    
-    // Add prompt as plain text if present
-    if !promptText.isEmpty {
-      combined.append(NSAttributedString(string: promptText + "\n"))
-    }
-    
-    // Add chips content labeled <prompt i>
-    if !chips.isEmpty {
-      for (index, chip) in chips.enumerated() {
-        let heading = "<prompt \(index + 1)>\n"
-        combined.append(NSAttributedString(string: heading))
-        let (rtfData, htmlData, plainText) = TextFileFormatter.loadAll(from: chip.url, type: UTType(filenameExtension: chip.url.pathExtension))
-        if let rtfData = rtfData,
-           let attributedString = NSAttributedString(rtf: rtfData, documentAttributes: nil) {
-          combined.append(attributedString)
-        } else if let htmlData = htmlData,
-                  let attributedString = NSAttributedString(html: htmlData, documentAttributes: nil) {
-          combined.append(attributedString)
-        } else if !plainText.isEmpty {
-          combined.append(NSAttributedString(string: plainText))
-        }
-        combined.append(NSAttributedString(string: "\n"))
-      }
-    }
-    
-    // Helper to append a single item's content
-    func appendItem(_ item: ContentItem) {
-      // Check if this is a file-backed text item that needs lazy loading
-      if item.sourceType == .folder && item.isText && item.fileURL != nil {
-        // Lazy load text file content
-        let (rtfData, htmlData, plainText) = TextFileFormatter.loadAll(from: item.fileURL!, type: item.fileUTType)
-        
-        if let rtfData = rtfData,
-           let attributedString = NSAttributedString(rtf: rtfData, documentAttributes: nil) {
-          combined.append(attributedString)
-        } else if let htmlData = htmlData,
-                  let attributedString = NSAttributedString(html: htmlData, documentAttributes: nil) {
-          combined.append(attributedString)
-        } else if !plainText.isEmpty {
-          combined.append(NSAttributedString(string: plainText))
-        }
-      } else {
-        // Use existing content for clipboard items
-        if let rtfData = item.rtfData,
-           let attributedString = NSAttributedString(rtf: rtfData, documentAttributes: nil) {
-          combined.append(attributedString)
-        } else if let htmlData = item.htmlData,
-                  let attributedString = NSAttributedString(html: htmlData, documentAttributes: nil) {
-          combined.append(attributedString)
-        } else if let text = item.plainText {
-          combined.append(NSAttributedString(string: text))
-        }
-      }
-    }
-    
-    // Helpers to expand folders into textual descendants and filter non-text
-    func textualDescendants(of folder: ContentItem) -> [ContentItem] {
-      guard folder.isFolder, let baseURL = folder.fileURL else { return [] }
-      var results: [ContentItem] = []
-      let fm = FileManager.default
-      if let enumerator = fm.enumerator(at: baseURL, includingPropertiesForKeys: [.isDirectoryKey, .contentTypeKey, .contentModificationDateKey, .fileSizeKey], options: [.skipsHiddenFiles]) {
-        for case let url as URL in enumerator {
-          do {
-            let vals = try url.resourceValues(forKeys: [.isDirectoryKey, .contentTypeKey, .contentModificationDateKey, .fileSizeKey])
-            if vals.isDirectory == true { continue }
-            let type = FileSystemSource.resolvedType(for: url)
-            // Consider textual if UTType conforms to .text, or is RTF/HTML/Markdown
-            let isMarkdown = (type?.identifier == "net.daringfireball.markdown" || type?.identifier == "public.markdown" || type?.preferredFilenameExtension == "md")
-            let isTextual = (type?.conforms(to: .text) == true) || type == .rtf || type == .rtfd || type == .html || isMarkdown
-            guard isTextual else { continue }
-            // Create a minimal ephemeral ContentItem for paste composition
-            let id = FileSystemSource.makeStableUUID(identity: FileIdentity.snapshot(for: url).identity, fallbackPath: url.absoluteString)
-            let item = ContentItem(
-              id: id,
-              title: url.lastPathComponent,
-              timestamp: vals.contentModificationDate ?? Date(),
-              sourceType: .folder,
-              sourceId: folder.sourceId,
-              fileURL: url,
-              imageData: nil,
-              rtfData: nil,
-              htmlData: nil,
-              plainText: nil,
-              fileIdentity: FileIdentity.snapshot(for: url).identity,
-              uniformTypeIdentifier: type?.identifier,
-              fileSize: vals.fileSize.flatMap(Int64.init),
-              isFolder: false,
-              depth: 0,
-              parentPath: nil,
-              isSelected: false,
-              isVisible: true
-            )
-            results.append(item)
-          } catch {
-            continue
-          }
-        }
-      }
-      return results
-    }
-    
-    func flattenToText(_ items: [ContentItem]) -> [ContentItem] {
-      var result: [ContentItem] = []
-      var seen: Set<UUID> = []
-      for item in items {
-        if item.isFolder {
-          for desc in textualDescendants(of: item) {
-            if !seen.contains(desc.id) {
-              seen.insert(desc.id)
-              result.append(desc)
-            }
-          }
-        } else {
-          // Keep only textual items
-          let isTextual = (item.sourceType == .folder && item.isText) || item.plainText != nil || item.rtfData != nil || item.htmlData != nil
-          if isTextual, !seen.contains(item.id) {
-            seen.insert(item.id)
-            result.append(item)
-          }
-        }
-      }
-      return result
-    }
-    
-    let flatContextItems = flattenToText(contextItems)
-    let flatExampleItems = flattenToText(exampleItems)
-    
-    // Add context items wrapped in <context> tags (context above examples)
-    for item in flatContextItems {
-      combined.append(NSAttributedString(string: "<context>\n"))
-      appendItem(item)
-      combined.append(NSAttributedString(string: "\n</context>\n"))
-    }
-    
-    // Add example items wrapped in <example> tags
-    for item in flatExampleItems {
-      combined.append(NSAttributedString(string: "<example>\n"))
-      appendItem(item)
-      combined.append(NSAttributedString(string: "\n</example>\n"))
-    }
-    
-    // Return all formats - pasteboard will use the best available
-    // Only convert to RTF/HTML if we have content to avoid crashes
-    let plainText = combined.string
-    let fullRange = NSRange(location: 0, length: combined.length)
-    
-    let rtfData: Data?
-    let htmlData: Data?
-    
-    if combined.length > 0 {
-      rtfData = try? combined.data(from: fullRange, documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf])
-      htmlData = try? combined.data(from: fullRange, documentAttributes: [.documentType: NSAttributedString.DocumentType.html])
-    } else {
-      rtfData = nil
-      htmlData = nil
-    }
-    
-    return (rtf: rtfData, html: htmlData, plain: plainText)
   }
   
   // MARK: - Prompt chips helpers

@@ -1,7 +1,7 @@
 import Foundation
 import AppKit
 
-struct PromptChip: Identifiable, Hashable {
+struct PromptChip: Identifiable, Hashable, Sendable {
   let id: UUID
   let url: URL
   var title: String
@@ -16,4 +16,3 @@ struct PromptChip: Identifiable, Hashable {
     NSWorkspace.shared.icon(forFile: url.path)
   }
 }
-
