@@ -26,44 +26,16 @@ final class ContentManager {
     // Preview focus tracking
     private(set) var focusedItemId: UUID?
     
+    // Cache for selected items to avoid repeated full scans and sorts
+    @ObservationIgnored private var _selectedCache: [ContentItem] = []
+    @ObservationIgnored private var _selectedCacheDirty: Bool = true
+    
     var selectedItems: [ContentItem] {
-        let items = allItems.filter { selectedItemIds.contains($0.id) }
-        
-        // Add parent folders when their children are selected
-        var parentFolders: [ContentItem] = []
-        
-        for selectedItem in items {
-            if let parentPath = selectedItem.parentPath {
-                // Find the parent folder
-                if let parentFolder = allItems.first(where: { 
-                    $0.isFolder && $0.fileURL?.path == parentPath 
-                }) {
-                    // Add parent if not already selected explicitly and not already in our list
-                    if !selectedItemIds.contains(parentFolder.id) && 
-                       !parentFolders.contains(where: { $0.id == parentFolder.id }) {
-                        parentFolders.append(parentFolder)
-                    }
-                }
-            }
+        if _selectedCacheDirty {
+            _selectedCache = makeSelectedItems()
+            _selectedCacheDirty = false
         }
-        
-        // Combine selected items and their parent folders, with parents first
-        let result = parentFolders + items
-        
-        // Sort to ensure logical order: parents before children
-        return result.sorted { first, second in
-            // If one is parent of the other, parent comes first
-            if let firstPath = first.fileURL?.path,
-               second.parentPath == firstPath {
-                return true // first is parent of second
-            }
-            if let secondPath = second.fileURL?.path,
-               first.parentPath == secondPath {
-                return false // second is parent of first
-            }
-            // Otherwise maintain original timestamp order
-            return first.timestamp > second.timestamp
-        }
+        return _selectedCache
     }
     
     // Convenience: selected items split into context vs examples
@@ -107,6 +79,7 @@ final class ContentManager {
             // Bridge to clipboard selection if needed
             syncClipboardSelection(id)
         }
+        markSelectedDirty()
     }
     
     private func toggleFolderSelection(_ folderId: UUID) {
@@ -149,6 +122,7 @@ final class ContentManager {
                 deselectFolderChildren(folderId)
             }
         }
+        markSelectedDirty()
     }
     
     private func selectFolderChildren(_ folderId: UUID) {
@@ -172,6 +146,7 @@ final class ContentManager {
         // Also select the folder itself (for consistency when expanding/collapsing)
         selectedItemIds.insert(folderId)
         exampleItemIds.remove(folderId)
+        markSelectedDirty()
     }
     
     private func deselectFolderChildren(_ folderId: UUID) {
@@ -195,6 +170,7 @@ final class ContentManager {
         // Also deselect the folder itself
         selectedItemIds.remove(folderId)
         exampleItemIds.remove(folderId)
+        markSelectedDirty()
     }
     
     func clearSelection() {
@@ -204,6 +180,7 @@ final class ContentManager {
         if sources["clipboard"] is ClipboardSource {
             History.shared.items.forEach { $0.isSelected = false }
         }
+        markSelectedDirty()
     }
     
     func isSelected(_ id: UUID) -> Bool {
@@ -250,6 +227,7 @@ final class ContentManager {
         if selectedItemIds.contains(folderItem.id) {
             selectFolderChildren(folderItem.id)
         }
+        markSelectedDirty()
     }
     
     private func syncClipboardSelection(_ id: UUID) {
@@ -313,6 +291,7 @@ final class ContentManager {
                 Bookmarks.remove(url: folderURL)
             }
         }
+        markSelectedDirty()
     }
     
     // Lookup
@@ -359,6 +338,7 @@ final class ContentManager {
                 }
             }
         }
+        markSelectedDirty()
     }
     
     // Collect all textual descendant file UUIDs for a folder item by scanning the filesystem
@@ -435,5 +415,60 @@ final class ContentManager {
         if item.rtfData != nil { return true }
         if item.htmlData != nil { return true }
         return false
+    }
+}
+
+// MARK: - Selected items caching helpers
+extension ContentManager {
+    func markSelectedDirty() {
+        _selectedCacheDirty = true
+    }
+    
+    private func makeSelectedItems() -> [ContentItem] {
+        let items = allItems
+        guard !selectedItemIds.isEmpty, !items.isEmpty else { return [] }
+        
+        // Index folders by path for fast parent lookup
+        var folderByPath: [String: ContentItem] = [:]
+        folderByPath.reserveCapacity(items.count)
+        for item in items where item.isFolder {
+            if let path = item.fileURL?.path { folderByPath[path] = item }
+        }
+        
+        // Determine which parent folders need to be included due to selected children
+        var neededParentIds: Set<UUID> = []
+        for item in items {
+            guard selectedItemIds.contains(item.id) else { continue }
+            if let parentPath = item.parentPath, let parent = folderByPath[parentPath] {
+                if !selectedItemIds.contains(parent.id) {
+                    neededParentIds.insert(parent.id)
+                }
+            }
+        }
+        
+        // Build result preserving appearance order: parents first, then children
+        var result: [ContentItem] = []
+        result.reserveCapacity(selectedItemIds.count + neededParentIds.count)
+        var seen: Set<UUID> = []
+        
+        // 1) Parents (explicitly selected folders + needed parents) in appearance order
+        for item in items where item.isFolder {
+            if neededParentIds.contains(item.id) || selectedItemIds.contains(item.id) {
+                if !seen.contains(item.id) {
+                    result.append(item)
+                    seen.insert(item.id)
+                }
+            }
+        }
+        
+        // 2) Children (all other selected items) in appearance order
+        for item in items {
+            if selectedItemIds.contains(item.id) && !seen.contains(item.id) {
+                result.append(item)
+                seen.insert(item.id)
+            }
+        }
+        
+        return result
     }
 }

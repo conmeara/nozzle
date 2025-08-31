@@ -10,7 +10,12 @@ import SwiftData
 class History { // swiftlint:disable:this type_body_length
   static let shared = History()
 
-  var items: [HistoryItemDecorator] = []
+  var items: [HistoryItemDecorator] = [] {
+    didSet {
+      // Visible list for clipboard changed; refresh selectedItems cache order
+      ContentManager.shared.markSelectedDirty()
+    }
+  }
   var selectedItem: HistoryItemDecorator? {
     willSet {
       // Don't change isSelected state for multi-select mode

@@ -123,6 +123,8 @@ final class FileSystemSource: ContentSource {
         let hierarchicalItems = await buildHierarchicalItems(at: folderURL, depth: 0, parentPath: nil)
         self.cachedItems = hierarchicalItems
         self.rebuildIndexes()
+        // Visible slice changed; invalidate selectedItems cache
+        ContentManager.shared.markSelectedDirty()
     }
 
     // MARK: - Localized refresh helpers
@@ -164,6 +166,8 @@ final class FileSystemSource: ContentSource {
             cachedItems.replaceSubrange(start..<safeEnd, with: replacement)
         }
         rebuildIndexes()
+        // Visible slice changed; invalidate selectedItems cache
+        ContentManager.shared.markSelectedDirty()
     }
 
     @MainActor

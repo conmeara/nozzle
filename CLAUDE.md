@@ -525,3 +525,45 @@ AppDelegate.swift           # Source registration + injection
 <key>com.apple.security.automation.apple-events</key>
 <true/>
 ```
+
+## Selected Items Caching
+
+To reduce recomputation during SwiftUI body evaluation and keep list order predictable, `ContentManager.selectedItems` uses a cache with targeted invalidation. This makes access O(#selected) and preserves on-screen appearance order (parents before children, then stable list order).
+
+Implementation
+
+```swift
+@ObservationIgnored private var _selectedCache: [ContentItem] = []
+@ObservationIgnored private var _selectedCacheDirty = true
+
+var selectedItems: [ContentItem] {
+    if _selectedCacheDirty { _selectedCache = makeSelectedItems(); _selectedCacheDirty = false }
+    return _selectedCache
+}
+
+func markSelectedDirty() { _selectedCacheDirty = true }
+
+private func makeSelectedItems() -> [ContentItem] {
+    // Traverse allItems (appearance order). Build two passes:
+    // 1) parents (explicitly selected folders + parents of selected children)
+    // 2) remaining selected children. No timestamp sort applied.
+}
+```
+
+Invalidation Points
+
+- Selection changes: `toggleSelection`, folder select/deselect helpers, `clearSelection`.
+- Example toggles: `toggleExample` may add/remove selections.
+- Source updates: `FileSystemSource.refresh()` and `refreshFolderSlice(at:)`.
+- Clipboard updates: `History.items` `didSet` when visible list changes.
+- Source removal and expansion: `removeSource(_:)`, `handleFolderExpansion(_:)`.
+
+Behavior Guarantees
+
+- Complexity: O(#selected) to build; reads return cached array.
+- Order: Parents before children; otherwise preserve current list order (no timestamp sort).
+- Stability: Prevents “cognitive jump” when selections are displayed across tabs.
+
+Maintainer Notes
+
+- If a source changes its visible list order or filtering, call `ContentManager.shared.markSelectedDirty()` after updating its items to keep the aggregated selection in sync.

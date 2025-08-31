@@ -525,3 +525,44 @@ AppDelegate.swift           # Source registration + injection
 <key>com.apple.security.automation.apple-events</key>
 <true/>
 ```
+
+## Selected Items Caching
+
+We optimized `ContentManager.selectedItems` to avoid repeated full scans/sorts and to keep the UI order stable.
+
+Summary
+
+- Complexity: O(#selected) with a cached array and dirty flag.
+- Order: Preserve appearance order from the visible list; parents before children; no timestamp sort.
+- Stability: Prevents reordering jitter in the Aggregated (“#”) tab and elsewhere.
+
+Implementation Sketch
+
+```swift
+@ObservationIgnored private var _selectedCache: [ContentItem] = []
+@ObservationIgnored private var _selectedCacheDirty = true
+
+var selectedItems: [ContentItem] {
+    if _selectedCacheDirty { _selectedCache = makeSelectedItems(); _selectedCacheDirty = false }
+    return _selectedCache
+}
+
+func markSelectedDirty() { _selectedCacheDirty = true }
+
+private func makeSelectedItems() -> [ContentItem] {
+    // Traverse allItems in appearance order.
+    // Include selected parents and parents of selected children, then selected children.
+}
+```
+
+Dirty Invalidation Triggers
+
+- Selection changes: `toggleSelection`, folder select/deselect helpers, `clearSelection`.
+- Example state changes: `toggleExample` (may alter selection set).
+- Source updates: `FileSystemSource.refresh()` and `refreshFolderSlice(at:)`.
+- Clipboard updates: `History.items` `didSet`.
+- Source removal and expansion events: `removeSource(_:)`, `handleFolderExpansion(_:)`.
+
+Maintainer Guidance
+
+- When a source changes its visible item order or filtering, call `ContentManager.shared.markSelectedDirty()` after updating to keep the aggregated selection view consistent.
