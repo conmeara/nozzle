@@ -7,6 +7,7 @@ struct KeyHandlingView<Content: View>: View {
   @ViewBuilder let content: () -> Content
 
   @Environment(AppState.self) private var appState
+  @Environment(ContentManager.self) private var contentManager
 
   var body: some View {
     content()
@@ -106,29 +107,83 @@ struct KeyHandlingView<Content: View>: View {
           guard NSApp.characterPickerWindow == nil else {
             return .ignored
           }
-
-          appState.highlightNext()
+          if contentManager.activeSourceId == "clipboard" {
+            appState.highlightNext()
+          } else {
+            appState.isKeyboardNavigating = true
+            let items: [ContentItem]
+            if contentManager.activeSourceId == "aggregated" {
+              items = contentManager.selectedContextItems + contentManager.selectedExampleItems
+            } else {
+              items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
+            }
+            if items.isEmpty { return .handled }
+            if let focused = contentManager.focusedItemId,
+               let idx = items.firstIndex(where: { $0.id == focused }),
+               idx + 1 < items.count {
+              contentManager.focus(items[idx + 1].id)
+            } else {
+              contentManager.focus(items.first!.id)
+            }
+          }
           return .handled
         case .moveToLast:
           guard NSApp.characterPickerWindow == nil else {
             return .ignored
           }
-
-          appState.highlightLast()
+          if contentManager.activeSourceId == "clipboard" {
+            appState.highlightLast()
+          } else {
+            appState.isKeyboardNavigating = true
+            let items: [ContentItem]
+            if contentManager.activeSourceId == "aggregated" {
+              items = contentManager.selectedContextItems + contentManager.selectedExampleItems
+            } else {
+              items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
+            }
+            if let last = items.last { contentManager.focus(last.id) }
+          }
           return .handled
         case .moveToPrevious:
           guard NSApp.characterPickerWindow == nil else {
             return .ignored
           }
-
-          appState.highlightPrevious()
+          if contentManager.activeSourceId == "clipboard" {
+            appState.highlightPrevious()
+          } else {
+            appState.isKeyboardNavigating = true
+            let items: [ContentItem]
+            if contentManager.activeSourceId == "aggregated" {
+              items = contentManager.selectedContextItems + contentManager.selectedExampleItems
+            } else {
+              items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
+            }
+            if items.isEmpty { return .handled }
+            if let focused = contentManager.focusedItemId,
+               let idx = items.firstIndex(where: { $0.id == focused }),
+               idx - 1 >= 0 {
+              contentManager.focus(items[idx - 1].id)
+            } else {
+              contentManager.focus(items.last!.id)
+            }
+          }
           return .handled
         case .moveToFirst:
           guard NSApp.characterPickerWindow == nil else {
             return .ignored
           }
-
-          appState.highlightFirst()
+          if contentManager.activeSourceId == "clipboard" {
+            appState.highlightFirst()
+          } else {
+            appState.isKeyboardNavigating = true
+            let items: [ContentItem]
+            if contentManager.activeSourceId == "aggregated" {
+              items = contentManager.selectedContextItems + contentManager.selectedExampleItems
+            } else {
+              items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
+            }
+            if let first = items.first { contentManager.focus(first.id) }
+          }
           return .handled
         case .openPreferences:
           appState.openPreferences()

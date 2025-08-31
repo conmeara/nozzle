@@ -100,7 +100,6 @@ struct FolderTreeItemView: View {
             }
             .onHover { hovering in
                 if hovering {
-                    appState.selectWithoutScrolling(item.id)
                     // Debounce preview focus while pointer dwells on the folder
                     FolderTreeItemView.previewHoverThrottler.minimumDelay = Double(Defaults[.hoverPreviewDelay]) / 1000
                     FolderTreeItemView.previewHoverThrottler.throttle {

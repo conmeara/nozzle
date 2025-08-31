@@ -24,13 +24,26 @@ struct ListItemView<Title: View>: View {
 
   @Default(.showApplicationIcons) private var showIcons
   @Environment(AppState.self) private var appState
+  @Environment(ContentManager.self) private var contentManager
   @Environment(ModifierFlags.self) private var modifierFlags
   @State private var isHovering = false
   
   private var shouldShowHoverBackground: Bool {
-    // Single source of truth: only check the actual selected items
-    appState.history.selectedItem?.id == id || 
-    appState.footer.selectedItem?.id == id
+    // Immediate hover background only when not keyboard navigating
+    if isHovering && !appState.isKeyboardNavigating { return true }
+
+    // Determine global focus across clipboard and universal sources
+    let clipboardFocused = (appState.history.selectedItem?.id == id ||
+                            appState.footer.selectedItem?.id == id)
+    let universalFocused = (contentManager.focusedItemId == id)
+    let isFocused = clipboardFocused || universalFocused
+
+    // During keyboard navigation, show focused row regardless of hover
+    if appState.isKeyboardNavigating { return isFocused }
+
+    // Mouse-driven: avoid ghost focus when hovering a different row
+    if let hoveredId = appState.hoveredListItemId { return isFocused && hoveredId == id }
+    return isFocused
   }
 
   var body: some View {
@@ -126,8 +139,18 @@ struct ListItemView<Title: View>: View {
       }
     }
     .clipShape(.rect(cornerRadius: 4))
+    // Any mouse movement exits keyboard navigation mode
+    .onMouseMove {
+      appState.isKeyboardNavigating = false
+    }
     .onHover { hovering in
       isHovering = hovering
+      // Track hovered row globally to coordinate background across rows
+      if hovering {
+        appState.hoveredListItemId = id
+      } else if appState.hoveredListItemId == id {
+        appState.hoveredListItemId = nil
+      }
       if hovering {
         if !appState.isKeyboardNavigating {
           // When preview pane is visible, debounce hover selection to reduce UI churn

@@ -261,10 +261,10 @@ struct ContentView: View {
             if appState.showPreviewPane {
               Divider()
               
-              // Use the new multi-source preview pane
+              // Gate preview by active tab so it always matches the visible list
               PreviewPaneView(
-                clipboardItem: appState.previewItem,
-                fileItem: contentManager.focusedContentItem
+                clipboardItem: contentManager.activeSourceId == "clipboard" ? appState.previewItem : nil,
+                fileItem: contentManager.activeSourceId == "clipboard" ? nil : contentManager.focusedContentItem
               )
               .frame(width: 350)
             }
@@ -296,6 +296,31 @@ struct ContentView: View {
     .onChange(of: contentManager.activeSourceId) { _, newSourceId in
       // Sync selectedTab when activeSourceId changes (e.g., from "/" shortcut)
       selectedTab = newSourceId
+      // Ensure an active row is highlighted immediately in the new tab
+      appState.isKeyboardNavigating = true
+      appState.hoveredListItemId = nil
+      if newSourceId == "clipboard" {
+        if let first = appState.history.items.first(where: \.isVisible) {
+          appState.selection = first.id
+        }
+      } else if newSourceId == "aggregated" {
+        // Selected Items view: focus first context item, else first example item
+        let ctx = contentManager.selectedContextItems
+        let ex = contentManager.selectedExampleItems
+        if let first = (ctx.first ?? ex.first) {
+          contentManager.focus(first.id)
+        } else {
+          contentManager.focus(nil)
+        }
+      } else {
+        // Universal sources (including Prompts): focus first visible item
+        let items = contentManager.getItems(for: newSourceId).filter(\.isVisible)
+        if let first = items.first {
+          contentManager.focus(first.id)
+        } else {
+          contentManager.focus(nil)
+        }
+      }
     }
     .onMouseMove {
       // Only set to false if it was true (avoid constant updates)

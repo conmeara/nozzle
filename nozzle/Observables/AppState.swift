@@ -75,6 +75,8 @@ class AppState {
   }
 
   var hoverSelectionWhileKeyboardNavigating: UUID?
+  // Track which list row is currently hovered globally to avoid duplicate highlights
+  var hoveredListItemId: UUID?
   var isKeyboardNavigating: Bool = true {
     didSet {
       if let hoverSelection = hoverSelectionWhileKeyboardNavigating {

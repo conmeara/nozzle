@@ -86,7 +86,6 @@ struct UniversalItemView: View {
                     }
                     .onHover { hovering in
                         if hovering {
-                            appState.selectWithoutScrolling(item.id)
                             // Debounce focus so we only preview when the pointer "dwells"
                             UniversalItemView.previewHoverThrottler.minimumDelay = Double(Defaults[.hoverPreviewDelay]) / 1000
                             UniversalItemView.previewHoverThrottler.throttle {

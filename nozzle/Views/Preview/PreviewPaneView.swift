@@ -35,12 +35,40 @@ struct PreviewPaneView: View {
                     )
                 }
             } else if let fileItem = fileItem {
-                // Route to appropriate file preview
+                // Route to appropriate preview for universal/selected items
                 if fileItem.sourceId == "prompts",
                    fileItem.fileURL != nil,
                    (fileItem.isText || fileItem.isMarkdown || fileItem.uniformTypeIdentifier == UTType.plainText.identifier) {
                     // Editable preview for prompt files
                     PromptEditorView(item: fileItem)
+                } else if fileItem.sourceType == .clipboard {
+                    // Clipboard-backed selected item: render text or image directly
+                    if let data = fileItem.imageData, let image = NSImage(data: data) {
+                        Image(nsImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .clipShape(.rect(cornerRadius: 5))
+                            .padding()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .previewSurfaceStyle()
+                    } else if let text = fileItem.plainText {
+                        PlainTextPreview(
+                            text: text,
+                            metadata: PlainTextPreview.PreviewMetadata(
+                                application: nil,
+                                applicationImage: nil,
+                                firstCopiedAt: nil,
+                                lastCopiedAt: nil,
+                                numberOfCopies: nil,
+                                fileName: nil,
+                                fileSize: nil
+                            )
+                        )
+                    } else if let fileURL = fileItem.fileURL {
+                        QuickLookPreview(url: fileURL)
+                    } else {
+                        EmptyPreviewView()
+                    }
                 } else if fileItem.isText {
                     // Async + cached text preview for files (no main-thread I/O)
                     AsyncTextPreview(item: fileItem)
