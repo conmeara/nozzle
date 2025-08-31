@@ -124,6 +124,59 @@ final class FileSystemSource: ContentSource {
         self.cachedItems = hierarchicalItems
         self.rebuildIndexes()
     }
+
+    // MARK: - Localized refresh helpers
+
+    @MainActor
+    private func refreshFolderSlice(at folderPath: String) async {
+        guard let folderIdx = indexByPath[folderPath],
+              cachedItems.indices.contains(folderIdx),
+              cachedItems[folderIdx].isFolder,
+              let folderURL = cachedItems[folderIdx].fileURL else { return }
+
+        let baseDepth = cachedItems[folderIdx].depth
+
+        // Count the current contiguous descendants (until an item with depth <= baseDepth)
+        var childCount = 0
+        var i = folderIdx + 1
+        while i < cachedItems.count, cachedItems[i].depth > baseDepth {
+            childCount += 1
+            i += 1
+        }
+
+        // Only rebuild children if this folder is expanded; otherwise remove slice
+        let replacement: [ContentItem]
+        if expansionState.isExpanded(folderPath) {
+            replacement = await buildHierarchicalItems(
+                at: folderURL,
+                depth: baseDepth + 1,
+                parentPath: folderURL.path
+            )
+        } else {
+            replacement = []
+        }
+
+        // Replace the slice under this folder with the newly built children
+        let start = folderIdx + 1
+        let end = folderIdx + 1 + childCount
+        if start <= end, start <= cachedItems.count {
+            let safeEnd = min(end, cachedItems.count)
+            cachedItems.replaceSubrange(start..<safeEnd, with: replacement)
+        }
+        rebuildIndexes()
+    }
+
+    @MainActor
+    private func nearestExpandedAncestor(of path: String) -> String? {
+        var url = URL(fileURLWithPath: path).deletingLastPathComponent()
+        while url.path.hasPrefix(folderURL.path) {
+            if expansionState.isExpanded(url.path) { return url.path }
+            let parent = url.deletingLastPathComponent()
+            if parent.path == url.path { break }
+            url = parent
+        }
+        return nil
+    }
     
     private func buildHierarchicalItems(at url: URL, depth: Int, parentPath: String?) async -> [ContentItem] {
         let task = Task.detached { () -> [ContentItem] in
@@ -358,22 +411,20 @@ extension FileSystemSource {
     private func applyPending() {
         let paths = pendingPaths
         pendingPaths.removeAll()
-        
-        for path in paths {
-            if FileIdentity.exists(at: path) {
-                // For now, refresh the entire hierarchy on any change
-                // This is simpler and safer for the initial implementation
+
+        // Prefer localized refresh within the nearest expanded ancestor
+        for p in paths {
+            if let ancestor = nearestExpandedAncestor(of: p) {
                 Task { @MainActor in
-                    await self.refresh()
-                }
-                return
-            } else {
-                // File deleted: refresh entire hierarchy
-                Task { @MainActor in
-                    await self.refresh()
+                    await self.refreshFolderSlice(at: ancestor)
                 }
                 return
             }
+        }
+
+        // Fallback if nothing is expanded or we can't localize
+        Task { @MainActor in
+            await self.refresh()
         }
     }
     
