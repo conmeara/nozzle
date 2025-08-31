@@ -20,18 +20,10 @@ struct PreviewPaneView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .previewSurfaceStyle()
                 } else {
-                    // Plain text preview for clipboard text
+                    // Plain text preview for clipboard text (no metadata)
                     PlainTextPreview(
                         text: clipboardItem.text,
-                        metadata: PlainTextPreview.PreviewMetadata(
-                            application: clipboardItem.application,
-                            applicationImage: clipboardItem.applicationImage.nsImage,
-                            firstCopiedAt: clipboardItem.item.firstCopiedAt,
-                            lastCopiedAt: clipboardItem.item.lastCopiedAt,
-                            numberOfCopies: clipboardItem.item.numberOfCopies,
-                            fileName: nil,
-                            fileSize: nil
-                        )
+                        metadata: nil
                     )
                 }
             } else if let fileItem = fileItem {
@@ -54,15 +46,7 @@ struct PreviewPaneView: View {
                     } else if let text = fileItem.plainText {
                         PlainTextPreview(
                             text: text,
-                            metadata: PlainTextPreview.PreviewMetadata(
-                                application: nil,
-                                applicationImage: nil,
-                                firstCopiedAt: nil,
-                                lastCopiedAt: nil,
-                                numberOfCopies: nil,
-                                fileName: nil,
-                                fileSize: nil
-                            )
+                            metadata: nil
                         )
                     } else if let fileURL = fileItem.fileURL {
                         QuickLookPreview(url: fileURL)

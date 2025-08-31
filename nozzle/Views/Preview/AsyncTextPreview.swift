@@ -33,18 +33,10 @@ struct AsyncTextPreview: View {
     var body: some View {
         ZStack {
             if let text {
-                // Reuse PlainTextPreview for consistent styling/metadata
+                // Reuse PlainTextPreview for consistent styling (no metadata)
                 PlainTextPreview(
                     text: text,
-                    metadata: PlainTextPreview.PreviewMetadata(
-                        application: nil,
-                        applicationImage: nil,
-                        firstCopiedAt: nil,
-                        lastCopiedAt: nil,
-                        numberOfCopies: nil,
-                        fileName: item.title,
-                        fileSize: item.fileSize
-                    )
+                    metadata: nil
                 )
             } else if isLoading {
                 // Lightweight placeholder while loading; avoids heavy layout
