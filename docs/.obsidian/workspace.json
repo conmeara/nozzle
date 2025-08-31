@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Todos.md",
+                "file": "Design/Materials.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Todos"
+              "title": "Materials"
             }
           }
         ]
@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "b5120dc5ed8bb83c",
@@ -172,6 +171,31 @@
   },
   "active": "499f95c375e9eb5f",
   "lastOpenFiles": [
+    "Design/Color.md",
+    "Design/Materials.md",
+    "Design Guidelines/Materials.md",
+    "Design",
+    "Design Guidelines/Color.md",
+    "Design Guidelines",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1022-thumb.imageset/Contents.json",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1022-thumb.imageset/1022-thumb@2x.jpg",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1021-thumb.imageset/Contents.json",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1021-thumb.imageset/1021-thumb@2x.jpg",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1020-thumb.imageset/Contents.json",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1020-thumb.imageset/1020-thumb@2x.jpg",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1019-thumb.imageset/Contents.json",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1019-thumb.imageset/1019-thumb@2x.jpg",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1017-thumb.imageset/1017-thumb@2x.jpg",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1018-thumb.imageset/Contents.json",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1018-thumb.imageset/1018-thumb@2x.jpg",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1017-thumb.imageset/Contents.json",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1016-thumb.imageset/Contents.json",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1016-thumb.imageset/1016-thumb@2x.jpg",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1015-thumb.imageset/Contents.json",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1015-thumb.imageset/1015-thumb@2x.jpg",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1014-thumb.imageset/1014-thumb@2x.jpg",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1012-thumb.imageset/1012-thumb@2x.jpg",
+    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/README.md",
     "nozzle-v3-architecture.md",
     "SystemLanguageModel.md",
     "SpeechAnalyzer.md",
@@ -188,35 +212,10 @@
     "Speech/SpeechAnalyzer.md",
     "Speech/SystemLanguageModel.md",
     "Foundation Models/Generating content and performing tasks with Foundation Models.md",
-    "Apple Intelligence/BringingAdvancedSpeechToTextCapabilitiesToYourApp",
-    "Apple Intelligence/AddingIntelligentAppFeaturesWithGenerativeModels",
-    "Apple Intelligence",
     "Liquid Glass/Liquid Glass.md",
     "Liquid Glass/Landmarks Building an app with Liquid Glass.md",
     "Liquid Glass/Adopting Liquid Glass.md",
     "Layout/sectionHeaders.md",
-    "Layout/sectionFooters.md",
-    "Layout/init(alignmentspacingpinnedViewscontent).md",
-    "Layout/init(alignmentspacingpinnedViewscontent) 1.md",
-    "Layout/init(alignmentspacingcontent).md",
-    "Layout/init(alignmentspacingcontent) 1.md",
-    "Layout/init(alignmenthorizontalSpacingverticalSpacingcontent).md",
-    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/docs",
-    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/untitled folder",
-    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/SwiftTranscriptionSampleApp.xcodeproj/project.xcworkspace/xcuserdata/conmeara.xcuserdatad/UserInterfaceState.xcuserstate",
-    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/SwiftTranscriptionSampleApp.xcodeproj/project.xcworkspace/xcuserdata/conmeara.xcuserdatad",
-    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/SwiftTranscriptionSampleApp.xcodeproj/project.xcworkspace/xcuserdata",
-    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/SwiftTranscriptionSampleApp.xcodeproj/xcuserdata/conmeara.xcuserdatad/xcschemes/xcschememanagement.plist",
-    "Speech/BringingAdvancedSpeechToTextCapabilitiesToYourApp/SwiftTranscriptionSampleApp.xcodeproj/xcuserdata/conmeara.xcuserdatad/xcschemes",
-    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1012-thumb.imageset/1012-thumb@2x.jpg",
-    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1021-thumb.imageset/1021-thumb@2x.jpg",
-    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1019-thumb.imageset/1019-thumb@2x.jpg",
-    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1018-thumb.imageset/1018-thumb@2x.jpg",
-    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1017-thumb.imageset/1017-thumb@2x.jpg",
-    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1016-thumb.imageset/1016-thumb@2x.jpg",
-    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1015-thumb.imageset/1015-thumb@2x.jpg",
-    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1014-thumb.imageset/1014-thumb@2x.jpg",
-    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1011-thumb.imageset/1011-thumb@2x.jpg",
-    "Foundation Models/AddingIntelligentAppFeaturesWithGenerativeModels/FoundationModelsTripPlanner/FoundationModelsTripPlanner/Resources/Assets.xcassets/Landmark thumbnails/1010-thumb.imageset/1010-thumb@2x.jpg"
+    "Layout/sectionFooters.md"
   ]
 }
