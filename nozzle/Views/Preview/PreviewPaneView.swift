@@ -48,17 +48,20 @@ struct PreviewPaneView: View {
                             text: text,
                             metadata: nil
                         )
-                    } else if let fileURL = fileItem.fileURL {
+                    } else if !fileItem.isFolder, let fileURL = fileItem.fileURL {
                         QuickLookPreview(url: fileURL)
+                            .id(fileURL)
+                            .padding()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         EmptyPreviewView()
                     }
-                } else if fileItem.isText {
-                    // Async + cached text preview for files (no main-thread I/O)
-                    AsyncTextPreview(item: fileItem)
-                } else if let fileURL = fileItem.fileURL {
-                    // QuickLook preview for all other file types
+                } else if !fileItem.isFolder, let fileURL = fileItem.fileURL {
+                    // Use Quick Look for all file-backed items in universal tabs (text and non-text)
                     QuickLookPreview(url: fileURL)
+                        .id(fileURL)
+                        .padding()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     EmptyPreviewView()
                 }

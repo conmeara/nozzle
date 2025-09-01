@@ -12,6 +12,13 @@ struct QuickLookPreview: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: QLPreviewView, context: Context) {
-        nsView.previewItem = url as NSURL
+        // Intentionally a no-op. We key the SwiftUI view with `.id(url)`
+        // so Make/Dismantle manage the preview lifecycle. This avoids
+        // setting a preview item on a deactivated view during updates.
+    }
+
+    static func dismantleNSView(_ nsView: QLPreviewView, coordinator: ()) {
+        // Clear to avoid assertions if SwiftUI tears down the view while a new URL is set
+        nsView.previewItem = nil
     }
 }
