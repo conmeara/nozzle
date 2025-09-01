@@ -439,14 +439,7 @@ struct TabButton: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(
-          RoundedRectangle(cornerRadius: 8)
-            .fill(
-              isSelected
-                ? Color(NSColor.controlAccentColor).opacity(0.20)
-                : Color(NSColor.quaternaryLabelColor)
-            )
-        )
+        .glassEffect(Glass.clear.tint(.white.opacity(0.05)).interactive(), in: .rect(cornerRadius: 8))
       }
       .buttonStyle(PlainButtonStyle())
       // Right-click context menu for deletable tabs
@@ -477,14 +470,7 @@ struct TabButtonLabel: View {
     }
     .padding(.horizontal, 8)
     .padding(.vertical, 4)
-    .background(
-      RoundedRectangle(cornerRadius: 8)
-        .fill(
-          isSelected
-            ? Color(NSColor.controlAccentColor).opacity(0.20)
-            : Color(NSColor.quaternaryLabelColor)
-        )
-    )
+    .glassEffect(Glass.clear.tint(.white.opacity(0.05)).interactive(), in: .rect(cornerRadius: 8))
   }
 }
 
@@ -521,14 +507,7 @@ struct TabButtonWithIcon: View {
       }
       .padding(.horizontal, 8)
       .padding(.vertical, 4)
-      .background(
-        RoundedRectangle(cornerRadius: 8)
-          .fill(
-            isSelected
-              ? Color(NSColor.controlAccentColor).opacity(0.20)
-              : Color(NSColor.quaternaryLabelColor)
-          )
-      )
+      .glassEffect(Glass.clear.tint(.white.opacity(0.05)).interactive(), in: .rect(cornerRadius: 8))
     }
     .buttonStyle(PlainButtonStyle())
   }

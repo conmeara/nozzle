@@ -171,6 +171,8 @@
   },
   "active": "499f95c375e9eb5f",
   "lastOpenFiles": [
+    "Liquid Glass/liquidglass-main",
+    "Liquid Glass/liquidglass-main.zip",
     "Design/Color.md",
     "Design/Materials.md",
     "Design Guidelines/Materials.md",
@@ -191,7 +193,6 @@
     "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1017-thumb.imageset/Contents.json",
     "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1016-thumb.imageset/Contents.json",
     "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1016-thumb.imageset/1016-thumb@2x.jpg",
-    "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1015-thumb.imageset/Contents.json",
     "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1015-thumb.imageset/1015-thumb@2x.jpg",
     "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1014-thumb.imageset/1014-thumb@2x.jpg",
     "Liquid Glass/LandmarksBuildingAnAppWithLiquidGlass/Landmarks/Landmarks/Resources/Assets.xcassets/Landmark thumbnails/1012-thumb.imageset/1012-thumb@2x.jpg",
@@ -215,7 +216,6 @@
     "Liquid Glass/Liquid Glass.md",
     "Liquid Glass/Landmarks Building an app with Liquid Glass.md",
     "Liquid Glass/Adopting Liquid Glass.md",
-    "Layout/sectionHeaders.md",
-    "Layout/sectionFooters.md"
+    "Layout/sectionHeaders.md"
   ]
 }
