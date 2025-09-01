@@ -260,7 +260,7 @@ struct ContentView: View {
                     .foregroundColor(Color.secondary.opacity(0.7))
                   Spacer()
                 }
-                .frame(minWidth: 300)
+                .frame(minWidth: 300, maxWidth: .infinity)
               } else {
                 ListView(contextItems: contextItems, exampleItems: exampleItems)
                   .frame(minWidth: 300)

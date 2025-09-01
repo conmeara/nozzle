@@ -1,4 +1,5 @@
 import AppKit
+import Defaults
 import Observation
 import UniformTypeIdentifiers
 
@@ -7,6 +8,14 @@ final class UniversalItemDecorator: ListItemDecorator {
     let id: UUID
     private(set) var base: ContentItem
     let sourceId: String
+    
+    // Cached thumbnail for performance
+    private var _thumbnailImage: NSImage?
+    
+    // Static thumbnail size to match HistoryItemDecorator
+    static var thumbnailImageSize: NSSize { 
+        NSSize(width: 340, height: Defaults[.imageMaxHeight]) 
+    }
     
     // Derived UI
     var title: String {
@@ -35,7 +44,15 @@ final class UniversalItemDecorator: ListItemDecorator {
     
     // Protocol conformance - ListItemDecorator
     var appIcon: ApplicationImage? { typeBadgeImage }
-    var image: NSImage? { nil } // Could be enhanced with thumbnails in Phase 2
+    var image: NSImage? { 
+        if _thumbnailImage == nil, 
+           let imageData = base.imageData,
+           let nsImage = NSImage(data: imageData) {
+            // Cache the resized thumbnail on first access
+            _thumbnailImage = nsImage.resized(to: UniversalItemDecorator.thumbnailImageSize)
+        }
+        return _thumbnailImage
+    }
     var accessoryImage: NSImage? { nil }
     var attributedTitle: AttributedString? { nil }
     var shortcuts: [KeyShortcut] { [] } // No numbered shortcuts for file sources in Phase 1
