@@ -66,7 +66,7 @@ extension Defaults.Keys {
   // Prompts folder settings
   static let promptsFolderBookmark = Key<Data?>("promptsFolderBookmark", default: nil)
   static let promptsFolderPath = Key<String?>("promptsFolderPath", default: nil)
-  static let promptsFileExtension = Key<String>("promptsFileExtension", default: "md")
+  static let promptsFileExtension = Key<String>("promptsFileExtension", default: "txt")
 
   // Prompt chips persistence (security-scoped bookmarks for each chip)
   static let promptChipsBookmarks = Key<[Data]>("promptChipsBookmarks", default: [])

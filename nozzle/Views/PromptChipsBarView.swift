@@ -89,10 +89,6 @@ private struct PromptChipView: View {
 
   var body: some View {
     HStack(spacing: 6) {
-      Image(nsImage: chip.icon)
-        .resizable()
-        .frame(width: 16, height: 16)
-        .clipShape(RoundedRectangle(cornerRadius: DesignConstants.smallCornerRadius))
       Text(chip.title)
         .font(.system(size: 12))
         .foregroundColor(isActive ? .primary : .secondary)

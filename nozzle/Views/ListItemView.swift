@@ -61,7 +61,7 @@ struct ListItemView<Title: View>: View {
       }
 
       Spacer()
-        .frame(width: showIcons ? 5 : 10)
+        .frame(width: (showIcons && appIcon != nil) ? 5 : 10)
 
       if let accessoryImage {
         Image(nsImage: accessoryImage)

@@ -9,7 +9,13 @@ final class UniversalItemDecorator: ListItemDecorator {
     let sourceId: String
     
     // Derived UI
-    var title: String { base.title }
+    var title: String {
+        // For Prompts, hide the file extension from display
+        if base.sourceId == "prompts", let url = base.fileURL {
+            return url.deletingPathExtension().lastPathComponent
+        }
+        return base.title
+    }
     var isSelected: Bool {
         ContentManager.shared.isSelected(id)
     }
