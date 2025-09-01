@@ -133,7 +133,7 @@ struct ListItemView<Title: View>: View {
       if isSelected {
         (selectionBackgroundColor ?? Color(NSColor.controlAccentColor)).opacity(0.25)  // Subtle accent color for selection
       } else if shouldShowHoverBackground {
-        Color(NSColor.quaternaryLabelColor).opacity(0.5)  // Hover background
+        Color(NSColor.quaternaryLabelColor).opacity(0.6)  // Hover background
       } else {
         Color.clear
       }
