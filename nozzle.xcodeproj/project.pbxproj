@@ -124,6 +124,7 @@
 		DAFE2DE9268A9B1B00990986 /* HistoryItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFE2DE8268A9B1B00990986 /* HistoryItemTests.swift */; };
 		DAFEF0B8249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFEF0B7249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift */; };
 		F50C3E222E64EDF800420829 /* DesignConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50C3E212E64EDF800420829 /* DesignConstants.swift */; };
+		F50C3E262E65F9B900420829 /* FolderPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50C3E252E65F9B900420829 /* FolderPreviewView.swift */; };
 		F55A77CA2E5E37F50039E760 /* PromptsSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A77C92E5E37F50039E760 /* PromptsSource.swift */; };
 		F55A77CC2E5E38000039E760 /* PromptEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A77CB2E5E38000039E760 /* PromptEditorView.swift */; };
 		F57274592E56720D003A9299 /* ContentSourceType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274582E56720D003A9299 /* ContentSourceType.swift */; };
@@ -522,6 +523,7 @@
 		DAFE2DE8268A9B1B00990986 /* HistoryItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItemTests.swift; sourceTree = "<group>"; };
 		DAFEF0B7249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyboardShortcuts.Name+Shortcuts.swift"; sourceTree = "<group>"; };
 		F50C3E212E64EDF800420829 /* DesignConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignConstants.swift; sourceTree = "<group>"; };
+		F50C3E252E65F9B900420829 /* FolderPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPreviewView.swift; sourceTree = "<group>"; };
 		F55A77C92E5E37F50039E760 /* PromptsSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptsSource.swift; sourceTree = "<group>"; };
 		F55A77CB2E5E38000039E760 /* PromptEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEditorView.swift; sourceTree = "<group>"; };
 		F57274562E56720D003A9299 /* ContentItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentItem.swift; sourceTree = "<group>"; };
@@ -871,6 +873,7 @@
 		F57274782E57C02C003A9299 /* Preview */ = {
 			isa = PBXGroup;
 			children = (
+				F50C3E252E65F9B900420829 /* FolderPreviewView.swift */,
 				F55A77CB2E5E38000039E760 /* PromptEditorView.swift */,
 				F5758AFE2E5D176C00FC0F19 /* QuickLookPreview.swift */,
 				F572747C2E58F854003A9299 /* PreviewSurfaceStyle.swift */,
@@ -1168,6 +1171,7 @@
 				F5758B032E5D228F00FC0F19 /* FolderTreeItemView.swift in Sources */,
 				DAA072E32C41D1D5006DDFD2 /* ListItemView.swift in Sources */,
 				DAA072D92C41C5AD006DDFD2 /* Footer.swift in Sources */,
+				F50C3E262E65F9B900420829 /* FolderPreviewView.swift in Sources */,
 				DA696BCE240177E800DE80CF /* Sorter.swift in Sources */,
 				DAA072E92C42C6AA006DDFD2 /* ListItemTitleView.swift in Sources */,
 				DABDE97F2974706C005B32E9 /* KeyboardLayout.swift in Sources */,
