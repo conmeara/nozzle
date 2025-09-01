@@ -29,6 +29,8 @@ struct PromptChipsBarView: View {
       }
     }
     .padding(.horizontal, 8)
+    // Add a touch of breathing room above when chips are present
+    .padding(.top, appState.promptChips.isEmpty ? 0 : 2)
     .animation(.easeInOut(duration: 0.2), value: appState.promptChips.count)
     // Clear active chip if focused preview changes away from active chip or Prompts closes
     .onChange(of: contentManager.focusedItemId) { _, _ in

@@ -6,6 +6,10 @@ struct DesignConstants {
     /// Standard corner radius used throughout the app (following Liquid Glass standard)
     static let cornerRadius: CGFloat = 15.0
     
+    /// Panel/window corner radius (outer container). Independent from inner elements.
+    /// Use this for the FloatingPanel container shape (glass/background mask).
+    static let panelCornerRadius: CGFloat = 26.0
+    
     /// Corner radius for tabs and selection items (Liquid Glass grid standard)
     static let tabCornerRadius: CGFloat = 8.0
     

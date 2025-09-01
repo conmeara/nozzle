@@ -43,8 +43,9 @@ struct ContentView: View {
               isSearchMode: appState.isSearchMode,
               isFocused: $inputFocused
             )
-            .padding(.top, 4)
-            .padding(.bottom, 4)
+            .padding(.horizontal, 2)
+            .padding(.top, 6)
+            .padding(.bottom, 6)
           .onChange(of: appState.isSearchMode) { _, newValue in
             // Clear search when switching to prompt mode
             if !newValue {
@@ -292,9 +293,14 @@ struct ContentView: View {
     .animation(.easeInOut(duration: 0.15), value: appState.showPreviewPane)
     .padding(.horizontal, 5)
     .padding(.top, appState.popup.verticalPadding)
-    .background(
-      reduceTransparency ? Color(NSColor.windowBackgroundColor) : Color.clear
-    )
+    .background {
+      if reduceTransparency {
+        Color(NSColor.windowBackgroundColor)
+          .clipShape(.rect(cornerRadius: DesignConstants.panelCornerRadius))
+      } else {
+        Color.clear
+      }
+    }
     .modifier(LiquidGlassModifier(reduceTransparency: reduceTransparency))
     .onAppear {
       inputFocused = true
@@ -521,7 +527,7 @@ struct LiquidGlassModifier: ViewModifier {
       content
     } else {
       content
-        .glassEffect(.regular, in: .rect(cornerRadius: DesignConstants.cornerRadius))
+        .glassEffect(.regular, in: .rect(cornerRadius: DesignConstants.panelCornerRadius))
     }
   }
 }

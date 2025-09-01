@@ -60,6 +60,10 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
             self.saveWindowFrame(frame: self.frame)
         })
     )
+
+    // Apply rounded corners to the window at the AppKit layer level so
+    // the shadow/hit region visually matches our SwiftUI mask.
+    applyWindowCornerMask()
   }
 
   func toggle(height: CGFloat, at popupPosition: PopupPosition = Defaults[.popupPosition]) {
@@ -110,6 +114,9 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
   func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
     saveWindowFrame(frame: NSRect(origin: frame.origin, size: frameSize))
 
+    // Keep window-level mask consistent on resize
+    applyWindowCornerMask()
+
     return frameSize
   }
 
@@ -137,5 +144,41 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
   // Allow text inputs inside the panel can receive focus
   override var canBecomeKey: Bool {
     return true
+  }
+
+  // MARK: - Corner Masking
+  private func applyWindowCornerMask() {
+    let radius = DesignConstants.panelCornerRadius
+
+    // Round the content hosting view so SwiftUI content clips to bounds
+    if let cv = contentView as? NSView {
+      cv.wantsLayer = true
+      if let layer = cv.layer {
+        layer.cornerRadius = radius
+        if #available(macOS 12.0, *) {
+          layer.cornerCurve = .continuous
+        }
+        layer.masksToBounds = true
+      }
+    }
+
+    // Best-effort: also round superviews to better match the window’s
+    // apparent shape and its shadow. Avoid masksToBounds here to preserve shadow.
+    var superview = contentView?.superview
+    for _ in 0..<2 { // Walk up a couple of levels safely
+      if let sv = superview {
+        sv.wantsLayer = true
+        if let layer = sv.layer {
+          layer.cornerRadius = radius
+          if #available(macOS 12.0, *) {
+            layer.cornerCurve = .continuous
+          }
+          layer.masksToBounds = false
+        }
+        superview = sv.superview
+      } else {
+        break
+      }
+    }
   }
 }
