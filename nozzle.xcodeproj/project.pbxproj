@@ -141,14 +141,12 @@
 		F57274742E57C00B003A9299 /* FileTypeBadgeCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274702E57C00B003A9299 /* FileTypeBadgeCache.swift */; };
 		F57274792E57C02C003A9299 /* PreviewPaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274762E57C02C003A9299 /* PreviewPaneView.swift */; };
 		F572747B2E57C02C003A9299 /* PlainTextPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274772E57C02C003A9299 /* PlainTextPreview.swift */; };
-		F572747F2E58F854003A9299 /* FileContentExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572747E2E58F854003A9299 /* FileContentExtractor.swift */; };
 		F57274812E58F854003A9299 /* PreviewSurfaceStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572747C2E58F854003A9299 /* PreviewSurfaceStyle.swift */; };
 		F5758AFF2E5D176C00FC0F19 /* QuickLookPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758AFE2E5D176C00FC0F19 /* QuickLookPreview.swift */; };
 		F5758B012E5D228200FC0F19 /* FolderExpansionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758B002E5D228200FC0F19 /* FolderExpansionState.swift */; };
 		F5758B032E5D228F00FC0F19 /* FolderTreeItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758B022E5D228F00FC0F19 /* FolderTreeItemView.swift */; };
 		F5A0B0012EE1AAAA00AAA001 /* SelectedItemsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5A0B0002EE1AAAA00AAA001 /* SelectedItemsView.swift */; };
 		F5C180392E622C8B007ED483 /* DictationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C180382E622C8B007ED483 /* DictationManager.swift */; };
-		F5C1805D2E63C0F3007ED483 /* AsyncTextPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C1805C2E63C0F3007ED483 /* AsyncTextPreview.swift */; };
 		F5C1805F2E63E4A5007ED483 /* CombinedContentBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C1805E2E63E4A5007ED483 /* CombinedContentBuilder.swift */; };
 		F5C88D252DE55BA500EF8FA3 /* PromptHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */; };
 		F5F0C0012EE0000000000001 /* PromptChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0002EE0000000000001 /* PromptChip.swift */; };
@@ -542,13 +540,11 @@
 		F57274762E57C02C003A9299 /* PreviewPaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewPaneView.swift; sourceTree = "<group>"; };
 		F57274772E57C02C003A9299 /* PlainTextPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainTextPreview.swift; sourceTree = "<group>"; };
 		F572747C2E58F854003A9299 /* PreviewSurfaceStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewSurfaceStyle.swift; sourceTree = "<group>"; };
-		F572747E2E58F854003A9299 /* FileContentExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileContentExtractor.swift; sourceTree = "<group>"; };
 		F5758AFE2E5D176C00FC0F19 /* QuickLookPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookPreview.swift; sourceTree = "<group>"; };
 		F5758B002E5D228200FC0F19 /* FolderExpansionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderExpansionState.swift; sourceTree = "<group>"; };
 		F5758B022E5D228F00FC0F19 /* FolderTreeItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderTreeItemView.swift; sourceTree = "<group>"; };
 		F5A0B0002EE1AAAA00AAA001 /* SelectedItemsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectedItemsView.swift; sourceTree = "<group>"; };
 		F5C180382E622C8B007ED483 /* DictationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationManager.swift; sourceTree = "<group>"; };
-		F5C1805C2E63C0F3007ED483 /* AsyncTextPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncTextPreview.swift; sourceTree = "<group>"; };
 		F5C1805E2E63E4A5007ED483 /* CombinedContentBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedContentBuilder.swift; sourceTree = "<group>"; };
 		F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptHeaderView.swift; sourceTree = "<group>"; };
 		F5F0C0002EE0000000000001 /* PromptChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChip.swift; sourceTree = "<group>"; };
@@ -866,7 +862,6 @@
 			isa = PBXGroup;
 			children = (
 				F5C1805E2E63E4A5007ED483 /* CombinedContentBuilder.swift */,
-				F572747E2E58F854003A9299 /* FileContentExtractor.swift */,
 				F57274702E57C00B003A9299 /* FileTypeBadgeCache.swift */,
 				F57274712E57C00B003A9299 /* TextFileFormatter.swift */,
 			);
@@ -876,7 +871,6 @@
 		F57274782E57C02C003A9299 /* Preview */ = {
 			isa = PBXGroup;
 			children = (
-				F5C1805C2E63C0F3007ED483 /* AsyncTextPreview.swift */,
 				F55A77CB2E5E38000039E760 /* PromptEditorView.swift */,
 				F5758AFE2E5D176C00FC0F19 /* QuickLookPreview.swift */,
 				F572747C2E58F854003A9299 /* PreviewSurfaceStyle.swift */,
@@ -1182,7 +1176,6 @@
 				DAA54BFA2C3C951900B7FDD8 /* FloatingPanel.swift in Sources */,
 				DA3BCB922C3EEC3C00B01BC1 /* History.swift in Sources */,
 				DA689FCA2C1D18890009B887 /* HighlightMatch.swift in Sources */,
-				F5C1805D2E63C0F3007ED483 /* AsyncTextPreview.swift in Sources */,
 				DA6491B029ABCF2400837D93 /* NSScreen+ForPopup.swift in Sources */,
 				DA81D674252A056B009977BC /* Throttler.swift in Sources */,
 				DA05B5112C234CB2006980FE /* nozzleApp.swift in Sources */,
@@ -1201,7 +1194,6 @@
 				2F1A79C02C6DFB7800C98EBD /* SearchVisibility.swift in Sources */,
 				DAA072DD2C41C61F006DDFD2 /* FooterItemView.swift in Sources */,
 				DA3EAE0C2AE30F7500F39108 /* NSApplication+Windows.swift in Sources */,
-				F572747F2E58F854003A9299 /* FileContentExtractor.swift in Sources */,
 				F57274812E58F854003A9299 /* PreviewSurfaceStyle.swift in Sources */,
 				F55A77CC2E5E38000039E760 /* PromptEditorView.swift in Sources */,
 				DAFE2DDA268A521B00990986 /* String+Shortened.swift in Sources */,
