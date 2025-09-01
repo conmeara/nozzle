@@ -131,10 +131,17 @@ struct ListItemView<Title: View>: View {
     .frame(maxWidth: .infinity, alignment: .leading)
     .foregroundStyle(.primary)
     .background {
+      // Selection and hover/focus states
       if isSelected {
-        (selectionBackgroundColor ?? Color(NSColor.controlAccentColor)).opacity(0.25)  // Subtle accent color for selection
+        let base = (selectionBackgroundColor ?? Color(NSColor.controlAccentColor))
+        // Make the active (hovered/focused) selected row darker for clarity
+        if shouldShowHoverBackground {
+          base.opacity(0.5)
+        } else {
+          base.opacity(0.25)  // Subtle accent color for non-active selection
+        }
       } else if shouldShowHoverBackground {
-        Color(NSColor.quaternaryLabelColor).opacity(0.6)  // Hover background
+        Color(NSColor.quaternaryLabelColor).opacity(0.6)  // Hover background for non-selected
       } else {
         Color.clear
       }
