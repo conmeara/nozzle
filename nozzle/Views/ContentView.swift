@@ -89,48 +89,56 @@ struct ContentView: View {
                   inputFocused = true
                 }
               }) {
-                Image(systemName: appState.isSearchMode ? "magnifyingglass" : "plus.circle")
+                Image(systemName: "plus.circle")
                   .font(.system(size: 14))
                   .foregroundColor(
                     appState.isSearchMode ? .secondary : (contentManager.activeSourceId == "prompts" ? Color(NSColor.controlAccentColor) : .secondary)
                   )
-                  .opacity(0.9)
+                  .opacity(appState.isSearchMode ? 0.5 : 0.9)
               }
               .buttonStyle(PlainButtonStyle())
-              .help(appState.isSearchMode ? "Switch to prompt mode" : "Open Prompts")
+              .help(appState.isSearchMode ? "Exit search mode" : "Open Prompts")
               
-              // Microphone button (only in prompt mode)
-              if !appState.isSearchMode {
-                Button(action: {
+              // Microphone button
+              Button(action: {
+                if appState.isSearchMode {
+                  // Exit search mode
+                  appState.isSearchMode = false
+                  inputFocused = true
+                } else {
                   Task { @MainActor in
                     await dictationManager.toggleDictation(for: $appState.promptText)
                   }
-                }) {
-                  Image(systemName: dictationManager.isRecording ? "mic.fill" : "mic")
-                    .font(.system(size: 15))
-                    .foregroundColor(dictationManager.isRecording ? .orange : .secondary)
-                    .opacity(dictationManager.isRecording ? 1.0 : 0.8)
-                    .padding(.all, 2)
                 }
-                .buttonStyle(PlainButtonStyle())
-                .help(dictationManager.isRecording ? "Stop dictation (fn)" : "Start dictation (fn)")
+              }) {
+                Image(systemName: dictationManager.isRecording ? "mic.fill" : "mic")
+                  .font(.system(size: 15))
+                  .foregroundColor(dictationManager.isRecording ? .orange : .secondary)
+                  .opacity(appState.isSearchMode ? 0.5 : (dictationManager.isRecording ? 1.0 : 0.8))
+                  .padding(.all, 2)
               }
+              .buttonStyle(PlainButtonStyle())
+              .help(appState.isSearchMode ? "Exit search mode" : (dictationManager.isRecording ? "Stop dictation (fn)" : "Start dictation (fn)"))
               
               
-              // Enhance prompt button (only in prompt mode)  
-              if !appState.isSearchMode {
-                Button(action: {
+              // Enhance prompt button
+              Button(action: {
+                if appState.isSearchMode {
+                  // Exit search mode
+                  appState.isSearchMode = false
+                  inputFocused = true
+                } else {
                   // Placeholder for enhance prompt functionality
-                }) {
-                  Image(systemName: "sparkles")
-                    .font(.system(size: 15))
-                    .foregroundColor(.secondary)
-                    .opacity(0.8)
-                    .padding(.all, 2)
                 }
-                .buttonStyle(PlainButtonStyle())
-                .help("Enhance prompt")
+              }) {
+                Image(systemName: "sparkles")
+                  .font(.system(size: 15))
+                  .foregroundColor(.secondary)
+                  .opacity(appState.isSearchMode ? 0.5 : 0.8)
+                  .padding(.all, 2)
               }
+              .buttonStyle(PlainButtonStyle())
+              .help(appState.isSearchMode ? "Exit search mode" : "Enhance prompt")
             }
             
             // Padding between icon group and tab group
