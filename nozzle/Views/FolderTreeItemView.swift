@@ -113,8 +113,15 @@ struct FolderTreeItemView: View {
     }
     
     private var folderIcon: ApplicationImage? {
-        // Use folder icon via modern UTType-based API
-        let folderImage = NSWorkspace.shared.icon(for: .folder)
+        // Try to get the actual folder icon that reflects content state
+        guard let folderPath = item.base.fileURL?.path, !folderPath.isEmpty else {
+            // Fallback to generic folder icon
+            let genericIcon = NSWorkspace.shared.icon(for: .folder)
+            return ApplicationImage(bundleIdentifier: nil, image: genericIcon)
+        }
+        
+        // Force fresh icon lookup without caching
+        let folderImage = NSWorkspace.shared.icon(forFile: folderPath)
         return ApplicationImage(bundleIdentifier: nil, image: folderImage)
     }
     

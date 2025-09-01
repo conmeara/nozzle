@@ -48,6 +48,8 @@ struct PreviewPaneView: View {
                             text: text,
                             metadata: nil
                         )
+                    } else if fileItem.isFolder, let fileURL = fileItem.fileURL {
+                        FolderPreviewView(folderURL: fileURL, item: fileItem)
                     } else if !fileItem.isFolder, let fileURL = fileItem.fileURL {
                         QuickLookPreview(url: fileURL)
                             .id(fileURL)
@@ -56,6 +58,8 @@ struct PreviewPaneView: View {
                     } else {
                         EmptyPreviewView()
                     }
+                } else if fileItem.isFolder, let fileURL = fileItem.fileURL {
+                    FolderPreviewView(folderURL: fileURL, item: fileItem)
                 } else if !fileItem.isFolder, let fileURL = fileItem.fileURL {
                     // Use Quick Look for all file-backed items in universal tabs (text and non-text)
                     QuickLookPreview(url: fileURL)
