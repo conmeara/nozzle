@@ -125,7 +125,7 @@ final class ContentManager {
         markSelectedDirty()
     }
     
-    private func selectFolderChildren(_ folderId: UUID) {
+    func selectFolderChildren(_ folderId: UUID) {
         guard let folderItem = allItems.first(where: { $0.id == folderId }),
               folderItem.isFolder,
               let folderPath = folderItem.fileURL?.path else { return }
@@ -149,7 +149,7 @@ final class ContentManager {
         markSelectedDirty()
     }
     
-    private func deselectFolderChildren(_ folderId: UUID) {
+    func deselectFolderChildren(_ folderId: UUID) {
         guard let folderItem = allItems.first(where: { $0.id == folderId }),
               folderItem.isFolder,
               let folderPath = folderItem.fileURL?.path else { return }
@@ -314,8 +314,8 @@ final class ContentManager {
     }
     
     func toggleExample(_ id: UUID) {
-        // Only allow toggling example state for selected, textual items
-        guard canToggleExample(id) else { return }
+        // Allow toggling example state for any textual items (no need to be selected as context)
+        guard isTextualItem(id) else { return }
         guard let item = allItems.first(where: { $0.id == id }) else { return }
         if exampleItemIds.contains(id) {
             // Turning OFF example: clear on folder and its descendants
@@ -392,6 +392,12 @@ final class ContentManager {
     func canToggleExample(_ id: UUID) -> Bool {
         guard selectedItemIds.contains(id),
               let item = allItems.first(where: { $0.id == id }) else { return false }
+        
+        return isTextualItem(id)
+    }
+    
+    func isTextualItem(_ id: UUID) -> Bool {
+        guard let item = allItems.first(where: { $0.id == id }) else { return false }
         
         if item.isFolder {
             // Allow folder examples only if all descendant files are textual and there is at least one file

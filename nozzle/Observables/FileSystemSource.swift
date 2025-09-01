@@ -4,6 +4,20 @@ import CryptoKit
 import Observation
 import CoreServices
 
+// MARK: - Sorting Enums
+
+enum FileSortOrder: String, CaseIterable {
+    case name = "name"
+    case dateModified = "dateModified"
+    case size = "size"
+    case type = "type"
+}
+
+enum FileSortDirection: String, CaseIterable {
+    case ascending = "ascending"
+    case descending = "descending"
+}
+
 @Observable @MainActor
 final class FileSystemSource: ContentSource {
     nonisolated let id: String  // Need nonisolated access for event persistence
@@ -18,6 +32,10 @@ final class FileSystemSource: ContentSource {
     
     var isMonitoring: Bool = false
     var searchQuery: String = ""
+    
+    // Sorting configuration
+    var sortOrder: FileSortOrder = .name
+    var sortDirection: FileSortDirection = .ascending
     
     // FSEvents monitoring
     private var stream: FSEventsStream?
@@ -208,8 +226,11 @@ final class FileSystemSource: ContentSource {
             }
             
             // Sort folders first, then files
-            folders.sort { $0.lastPathComponent.localizedCompare($1.lastPathComponent) == .orderedAscending }
-            files.sort { $0.lastPathComponent.localizedCompare($1.lastPathComponent) == .orderedAscending }
+            let sortOrder = await MainActor.run { self.sortOrder }
+            let sortDirection = await MainActor.run { self.sortDirection }
+            
+            folders.sort { self.sortFiles($0, $1, order: sortOrder, direction: sortDirection) }
+            files.sort { self.sortFiles($0, $1, order: sortOrder, direction: sortDirection) }
             
             // Add folders
             for folderURL in folders {
@@ -317,6 +338,42 @@ final class FileSystemSource: ContentSource {
     
     func isFolderExpanded(at path: String) -> Bool {
         expansionState.isExpanded(path)
+    }
+    
+    // MARK: - Sorting Methods
+    
+    func setSortOrder(_ order: FileSortOrder, direction: FileSortDirection) {
+        sortOrder = order
+        sortDirection = direction
+        Task {
+            await refresh()
+        }
+    }
+    
+    private nonisolated func sortFiles(_ file1: URL, _ file2: URL, order: FileSortOrder, direction: FileSortDirection) -> Bool {
+        let result: Bool
+        
+        switch order {
+        case .name:
+            result = file1.lastPathComponent.localizedCompare(file2.lastPathComponent) == .orderedAscending
+            
+        case .dateModified:
+            let date1 = (try? file1.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
+            let date2 = (try? file2.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
+            result = date1 < date2
+            
+        case .size:
+            let size1 = (try? file1.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            let size2 = (try? file2.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            result = size1 < size2
+            
+        case .type:
+            let ext1 = file1.pathExtension.lowercased()
+            let ext2 = file2.pathExtension.lowercased()
+            result = ext1.localizedCompare(ext2) == .orderedAscending
+        }
+        
+        return direction == .ascending ? result : !result
     }
 }
 

@@ -85,11 +85,9 @@ struct FolderTreeItemView: View {
                         // Copy folder path when not selected
                         item.copyToClipboard()
                         appState.popup.close()
-                    } else if contentManager.canToggleExample(item.id) {
-                        // Toggle example state for textual-only folders
-                        contentManager.toggleExample(item.id)
                     } else {
-                        // Ignore toggle for non-textual folders
+                        // Toggle example state for folders
+                        contentManager.toggleExample(item.id)
                     }
                 } else {
                     // Focus and selection
@@ -107,6 +105,46 @@ struct FolderTreeItemView: View {
                     }
                 } else {
                     FolderTreeItemView.previewHoverThrottler.cancel()
+                }
+            }
+            .contextMenu {
+                if let url = item.base.fileURL {
+                    Button("Copy Path") {
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(url.path, forType: .string)
+                    }
+                    
+                    Button("Open in Finder") {
+                        NSWorkspace.shared.open(url)
+                    }
+                    
+                    Divider()
+                    
+                    Button(isExpanded ? "Collapse" : "Expand") {
+                        toggleExpansion()
+                    }
+                    
+                    Divider()
+                    
+                    let folderSelectionState = contentManager.getFolderSelectionState(item.id)
+                    if folderSelectionState == .none {
+                        Button("Select All Contents") {
+                            contentManager.selectFolderChildren(item.id)
+                            appState.updateFooterItemVisibility()
+                        }
+                    } else {
+                        Button("Deselect All Contents") {
+                            contentManager.deselectFolderChildren(item.id)
+                            appState.updateFooterItemVisibility()
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    Button("Remove from Sources", role: .destructive) {
+                        contentManager.removeSource(item.sourceId)
+                    }
                 }
             }
         }

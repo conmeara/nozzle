@@ -175,7 +175,8 @@ struct ContentView: View {
                     if selectedTab == src.id {
                       selectedTab = "clipboard"
                     }
-                  } : nil
+                  } : nil,
+                  source: src
                 )
               }
               
@@ -271,6 +272,34 @@ struct ContentView: View {
                 .frame(minWidth: 300, maxWidth: .infinity)
               } else {
                 ListView(contextItems: contextItems, exampleItems: exampleItems)
+                  .contextMenu {
+                    Button("Copy All") {
+                      appState.performCombinedPaste()
+                    }
+                    
+                    Button("Clear Selection") {
+                      contentManager.clearSelection()
+                      appState.updateFooterItemVisibility()
+                    }
+                    
+                    Divider()
+                    
+                    if !contextItems.isEmpty {
+                      Button("Convert All to Examples") {
+                        for item in contextItems {
+                          contentManager.toggleExample(item.id)
+                        }
+                      }
+                    }
+                    
+                    if !exampleItems.isEmpty {
+                      Button("Convert All to Context") {
+                        for item in exampleItems {
+                          contentManager.toggleExample(item.id)
+                        }
+                      }
+                    }
+                  }
                   .frame(minWidth: 300)
               }
             } else {
@@ -431,13 +460,15 @@ struct TabButton: View {
   let showCloseButton: Bool
   let action: () -> Void
   let onClose: (() -> Void)?
+  let source: (any ContentSource)?
   
-  init(title: String, isSelected: Bool, showCloseButton: Bool = false, action: @escaping () -> Void, onClose: (() -> Void)? = nil) {
+  init(title: String, isSelected: Bool, showCloseButton: Bool = false, action: @escaping () -> Void, onClose: (() -> Void)? = nil, source: (any ContentSource)? = nil) {
     self.title = title
     self.isSelected = isSelected
     self.showCloseButton = showCloseButton
     self.action = action
     self.onClose = onClose
+    self.source = source
   }
   
   var body: some View {
@@ -458,7 +489,50 @@ struct TabButton: View {
       .buttonStyle(PlainButtonStyle())
       // Right-click context menu for deletable tabs
       .contextMenu {
-        if showCloseButton {
+        if let fileSystemSource = source as? FileSystemSource {
+          // Enhanced context menu for folder tabs
+          Menu("Sort By") {
+            Button(fileSystemSource.sortOrder == .name && fileSystemSource.sortDirection == .ascending ? "✓ Name (A-Z)" : "Name (A-Z)") {
+              fileSystemSource.setSortOrder(.name, direction: .ascending)
+            }
+            Button(fileSystemSource.sortOrder == .name && fileSystemSource.sortDirection == .descending ? "✓ Name (Z-A)" : "Name (Z-A)") {
+              fileSystemSource.setSortOrder(.name, direction: .descending)
+            }
+            Button(fileSystemSource.sortOrder == .dateModified && fileSystemSource.sortDirection == .descending ? "✓ Date Modified (Newest First)" : "Date Modified (Newest First)") {
+              fileSystemSource.setSortOrder(.dateModified, direction: .descending)
+            }
+            Button(fileSystemSource.sortOrder == .dateModified && fileSystemSource.sortDirection == .ascending ? "✓ Date Modified (Oldest First)" : "Date Modified (Oldest First)") {
+              fileSystemSource.setSortOrder(.dateModified, direction: .ascending)
+            }
+            Button(fileSystemSource.sortOrder == .size && fileSystemSource.sortDirection == .descending ? "✓ Size (Largest First)" : "Size (Largest First)") {
+              fileSystemSource.setSortOrder(.size, direction: .descending)
+            }
+            Button(fileSystemSource.sortOrder == .size && fileSystemSource.sortDirection == .ascending ? "✓ Size (Smallest First)" : "Size (Smallest First)") {
+              fileSystemSource.setSortOrder(.size, direction: .ascending)
+            }
+            Button(fileSystemSource.sortOrder == .type && fileSystemSource.sortDirection == .ascending ? "✓ Type" : "Type") {
+              fileSystemSource.setSortOrder(.type, direction: .ascending)
+            }
+          }
+          
+          Divider()
+          
+          Button("Refresh") {
+            Task {
+              await fileSystemSource.refresh()
+            }
+          }
+          
+          Button("Reveal in Finder") {
+            NSWorkspace.shared.open(fileSystemSource.folderURL)
+          }
+          
+          Divider()
+          
+          Button("Close Tab", role: .destructive) {
+            onClose?()
+          }
+        } else if showCloseButton {
           Button(action: { onClose?() }) {
             Label("Close Tab", systemImage: "xmark")
           }
