@@ -29,7 +29,7 @@ struct UniversalItemView: View {
                     ListItemView(
                         id: item.id,
                         appIcon: (item.base.sourceId == "prompts" ? nil : item.typeBadgeImage),        // Hide file type badge for Prompts
-                        image: nil,                          // optional: lightweight thumbs in Phase 2
+                        image: item.image,
                         accessoryImage: nil,
                         attributedTitle: nil,
                         shortcuts: [],                       // no numbered shortcuts for file sources in Phase 1

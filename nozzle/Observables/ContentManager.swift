@@ -446,22 +446,34 @@ extension ContentManager {
             }
         }
         
-        // Build result preserving appearance order: parents first, then children
+        // Build result with better hierarchical grouping
         var result: [ContentItem] = []
         result.reserveCapacity(selectedItemIds.count + neededParentIds.count)
         var seen: Set<UUID> = []
         
-        // 1) Parents (explicitly selected folders + needed parents) in appearance order
-        for item in items where item.isFolder {
-            if neededParentIds.contains(item.id) || selectedItemIds.contains(item.id) {
+        // Process items in hierarchical order: folders followed immediately by their children
+        for item in items {
+            // Add folders (both needed parents and explicitly selected)
+            if item.isFolder && (neededParentIds.contains(item.id) || selectedItemIds.contains(item.id)) {
                 if !seen.contains(item.id) {
                     result.append(item)
                     seen.insert(item.id)
+                    
+                    // Immediately add children of this folder that are selected
+                    let folderPath = item.fileURL?.path
+                    for childItem in items {
+                        if selectedItemIds.contains(childItem.id) && 
+                           !seen.contains(childItem.id) && 
+                           childItem.parentPath == folderPath {
+                            result.append(childItem)
+                            seen.insert(childItem.id)
+                        }
+                    }
                 }
             }
         }
         
-        // 2) Children (all other selected items) in appearance order
+        // Add any remaining selected items that don't have a parent (e.g., clipboard items)
         for item in items {
             if selectedItemIds.contains(item.id) && !seen.contains(item.id) {
                 result.append(item)
