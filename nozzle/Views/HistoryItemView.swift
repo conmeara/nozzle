@@ -74,7 +74,7 @@ struct HistoryItemView: View {
     .onTapGesture { location in
       // Check if click is in the copy button area (right 60 pixels)
       let frameWidth = copyButtonArea.width > 0 ? copyButtonArea.width : 300 // fallback width
-      let copyButtonAreaWidth: CGFloat = 60
+      let copyButtonAreaWidth: CGFloat = 42
       let isCopyButtonClick = location.x > (frameWidth - copyButtonAreaWidth)
       
       if isCopyButtonClick {

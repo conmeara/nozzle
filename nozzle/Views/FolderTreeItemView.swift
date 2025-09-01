@@ -77,7 +77,7 @@ struct FolderTreeItemView: View {
             }
             .onTapGesture { location in
                 // Handle folder selection and focus
-                let copyAreaThreshold: CGFloat = 60
+                let copyAreaThreshold: CGFloat = 42
                 let frameWidth: CGFloat = 300
                 
                 if location.x > (frameWidth - copyAreaThreshold) {

@@ -75,12 +75,13 @@ struct ListItemView<Title: View>: View {
           .accessibilityIdentifier("copy-history-item")
           .padding(.trailing, 5)
           .padding(.vertical, 5)
+        // When showing a thumbnail instead of text, use a spacer to push actions right
+        Spacer()
       } else {
         ListItemTitleView(attributedTitle: attributedTitle, title: title)
-          .padding(.trailing, 5)
+          .padding(.trailing, 1)
+          .frame(maxWidth: .infinity, alignment: .leading)
       }
-
-      Spacer()
 
       // Copy button, checkbox, or Command shortcut
       if showCheckbox {
@@ -107,7 +108,7 @@ struct ListItemView<Title: View>: View {
               .frame(maxWidth: .infinity, alignment: .trailing)
           }
         }
-        .frame(width: 50)
+        .frame(width: 32)
         .padding(.trailing, 10)
       } else if !shortcuts.isEmpty {
         // For footer items, just show shortcuts
@@ -117,11 +118,11 @@ struct ListItemView<Title: View>: View {
               .opacity(shortcut.isVisible(shortcuts, modifierFlags.flags) ? 1 : 0)
           }
         }
-        .frame(width: 50)
+        .frame(width: 32)
         .padding(.trailing, 10)
       } else {
         Spacer()
-          .frame(width: 50)
+          .frame(width: 32)
           .padding(.trailing, 10)
       }
     }

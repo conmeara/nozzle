@@ -35,6 +35,8 @@ struct DesignConstants {
     
     /// Safe area padding
     static let safeAreaPadding: CGFloat = 30.0
+
+    
     
     // MARK: Typography
     /// Title padding values

@@ -44,7 +44,7 @@ struct UniversalItemView: View {
                     }
                     .onTapGesture { location in
                         // Emulate HistoryItemView behavior: right area = copy; else toggle selection
-                        let copyAreaThreshold: CGFloat = 60
+                        let copyAreaThreshold: CGFloat = 42
                         let frameWidth: CGFloat = 300  // Approximate width
                         
                         if location.x > (frameWidth - copyAreaThreshold) {
