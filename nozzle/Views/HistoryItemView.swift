@@ -81,11 +81,9 @@ struct HistoryItemView: View {
         if !item.isSelected {
           // Copy button clicked - copy to clipboard
           copyItemToClipboard()
-        } else if contentManager.canToggleExample(item.id) {
-          // Toggle example state when clicking the selected checkmark area
-          contentManager.toggleExample(item.id)
         } else {
-          // Not textual; ignore toggle (keep selected as context)
+          // Toggle example state when clicking the selected checkmark area  
+          contentManager.toggleExample(item.id)
         }
       } else if NSEvent.modifierFlags.contains(.command) {
         // Command-click: immediate paste
@@ -95,6 +93,32 @@ struct HistoryItemView: View {
         contentManager.toggleSelection(item.id)
         item.isSelected = contentManager.isSelected(item.id)
         appState.selection = item.id  // Move focus to this item
+        appState.updateFooterItemVisibility()
+      }
+    }
+    .contextMenu {
+      Button("Copy") {
+        copyItemToClipboard()
+      }
+      
+      Button(item.isPinned ? "Unpin" : "Pin") {
+        appState.history.togglePin(item)
+      }
+      
+      Button("Delete") {
+        appState.highlightNext()
+        appState.history.delete(item)
+      }
+      
+      Divider()
+      
+      Button(contentManager.isExample(item.id) ? "Remove as Example" : "Mark as Example") {
+        contentManager.toggleExample(item.id)
+      }
+      
+      Button(contentManager.isSelected(item.id) ? "Remove as Context" : "Mark as Context") {
+        contentManager.toggleSelection(item.id)
+        item.isSelected = contentManager.isSelected(item.id)
         appState.updateFooterItemVisibility()
       }
     }

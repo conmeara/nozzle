@@ -53,11 +53,9 @@ struct UniversalItemView: View {
                                 item.copyToClipboard()
                                 // Optionally close the popup after copy
                                 appState.popup.close()
-                            } else if contentManager.canToggleExample(item.id) {
+                            } else {
                                 // Toggle example state when clicking the selected checkmark area
                                 contentManager.toggleExample(item.id)
-                            } else {
-                                // Not textual; ignore toggle
                             }
                         } else {
                             // Special handling for Prompts: add as chip instead of aggregated selection
@@ -101,6 +99,17 @@ struct UniversalItemView: View {
         }
         .contextMenu {
             if item.base.sourceId == "prompts", let url = item.base.fileURL {
+                Button("New") {
+                    (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt()
+                }
+                
+                Button("Add") {
+                    let currentText = appState.isSearchMode ? appState.history.searchQuery : appState.promptText
+                    (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
+                }
+                
+                Divider()
+                
                 Button("Apply to input") {
                     (contentManager.sources["prompts"] as? PromptsSource)?.applyPrompt(at: url)
                     appState.addPromptChip(url: url)
@@ -118,6 +127,38 @@ struct UniversalItemView: View {
                 }
                 Button("Delete", role: .destructive) {
                     (contentManager.sources["prompts"] as? PromptsSource)?.deletePrompt(at: url)
+                }
+            } else if !item.base.isFolder, let url = item.base.fileURL {
+                // Context menu for regular files
+                Button("Copy") {
+                    item.copyToClipboard()
+                }
+                
+                Button("Copy Path") {
+                    let pasteboard = NSPasteboard.general
+                    pasteboard.clearContents()
+                    pasteboard.setString(url.path, forType: .string)
+                }
+                
+                Button("Open") {
+                    NSWorkspace.shared.open(url)
+                }
+                
+                Divider()
+                
+                Button(contentManager.isExample(item.id) ? "Remove as Example" : "Mark as Example") {
+                    contentManager.toggleExample(item.id)
+                }
+                
+                Button(contentManager.isSelected(item.id) ? "Remove as Context" : "Mark as Context") {
+                    contentManager.toggleSelection(item.id)
+                    appState.updateFooterItemVisibility()
+                }
+                
+                Divider()
+                
+                Button("Reveal in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([url])
                 }
             }
         }
