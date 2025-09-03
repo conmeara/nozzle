@@ -68,8 +68,8 @@ struct UnifiedInputFieldView: View {
             Text(placeholderText)
               .font(.system(size: 13))
               .foregroundColor(.secondary.opacity(0.5))
-              .padding(.horizontal, 5)
-              .padding(.vertical, 8)
+              .padding(.leading, 5)
+              .padding(.top, 0)
               .allowsHitTesting(false)
           }
         }
