@@ -8,6 +8,10 @@ struct UnifiedInputFieldView: View {
   @Environment(AppState.self) private var appState
   @Environment(ContentManager.self) private var contentManager
   
+  // State for dynamic text height
+  @State private var textHeight: CGFloat = 20  // Start with single line height
+  @State private var fieldWidth: CGFloat = 400  // Default width estimate
+  
   // Removed inline mic button to avoid duplication with controls row
   
   private var placeholderText: String {
@@ -16,6 +20,40 @@ struct UnifiedInputFieldView: View {
     } else {
       return NSLocalizedString("prompt_placeholder", comment: "")
     }
+  }
+  
+  private func calculateTextHeight(_ text: String, width: CGFloat) -> CGFloat {
+    let lineHeight: CGFloat = 18  // Approximate height per line for 13pt font  
+    let baseHeight: CGFloat = 20  // Minimum single line height
+    
+    if text.isEmpty {
+      return baseHeight
+    }
+    
+    // Split by newlines and calculate total lines including wrapped lines
+    let lines = text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+    var totalLines = 0
+    
+    // Calculate chars per line based on actual width
+    // Font size 13pt typically has character width of about 7-8 points
+    // For proportional fonts, average is about 6-7 points
+    // Subtracting padding and using conservative estimate
+    let charWidth: CGFloat = 7.0  // Average character width for 13pt font
+    let usableWidth = max(100, width - 40)  // Account for padding and minimum width
+    let charsPerLine = Int(usableWidth / charWidth)
+    
+    for line in lines {
+      if line.isEmpty {
+        totalLines += 1
+      } else {
+        // Calculate how many visual lines this text line will take
+        let visualLines = (line.count - 1) / charsPerLine + 1
+        totalLines += visualLines
+      }
+    }
+    
+    let calculatedHeight = baseHeight + CGFloat(max(0, totalLines - 1)) * lineHeight
+    return min(calculatedHeight, 80)  // Cap at max height (~4 lines)
   }
 
   var body: some View {
@@ -46,39 +84,52 @@ struct UnifiedInputFieldView: View {
           }
       } else {
         // Multi-line TextEditor for prompt mode with scrolling
-        ZStack(alignment: .topLeading) {
-          TextEditor(text: $query)
-            .focused($isFocused)
-            .disableAutocorrection(true)
-            .font(.system(size: 13))
-            .scrollContentBackground(.hidden)
-            .background(Color.clear)
-            .frame(minHeight: 20, maxHeight: 80) // ~4 lines max with scrolling
-            .onChange(of: query) { oldValue, newValue in
-              handleQueryChange(oldValue: oldValue, newValue: newValue)
-            }
-            .onSubmit {
-              if !query.contains("\n") {
-                handleSubmit()
-              }
-            }
-          
-          // Show placeholder when empty (TextEditor doesn't support placeholders)
-          if query.isEmpty {
-            Text(placeholderText)
+        GeometryReader { geometry in
+          ZStack(alignment: .topLeading) {
+            TextEditor(text: $query)
+              .focused($isFocused)
+              .disableAutocorrection(true)
               .font(.system(size: 13))
-              .foregroundColor(.secondary.opacity(0.5))
-              .padding(.leading, 5)
-              .padding(.top, 0)
-              .allowsHitTesting(false)
+              .scrollContentBackground(.hidden)
+              .background(Color.clear)
+              .frame(height: textHeight)  // Dynamic height based on content
+              .onChange(of: query) { oldValue, newValue in
+                textHeight = calculateTextHeight(newValue, width: geometry.size.width)
+                handleQueryChange(oldValue: oldValue, newValue: newValue)
+              }
+              .onChange(of: geometry.size.width) { _, newWidth in
+                fieldWidth = newWidth
+                textHeight = calculateTextHeight(query, width: newWidth)
+              }
+              .onSubmit {
+                if !query.contains("\n") {
+                  handleSubmit()
+                }
+              }
+              .onAppear {
+                fieldWidth = geometry.size.width
+                textHeight = calculateTextHeight(query, width: geometry.size.width)
+              }
+            
+            // Show placeholder when empty (TextEditor doesn't support placeholders)
+            if query.isEmpty {
+              Text(placeholderText)
+                .font(.system(size: 13))
+                .foregroundColor(.secondary.opacity(0.5))
+                .padding(.leading, 5)
+                .padding(.top, 0)
+                .allowsHitTesting(false)
+            }
           }
         }
+        .frame(height: textHeight)  // Apply height to GeometryReader
       }
       
     }
     .padding(.horizontal, 8)
     .padding(.vertical, 4)
     .animation(.easeInOut(duration: 0.15), value: isSearchMode)
+    .animation(.easeInOut(duration: 0.1), value: textHeight)
   }
   
   @MainActor
