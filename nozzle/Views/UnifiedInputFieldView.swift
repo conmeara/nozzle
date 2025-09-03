@@ -30,20 +30,50 @@ struct UnifiedInputFieldView: View {
       }
       
       // Minimal transparent text field with multi-line support
-      TextField(placeholderText, text: $query, axis: isSearchMode ? .horizontal : .vertical)
-        .textFieldStyle(.plain)
-        .focused($isFocused)
-        .disableAutocorrection(true)
-        .lineLimit(isSearchMode ? 1...1 : 1...10)
-        .font(.system(size: 13))
-        .onSubmit {
-          if isSearchMode || !query.contains("\n") {
+      if isSearchMode {
+        // Single-line TextField for search mode
+        TextField(placeholderText, text: $query, axis: .horizontal)
+          .textFieldStyle(.plain)
+          .focused($isFocused)
+          .disableAutocorrection(true)
+          .lineLimit(1)
+          .font(.system(size: 13))
+          .onSubmit {
             handleSubmit()
           }
+          .onChange(of: query) { oldValue, newValue in
+            handleQueryChange(oldValue: oldValue, newValue: newValue)
+          }
+      } else {
+        // Multi-line TextEditor for prompt mode with scrolling
+        ZStack(alignment: .topLeading) {
+          TextEditor(text: $query)
+            .focused($isFocused)
+            .disableAutocorrection(true)
+            .font(.system(size: 13))
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
+            .frame(minHeight: 20, maxHeight: 80) // ~4 lines max with scrolling
+            .onChange(of: query) { oldValue, newValue in
+              handleQueryChange(oldValue: oldValue, newValue: newValue)
+            }
+            .onSubmit {
+              if !query.contains("\n") {
+                handleSubmit()
+              }
+            }
+          
+          // Show placeholder when empty (TextEditor doesn't support placeholders)
+          if query.isEmpty {
+            Text(placeholderText)
+              .font(.system(size: 13))
+              .foregroundColor(.secondary.opacity(0.5))
+              .padding(.horizontal, 5)
+              .padding(.vertical, 8)
+              .allowsHitTesting(false)
+          }
         }
-        .onChange(of: query) { oldValue, newValue in
-          handleQueryChange(oldValue: oldValue, newValue: newValue)
-        }
+      }
       
     }
     .padding(.horizontal, 8)
