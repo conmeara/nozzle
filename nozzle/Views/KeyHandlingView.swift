@@ -205,7 +205,11 @@ struct KeyHandlingView<Content: View>: View {
         case .togglePromptMode:
           appState.isSearchMode.toggle()
           appState.isPromptMode = !appState.isSearchMode  // Ensure they're opposite
-          searchFocused = true
+          // Use a small delay to ensure the new input field is rendered before focusing
+          Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(50))
+            searchFocused = true
+          }
           return .handled
         case .toggleDictation:
           Task {

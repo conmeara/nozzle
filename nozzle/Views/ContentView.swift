@@ -73,7 +73,10 @@ struct ContentView: View {
                 if appState.isSearchMode {
                   // In search mode, this acts as a switch to prompt mode
                     appState.isSearchMode = false
-                    inputFocused = true
+                    Task { @MainActor in
+                      try? await Task.sleep(for: .milliseconds(50))
+                      inputFocused = true
+                    }
                 } else {
                   // In prompt mode, toggle between Prompts and previous tab
                   if contentManager.activeSourceId == "prompts" {
@@ -86,7 +89,10 @@ struct ContentView: View {
                     selectedTab = "prompts"
                     contentManager.activeSourceId = "prompts"
                   }
-                  inputFocused = true
+                  Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(50))
+                    inputFocused = true
+                  }
                 }
               }) {
                 Image(systemName: "plus.circle")
@@ -104,7 +110,10 @@ struct ContentView: View {
                 if appState.isSearchMode {
                   // Exit search mode
                   appState.isSearchMode = false
-                  inputFocused = true
+                  Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(50))
+                    inputFocused = true
+                  }
                 } else {
                   Task { @MainActor in
                     await dictationManager.toggleDictation(for: $appState.promptText)
@@ -126,7 +135,10 @@ struct ContentView: View {
                 if appState.isSearchMode {
                   // Exit search mode
                   appState.isSearchMode = false
-                  inputFocused = true
+                  Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(50))
+                    inputFocused = true
+                  }
                 } else {
                   // Placeholder for enhance prompt functionality
                 }
