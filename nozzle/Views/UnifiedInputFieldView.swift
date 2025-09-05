@@ -57,7 +57,7 @@ struct UnifiedInputFieldView: View {
   }
 
   var body: some View {
-    HStack(spacing: 6) {
+    HStack(spacing: 4) {
       // Search icon only in search mode, inline with text
       if isSearchMode {
         Image(systemName: "magnifyingglass")
@@ -89,6 +89,7 @@ struct UnifiedInputFieldView: View {
             Text(placeholderText)
               .font(.system(size: 13))
               .foregroundColor(.secondary.opacity(0.5))
+              .padding(.leading, 1)
               .allowsHitTesting(false)
           }
         }
@@ -126,13 +127,14 @@ struct UnifiedInputFieldView: View {
               Text(placeholderText)
                 .font(.system(size: 13))
                 .foregroundColor(.secondary.opacity(0.5))
-                .padding(.leading, 5)
+                .padding(.leading, 6)
                 .padding(.top, 0)
                 .allowsHitTesting(false)
             }
           }
         }
         .frame(height: textHeight)  // Apply height to GeometryReader
+        .padding(.bottom, -4)  // Reduce bottom padding to match search mode
       }
       
     }
