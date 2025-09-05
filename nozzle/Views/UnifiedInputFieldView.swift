@@ -69,19 +69,29 @@ struct UnifiedInputFieldView: View {
       
       // Minimal transparent text field with multi-line support
       if isSearchMode {
-        // Single-line TextField for search mode
-        TextField(placeholderText, text: $query, axis: .horizontal)
-          .textFieldStyle(.plain)
-          .focused($isFocused)
-          .disableAutocorrection(true)
-          .lineLimit(1)
-          .font(.system(size: 13))
-          .onSubmit {
-            handleSubmit()
+        // Single-line TextField for search mode with custom placeholder
+        ZStack(alignment: .leading) {
+          TextField("", text: $query, axis: .horizontal)
+            .textFieldStyle(.plain)
+            .focused($isFocused)
+            .disableAutocorrection(true)
+            .lineLimit(1)
+            .font(.system(size: 13))
+            .onSubmit {
+              handleSubmit()
+            }
+            .onChange(of: query) { oldValue, newValue in
+              handleQueryChange(oldValue: oldValue, newValue: newValue)
+            }
+          
+          // Show placeholder when empty (matching prompt mode styling)
+          if query.isEmpty {
+            Text(placeholderText)
+              .font(.system(size: 13))
+              .foregroundColor(.secondary.opacity(0.5))
+              .allowsHitTesting(false)
           }
-          .onChange(of: query) { oldValue, newValue in
-            handleQueryChange(oldValue: oldValue, newValue: newValue)
-          }
+        }
       } else {
         // Multi-line TextEditor for prompt mode with scrolling
         GeometryReader { geometry in
