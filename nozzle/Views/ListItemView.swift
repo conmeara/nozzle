@@ -56,12 +56,12 @@ struct ListItemView<Title: View>: View {
             .frame(width: 15, height: 15)
           Spacer(minLength: 0)
         }
-        .padding(.leading, 4)
+        .padding(.leading, 6)
         .padding(.vertical, 5)
       }
 
       Spacer()
-        .frame(width: (showIcons && appIcon != nil) ? 5 : 10)
+        .frame(width: (showIcons && appIcon != nil) ? 6 : 12)
 
       if let accessoryImage {
         Image(nsImage: accessoryImage)
@@ -87,11 +87,13 @@ struct ListItemView<Title: View>: View {
       if showCheckbox {
         ZStack {
           if modifierFlags.flags.contains(.command) && !shortcuts.isEmpty {
-            // Show shortcut when Command is held
+            // Show shortcut when Command is held (replaces checkmark)
             ForEach(shortcuts) { shortcut in
               KeyboardShortcutView(shortcut: shortcut)
                 .opacity(shortcut.isVisible(shortcuts, modifierFlags.flags) ? 1 : 0)
             }
+            .padding(.trailing, 20)
+            .frame(maxWidth: .infinity, alignment: .trailing)
           } else if isSelected {
             // Show round checkbox when item is selected
             Image(systemName: selectionSymbol)
@@ -108,8 +110,8 @@ struct ListItemView<Title: View>: View {
               .frame(maxWidth: .infinity, alignment: .trailing)
           }
         }
-        .frame(width: 32)
-        .padding(.trailing, 10)
+        .frame(width: 30)
+        .padding(.trailing, 8)
       } else if !shortcuts.isEmpty {
         // For footer items, just show shortcuts
         ZStack {
@@ -118,12 +120,12 @@ struct ListItemView<Title: View>: View {
               .opacity(shortcut.isVisible(shortcuts, modifierFlags.flags) ? 1 : 0)
           }
         }
-        .frame(width: 32)
-        .padding(.trailing, 10)
+        .frame(width: 30)
+        .padding(.trailing, 8)
       } else {
         Spacer()
-          .frame(width: 32)
-          .padding(.trailing, 10)
+          .frame(width: 30)
+          .padding(.trailing, 8)
       }
     }
     .frame(minHeight: 22)
@@ -147,6 +149,8 @@ struct ListItemView<Title: View>: View {
       }
     }
     .clipShape(.rect(cornerRadius: DesignConstants.cornerRadius))
+    .padding(.leading, 3)
+    .padding(.trailing, 5)
     // Any mouse movement exits keyboard navigation mode
     .onMouseMove {
       appState.isKeyboardNavigating = false

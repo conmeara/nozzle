@@ -16,9 +16,9 @@ struct KeyboardShortcutView: View {
   }
 
   var body: some View {
-    HStack(spacing: 1) {
-      Text(modifiers).frame(width: 55, alignment: .trailing)
-      Text(character).frame(width: 12, alignment: .center)
+    HStack(spacing: 0) {
+      Text(modifiers).frame(width: 45, alignment: .trailing)
+      Text(character).frame(width: 10, alignment: .center)
     }
     .lineLimit(1)
     .opacity(character.isEmpty ? 0 : 0.4)
