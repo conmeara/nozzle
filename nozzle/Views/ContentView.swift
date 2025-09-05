@@ -16,9 +16,9 @@ struct ContentView: View {
     VStack(alignment: .leading, spacing: 0) {
       KeyHandlingView(searchQuery: $appState.history.searchQuery, searchFocused: $inputFocused) {
         VStack(spacing: 0) {
-          // Header: chips (prompt mode only), input field, and controls with tabs
+          // Header: chips (always show when present), input field, and controls with tabs
           VStack(spacing: 0) {
-            if !appState.isSearchMode {
+            if !appState.promptChips.isEmpty {
               PromptChipsBarView()
             }
 
