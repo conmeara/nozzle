@@ -391,7 +391,7 @@ final class ContentManager {
     
     func canToggleExample(_ id: UUID) -> Bool {
         guard selectedItemIds.contains(id),
-              let item = allItems.first(where: { $0.id == id }) else { return false }
+              let _ = allItems.first(where: { $0.id == id }) else { return false }
         
         return isTextualItem(id)
     }

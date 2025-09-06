@@ -151,7 +151,7 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
     let radius = DesignConstants.panelCornerRadius
 
     // Round the content hosting view so SwiftUI content clips to bounds
-    if let cv = contentView as? NSView {
+    if let cv = contentView {
       cv.wantsLayer = true
       if let layer = cv.layer {
         layer.cornerRadius = radius

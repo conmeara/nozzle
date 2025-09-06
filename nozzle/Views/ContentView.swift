@@ -14,6 +14,8 @@ struct ContentView: View {
   @State private var tabsPerPage = 5
   @State private var availableTabWidth: CGFloat = 400
   @State private var pageBreaks: [Int] = [0] // Start indices of each page
+  @State private var tabWidthCache: [String: CGFloat] = [:] // Cache for tab width calculations
+  @State private var updateTabsTask: Task<Void, Never>? // Debouncing task
 
   @FocusState private var inputFocused: Bool
   @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -26,7 +28,12 @@ struct ContentView: View {
   
   // Calculate approximate width needed for a tab based on its title
   private func calculateTabWidth(for title: String) -> CGFloat {
-    // Approximate character width for 13pt system font
+    // Check cache first
+    if let cachedWidth = tabWidthCache[title] {
+      return cachedWidth
+    }
+    
+    // Calculate if not cached (fallback for any calls outside updateTabsPerPage)
     let avgCharWidth: CGFloat = 7.5
     let paddingHorizontal: CGFloat = 16 // 8px on each side
     let baseWidth = CGFloat(title.count) * avgCharWidth + paddingHorizontal
@@ -229,12 +236,20 @@ struct ContentView: View {
                 ) {
                   selectedTab = "aggregated"
                   contentManager.activeSourceId = "aggregated"
+                  // Refresh file sources if needed when viewing aggregated
+                  Task {
+                    for source in contentManager.getAllSources() {
+                      if let fileSource = source as? FileSystemSource {
+                        await fileSource.refreshIfNeeded()
+                      }
+                    }
+                  }
                 }
                 
                 // Left navigation (visible on page 2+)
                 if showLeftNavButton {
                   NavigationTabButton(direction: .left) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
                       currentTabPage = max(0, currentTabPage - 1)
                     }
                   }
@@ -248,6 +263,12 @@ struct ContentView: View {
                   onTabSelect: { tabId, source in
                     selectedTab = tabId
                     contentManager.activeSourceId = tabId
+                    // For file tabs, only refresh if data is stale
+                    if let fileSource = source as? FileSystemSource {
+                      Task {
+                        await fileSource.refreshIfNeeded()
+                      }
+                    }
                   },
                   onTabClose: { source in
                     contentManager.removeSource(source.id)
@@ -259,7 +280,7 @@ struct ContentView: View {
                 // Right navigation OR Add button
                 if hasMorePages {
                   NavigationTabButton(direction: .right) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
                       currentTabPage = min(totalPages - 1, currentTabPage + 1)
                     }
                   }
@@ -292,6 +313,11 @@ struct ContentView: View {
               }
               .onChange(of: geometry.size.width) { _, newWidth in
                 updateTabsPerPage(availableWidth: newWidth)
+              }
+              .onDisappear {
+                // Clean up debouncing task
+                updateTabsTask?.cancel()
+                updateTabsTask = nil
               }
             }
             .frame(height: 32)
@@ -498,6 +524,33 @@ struct ContentView: View {
   // MARK: - Tab Pagination Helper Functions
   
   private func updateTabsPerPage(availableWidth: CGFloat) {
+    // Cancel previous task
+    updateTabsTask?.cancel()
+    
+    // Schedule new debounced task
+    updateTabsTask = Task { @MainActor in
+      // Wait one frame to batch multiple rapid calls
+      try? await Task.sleep(nanoseconds: 16_000_000) // ~16ms = 1 frame at 60fps
+      
+      // Check if task was cancelled
+      guard !Task.isCancelled else { return }
+      
+      // Perform the actual update
+      performUpdateTabsPerPage(availableWidth: availableWidth)
+    }
+  }
+  
+  private func performUpdateTabsPerPage(availableWidth: CGFloat) {
+    // Populate cache for all tabs first (only calculates for uncached tabs)
+    for tab in allTabs {
+      if tabWidthCache[tab.name] == nil {
+        let avgCharWidth: CGFloat = 7.5
+        let paddingHorizontal: CGFloat = 16 // 8px on each side
+        let baseWidth = CGFloat(tab.name.count) * avgCharWidth + paddingHorizontal
+        tabWidthCache[tab.name] = min(baseWidth, maxTabWidth)
+      }
+    }
+    
     // Calculate available width for tabs (minus fixed elements)
     // Always account for aggregated tab and spacing
     let aggregatedAndSpacing = aggregatedTabWidth + tabSpacing
@@ -509,10 +562,10 @@ struct ContentView: View {
     let addButtonWidth: CGFloat = 40
     var usableWidth = availableWidth - aggregatedAndSpacing - leftNavWidth - addButtonWidth - tabSpacing
     
-    // Calculate how many tabs fit
+    // Calculate how many tabs fit (now using cached values)
     var totalTabWidth: CGFloat = 0
     for tab in allTabs {
-      totalTabWidth += calculateTabWidth(for: tab.name) + tabSpacing
+      totalTabWidth += (tabWidthCache[tab.name] ?? calculateTabWidth(for: tab.name)) + tabSpacing
     }
     
     // If all tabs don't fit, we need pagination, so account for nav buttons instead of add button
@@ -528,7 +581,7 @@ struct ContentView: View {
     var currentPageStartIndex = 0
     
     for (index, tab) in allTabs.enumerated() {
-      let tabWidth = calculateTabWidth(for: tab.name)
+      let tabWidth = tabWidthCache[tab.name] ?? calculateTabWidth(for: tab.name)
       let tabWithSpacing = tabWidth + tabSpacing
       
       // Check if adding this tab would exceed the page width
@@ -551,6 +604,11 @@ struct ContentView: View {
   }
   
   private func handleTabRemoval(_ removedTabId: String) {
+    // Clear cache for the removed tab
+    if let source = contentManager.sources[removedTabId] {
+      tabWidthCache.removeValue(forKey: source.name)
+    }
+    
     // Update selected tab if we just removed the active one
     if selectedTab == removedTabId {
       selectedTab = "clipboard"
@@ -565,7 +623,7 @@ struct ContentView: View {
   
   private func navigateToPreviousTabPage() {
     if currentTabPage > 0 {
-      withAnimation(.easeInOut(duration: 0.2)) {
+      withAnimation(.easeInOut(duration: 0.1)) {
         currentTabPage -= 1
       }
     }
@@ -573,7 +631,7 @@ struct ContentView: View {
   
   private func navigateToNextTabPage() {
     if currentTabPage < totalPages - 1 {
-      withAnimation(.easeInOut(duration: 0.2)) {
+      withAnimation(.easeInOut(duration: 0.1)) {
         currentTabPage += 1
       }
     }
@@ -793,12 +851,12 @@ struct NavigationTabButton: View {
     Button(action: action) {
       HStack(spacing: 4) {
         Image(systemName: direction.iconName)
-          .font(.system(size: 14, weight: .regular))
+          .font(.system(size: 12, weight: .regular))
           .foregroundColor(.secondary)
           .opacity(0.8)
       }
-      .padding(.horizontal, 10)
-      .padding(.vertical, 5)
+      .padding(.horizontal, 11)
+      .padding(.vertical, 6)
       .glassEffect(Glass.clear.tint(.white.opacity(0.05)).interactive(), in: .rect(cornerRadius: 8))
     }
     .buttonStyle(PlainButtonStyle())
@@ -833,7 +891,7 @@ struct TabPageContainer: View {
         )
       }
     }
-    .animation(.easeInOut(duration: 0.2), value: currentPage)
+    // Animation removed - page transitions are already handled by withAnimation in navigation buttons
   }
 }
 
