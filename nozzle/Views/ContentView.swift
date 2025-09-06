@@ -13,6 +13,7 @@ struct ContentView: View {
   @State private var currentTabPage = 0
   @State private var tabsPerPage = 5
   @State private var availableTabWidth: CGFloat = 400
+  @State private var pageBreaks: [Int] = [0] // Start indices of each page
 
   @FocusState private var inputFocused: Bool
   @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -23,17 +24,37 @@ struct ContentView: View {
   private var navigationButtonWidth: CGFloat { 32 }
   private var aggregatedTabWidth: CGFloat { 32 }
   
+  // Calculate approximate width needed for a tab based on its title
+  private func calculateTabWidth(for title: String) -> CGFloat {
+    // Approximate character width for 13pt system font
+    let avgCharWidth: CGFloat = 7.5
+    let paddingHorizontal: CGFloat = 16 // 8px on each side
+    let baseWidth = CGFloat(title.count) * avgCharWidth + paddingHorizontal
+    
+    // Apply max width limit but allow natural sizing below it
+    return min(baseWidth, maxTabWidth)
+  }
+  
   private var allTabs: [any ContentSource] {
     contentManager.getAllSources().filter { $0.id != "prompts" }
   }
   
   private var totalPages: Int {
-    max(1, Int(ceil(Double(allTabs.count) / Double(tabsPerPage))))
+    max(1, pageBreaks.count)
   }
   
   private var visibleTabsForCurrentPage: [any ContentSource] {
-    let startIndex = currentTabPage * tabsPerPage
-    let endIndex = min(startIndex + tabsPerPage, allTabs.count)
+    guard currentTabPage < pageBreaks.count else { return [] }
+    
+    let startIndex = pageBreaks[currentTabPage]
+    let endIndex: Int
+    
+    if currentTabPage + 1 < pageBreaks.count {
+      endIndex = pageBreaks[currentTabPage + 1]
+    } else {
+      endIndex = allTabs.count
+    }
+    
     return Array(allTabs[startIndex..<endIndex])
   }
   
@@ -221,7 +242,6 @@ struct ContentView: View {
                 TabPageContainer(
                   tabs: visibleTabsForCurrentPage,
                   currentPage: currentTabPage,
-                  maxTabWidth: maxTabWidth,
                   selectedTab: selectedTab,
                   onTabSelect: { tabId, source in
                     selectedTab = tabId
@@ -242,7 +262,7 @@ struct ContentView: View {
                     }
                   }
                 } else {
-                  // "+" menu to add folder source
+                  // "+" menu styled like navigation buttons
                   Menu {
                     Button("Add Folder…") {
                       openFolderPickerAndRegister()
@@ -495,17 +515,35 @@ struct ContentView: View {
     // Calculate available width for tabs (minus fixed elements)
     let fixedWidth = aggregatedTabWidth + (showLeftNavButton ? navigationButtonWidth + tabSpacing : 0)
     let addButtonWidth: CGFloat = 40 // Approximate width of add button
-    let usableWidth = availableWidth - fixedWidth - addButtonWidth - (tabSpacing * 2)
+    let navigationWidth = hasMorePages ? navigationButtonWidth + tabSpacing : 0
+    let usableWidth = availableWidth - fixedWidth - addButtonWidth - navigationWidth - (tabSpacing * 2)
     
-    // Calculate how many tabs fit
-    let tabWithSpacing = maxTabWidth + tabSpacing
-    let calculatedTabsPerPage = max(1, Int(usableWidth / tabWithSpacing))
+    // Calculate page breaks based on actual tab widths
+    var pageBreaks: [Int] = [0] // Start of each page
+    var currentPageWidth: CGFloat = 0
+    var currentPageStartIndex = 0
     
-    if calculatedTabsPerPage != tabsPerPage {
-      tabsPerPage = calculatedTabsPerPage
-      // Ensure current page is still valid
-      currentTabPage = min(currentTabPage, totalPages - 1)
+    for (index, tab) in allTabs.enumerated() {
+      let tabWidth = calculateTabWidth(for: tab.name)
+      let tabWithSpacing = tabWidth + tabSpacing
+      
+      // Check if adding this tab would exceed the page width
+      if currentPageWidth + tabWithSpacing > usableWidth && index > currentPageStartIndex {
+        // Start a new page
+        pageBreaks.append(index)
+        currentPageStartIndex = index
+        currentPageWidth = tabWithSpacing
+      } else {
+        currentPageWidth += tabWithSpacing
+      }
     }
+    
+    // Store the page breaks and update total pages
+    self.pageBreaks = pageBreaks
+    let newTotalPages = max(1, pageBreaks.count)
+    
+    // Ensure current page is still valid
+    currentTabPage = min(currentTabPage, newTotalPages - 1)
   }
   
   private func handleTabRemoval(_ removedTabId: String) {
@@ -597,7 +635,6 @@ struct TabButton: View {
             .opacity(isSelected ? 1.0 : 0.8)
             .lineLimit(1)
             .truncationMode(.tail)
-            .frame(maxWidth: maxWidth)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -711,7 +748,7 @@ struct TabButtonWithIcon: View {
         }
       }
       .padding(.horizontal, 8)
-      .padding(.vertical, 4)
+      .padding(.vertical, 3.5)
       .glassEffect(Glass.clear.tint(.white.opacity(0.05)).interactive(), in: .rect(cornerRadius: 8))
     }
     .buttonStyle(PlainButtonStyle())
@@ -752,12 +789,12 @@ struct NavigationTabButton: View {
     Button(action: action) {
       HStack(spacing: 4) {
         Image(systemName: direction.iconName)
-          .font(.system(size: 13, weight: .regular))
+          .font(.system(size: 14, weight: .regular))
           .foregroundColor(.secondary)
           .opacity(0.8)
       }
       .padding(.horizontal, 10)
-      .padding(.vertical, 4)
+      .padding(.vertical, 5)
       .glassEffect(Glass.clear.tint(.white.opacity(0.05)).interactive(), in: .rect(cornerRadius: 8))
     }
     .buttonStyle(PlainButtonStyle())
@@ -765,11 +802,11 @@ struct NavigationTabButton: View {
   }
 }
 
+
 // Container for paginated tabs with sliding animation
 struct TabPageContainer: View {
   let tabs: [any ContentSource]
   let currentPage: Int
-  let maxTabWidth: CGFloat?
   let selectedTab: String
   let onTabSelect: (String, any ContentSource) -> Void
   let onTabClose: ((any ContentSource) -> Void)?
@@ -781,7 +818,7 @@ struct TabPageContainer: View {
           title: source.name,
           isSelected: selectedTab == source.id,
           showCloseButton: source.type == .folder,
-          maxWidth: maxTabWidth,
+          maxWidth: nil,
           action: {
             onTabSelect(source.id, source)
           },
