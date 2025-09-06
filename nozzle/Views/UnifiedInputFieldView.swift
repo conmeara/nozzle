@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct UnifiedInputFieldView: View {
   @Binding var query: String
@@ -23,37 +24,56 @@ struct UnifiedInputFieldView: View {
   }
   
   private func calculateTextHeight(_ text: String, width: CGFloat) -> CGFloat {
-    let lineHeight: CGFloat = 18  // Approximate height per line for 13pt font  
-    let baseHeight: CGFloat = 20  // Minimum single line height
-    
-    if text.isEmpty {
+    // Use TextKit to measure exact wrapped height for the given width and font.
+    // Keep existing UX constraints: minimum single-line height and ~4-line cap.
+    let baseHeight: CGFloat = 20   // Minimum height for a single line
+    let maxHeight: CGFloat = 80    // Cap at ~4 lines (matches existing behavior)
+
+    guard !text.isEmpty, width > 0 else {
       return baseHeight
     }
-    
-    // Split by newlines and calculate total lines including wrapped lines
-    let lines = text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
-    var totalLines = 0
-    
-    // Calculate chars per line based on actual width
-    // Font size 13pt typically has character width of about 7-8 points
-    // For proportional fonts, average is about 6-7 points
-    // Subtracting padding and using conservative estimate
-    let charWidth: CGFloat = 7.0  // Average character width for 13pt font
-    let usableWidth = max(100, width - 40)  // Account for padding and minimum width
-    let charsPerLine = Int(usableWidth / charWidth)
-    
-    for line in lines {
-      if line.isEmpty {
-        totalLines += 1
-      } else {
-        // Calculate how many visual lines this text line will take
-        let visualLines = (line.count - 1) / charsPerLine + 1
-        totalLines += visualLines
-      }
+
+    let font = NSFont.systemFont(ofSize: 13)
+
+    // Configure paragraph for word-wrapping similar to TextEditor
+    let paragraph = NSMutableParagraphStyle()
+    paragraph.lineBreakMode = .byWordWrapping
+    paragraph.alignment = .natural
+
+    let attributed = NSAttributedString(
+      string: text,
+      attributes: [
+        .font: font,
+        .paragraphStyle: paragraph
+      ]
+    )
+
+    let storage = NSTextStorage(attributedString: attributed)
+    let layoutManager = NSLayoutManager()
+    let container = NSTextContainer(size: CGSize(width: max(1, width), height: .greatestFiniteMagnitude))
+    // Match NSTextView defaults: keep a small line fragment padding so measurement
+    // behaves like TextEditor. This aligns with AppKit's default of ~5pt.
+    container.lineFragmentPadding = 5
+    container.maximumNumberOfLines = 0
+
+    layoutManager.addTextContainer(container)
+    storage.addLayoutManager(layoutManager)
+
+    // Ensure glyph layout, then measure the used rect
+    _ = layoutManager.glyphRange(for: container)
+    var measured = ceil(layoutManager.usedRect(for: container).height)
+
+    // Account for trailing newline which AppKit can treat as zero-width at end
+    if text.hasSuffix("\n") {
+      let lineHeight = ceil(layoutManager.defaultLineHeight(for: font))
+      measured += lineHeight
     }
-    
-    let calculatedHeight = baseHeight + CGFloat(max(0, totalLines - 1)) * lineHeight
-    return min(calculatedHeight, 80)  // Cap at max height (~4 lines)
+
+    // Enforce min and max heights
+    if measured < baseHeight { measured = baseHeight }
+    if measured > maxHeight { measured = maxHeight }
+
+    return measured
   }
 
   var body: some View {
