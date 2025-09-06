@@ -4,6 +4,8 @@ import SwiftUI
 struct KeyHandlingView<Content: View>: View {
   @Binding var searchQuery: String
   @FocusState.Binding var searchFocused: Bool
+  @Binding var currentTabPage: Int
+  let totalPages: Int
   @ViewBuilder let content: () -> Content
 
   @Environment(AppState.self) private var appState
@@ -224,6 +226,22 @@ struct KeyHandlingView<Content: View>: View {
           if let item = appState.history.selectedItem {
             item.isSelected.toggle()
             appState.updateFooterItemVisibility()
+          }
+          return .handled
+        case .previousTabPage:
+          // Cmd+[ - navigate to previous tab page
+          if currentTabPage > 0 {
+            withAnimation(.easeInOut(duration: 0.2)) {
+              currentTabPage -= 1
+            }
+          }
+          return .handled
+        case .nextTabPage:
+          // Cmd+] - navigate to next tab page
+          if currentTabPage < totalPages - 1 {
+            withAnimation(.easeInOut(duration: 0.2)) {
+              currentTabPage += 1
+            }
           }
           return .handled
         default:

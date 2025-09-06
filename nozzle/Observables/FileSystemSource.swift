@@ -1,6 +1,5 @@
 import AppKit
 import UniformTypeIdentifiers
-import CryptoKit
 import Observation
 import CoreServices
 
@@ -26,6 +25,9 @@ final class FileSystemSource: ContentSource {
     let type: ContentSourceType = .folder
     nonisolated let folderURL: URL  // Expose for bookmark cleanup and settings
     private var cachedItems: [ContentItem] = []
+    private var lastRefreshTime: Date = .distantPast
+    private let refreshInterval: TimeInterval = 30.0 // Don't refresh if data is less than 30 seconds old
+    private var directoryModDateCache: [String: Date] = [:] // Cache directory modification dates
     
     // Folder expansion state
     private var expansionState: FolderExpansionState
@@ -137,12 +139,64 @@ final class FileSystemSource: ContentSource {
     }
     
     func refresh() async {
+        await forceRefresh()
+    }
+    
+    func refreshIfNeeded() async {
+        // Only refresh if data is stale (older than refreshInterval)
+        let timeSinceLastRefresh = Date().timeIntervalSince(lastRefreshTime)
+        if timeSinceLastRefresh > refreshInterval {
+            await forceRefresh()
+        }
+    }
+    
+    private func forceRefresh() async {
         // Build hierarchical structure starting from root
         let hierarchicalItems = await buildHierarchicalItems(at: folderURL, depth: 0, parentPath: nil)
         self.cachedItems = hierarchicalItems
+        self.lastRefreshTime = Date()
         self.rebuildIndexes()
         // Visible slice changed; invalidate selectedItems cache
         ContentManager.shared.markSelectedDirty()
+    }
+    
+    // Check if directory has been modified since last cache
+    private func hasDirectoryChanged(at url: URL) -> Bool {
+        let path = url.path
+        let currentModDate = getDirectoryModificationDate(url)
+        
+        if let cachedModDate = directoryModDateCache[path] {
+            return currentModDate > cachedModDate
+        }
+        
+        // No cache entry means we haven't scanned this directory before
+        return true
+    }
+    
+    // Update directory modification date cache
+    private func updateDirectoryModDateCache(at url: URL) {
+        let path = url.path
+        let modDate = getDirectoryModificationDate(url)
+        directoryModDateCache[path] = modDate
+    }
+    
+    // Get directory modification date
+    private func getDirectoryModificationDate(_ url: URL) -> Date {
+        let resourceValues = try? url.resourceValues(forKeys: [.contentModificationDateKey])
+        return resourceValues?.contentModificationDate ?? .distantPast
+    }
+    
+    // Clear modification date cache for path and its children
+    private func clearDirectoryModDateCache(for path: String? = nil) {
+        if let specificPath = path {
+            // Clear cache for specific path and any child directories
+            directoryModDateCache = directoryModDateCache.filter { cachedPath, _ in
+                !cachedPath.hasPrefix(specificPath)
+            }
+        } else {
+            // Clear entire cache
+            directoryModDateCache.removeAll()
+        }
     }
 
     // MARK: - Localized refresh helpers
@@ -201,27 +255,37 @@ final class FileSystemSource: ContentSource {
     }
     
     private func buildHierarchicalItems(at url: URL, depth: Int, parentPath: String?) async -> [ContentItem] {
+        // Check if directory has changed before expensive scanning
+        let hasChanged = await MainActor.run { self.hasDirectoryChanged(at: url) }
+        
+        // If directory hasn't changed and we have cached items for this path, return cached subset
+        if !hasChanged && depth == 0 {
+            // For root level, return existing cached items since directory is unchanged
+            return await MainActor.run { self.cachedItems }
+        }
+        
         let task = Task.detached { () -> [ContentItem] in
             let fm = FileManager.default
+            // Only fetch isDirectory initially to separate folders/files
             guard let urls = try? fm.contentsOfDirectory(
                 at: url,
-                includingPropertiesForKeys: [.contentModificationDateKey, .isDirectoryKey, .fileSizeKey, .contentTypeKey],
+                includingPropertiesForKeys: [.isDirectoryKey],
                 options: [.skipsHiddenFiles]
             ) else { return [] }
             
             var items: [ContentItem] = []
             let sourceId = "folder:\(self.folderURL.path)"
             
-            // Separate folders and files
-            var folders: [URL] = []
-            var files: [URL] = []
+            // Separate folders and files with minimal metadata
+            var folders: [(url: URL, isDir: Bool)] = []
+            var files: [(url: URL, isDir: Bool)] = []
             
             for itemURL in urls {
-                let snap = FileIdentity.snapshot(for: itemURL)
-                if snap.isDirectory {
-                    folders.append(itemURL)
+                let isDir = (try? itemURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+                if isDir {
+                    folders.append((itemURL, isDir))
                 } else {
-                    files.append(itemURL)
+                    files.append((itemURL, isDir))
                 }
             }
             
@@ -229,11 +293,12 @@ final class FileSystemSource: ContentSource {
             let sortOrder = await MainActor.run { self.sortOrder }
             let sortDirection = await MainActor.run { self.sortDirection }
             
-            folders.sort { self.sortFiles($0, $1, order: sortOrder, direction: sortDirection) }
-            files.sort { self.sortFiles($0, $1, order: sortOrder, direction: sortDirection) }
+            folders.sort { self.sortFiles($0.url, $1.url, order: sortOrder, direction: sortDirection) }
+            files.sort { self.sortFiles($0.url, $1.url, order: sortOrder, direction: sortDirection) }
             
             // Add folders
-            for folderURL in folders {
+            for (folderURL, _) in folders {
+                // Fetch metadata once per folder
                 let snap = FileIdentity.snapshot(for: folderURL)
                 // Derive a stable UUID from the file identity when available;
                 // fall back to absolute path for determinism (not mod date).
@@ -256,10 +321,12 @@ final class FileSystemSource: ContentSource {
             }
             
             // Add files
-            for fileURL in files {
+            for (fileURL, _) in files {
+                // Fetch metadata once per file
                 let snap = FileIdentity.snapshot(for: fileURL)
                 let type = Self.resolvedType(for: fileURL)
-                let fileSize = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]))?.fileSize.flatMap(Int64.init)
+                // File size is already fetched in snap
+                let fileSize = snap.size
                 
                 // Use stable identity-based UUID to prevent ID churn on save.
                 let uuid = Self.makeStableUUID(identity: snap.identity, fallbackPath: fileURL.absoluteString)
@@ -312,6 +379,11 @@ final class FileSystemSource: ContentSource {
             }
         }
         
+        // Update directory modification date cache after successful scan
+        await MainActor.run {
+            self.updateDirectoryModDateCache(at: url)
+        }
+        
         return allItems
     }
     
@@ -345,8 +417,9 @@ final class FileSystemSource: ContentSource {
     func setSortOrder(_ order: FileSortOrder, direction: FileSortDirection) {
         sortOrder = order
         sortDirection = direction
+        clearDirectoryModDateCache() // Clear cache since sorting affects display
         Task {
-            await refresh()
+            await forceRefresh()  // Force refresh when user explicitly changes sort
         }
     }
     
@@ -382,19 +455,40 @@ final class FileSystemSource: ContentSource {
 extension FileSystemSource {
     // Generate a deterministic UUID from a file identity if present, otherwise from a stable string (path).
     nonisolated static func makeStableUUID(identity: Data?, fallbackPath: String) -> UUID {
-        if let identity {
-            let hash = SHA256.hash(data: identity)
-            let hex = hash.compactMap { String(format: "%02x", $0) }.joined()
-            let truncated = String(hex.prefix(32))
-            let formatted = truncated.inserting("-", at: [8, 12, 16, 20])
-            if let uuid = UUID(uuidString: formatted) { return uuid }
+        // Try to use identity data directly if available (much faster than SHA256)
+        if let identity, identity.count >= 16 {
+            // Use first 16 bytes of identity as UUID bytes
+            let uuidBytes = Data(identity.prefix(16))
+            let uuid = uuidBytes.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) in
+                let bytePtr = bytes.bindMemory(to: UInt8.self)
+                return UUID(uuid: (
+                    bytePtr[0], bytePtr[1], bytePtr[2], bytePtr[3],
+                    bytePtr[4], bytePtr[5], bytePtr[6], bytePtr[7],
+                    bytePtr[8], bytePtr[9], bytePtr[10], bytePtr[11],
+                    bytePtr[12], bytePtr[13], bytePtr[14], bytePtr[15]
+                ))
+            }
+            return uuid
         }
-        // Fallback: deterministic hash of absolute path (stable across saves)
-        let hash = SHA256.hash(data: Data(fallbackPath.utf8))
-        let hex = hash.compactMap { String(format: "%02x", $0) }.joined()
-        let truncated = String(hex.prefix(32))
-        let formatted = truncated.inserting("-", at: [8, 12, 16, 20])
-        return UUID(uuidString: formatted) ?? UUID()
+        
+        // Fallback: Use a simple hash of the path (faster than SHA256)
+        // Create deterministic UUID from path using a simpler hash
+        var hash: UInt64 = 5381
+        for byte in fallbackPath.utf8 {
+            hash = ((hash << 5) &+ hash) &+ UInt64(byte)
+        }
+        
+        // Convert hash to UUID format
+        let bytes = withUnsafeBytes(of: hash.bigEndian) { Array($0) }
+        let padding = Array(repeating: UInt8(0), count: 8)
+        let allBytes = bytes + padding
+        
+        return UUID(uuid: (
+            allBytes[0], allBytes[1], allBytes[2], allBytes[3],
+            allBytes[4], allBytes[5], allBytes[6], allBytes[7],
+            allBytes[8], allBytes[9], allBytes[10], allBytes[11],
+            allBytes[12], allBytes[13], allBytes[14], allBytes[15]
+        ))
     }
     nonisolated static func resolvedType(for url: URL) -> UTType? {
         // Try to get type from resource values first
@@ -426,8 +520,9 @@ extension FileSystemSource {
         // Check for critical flags that require full rescan
         for event in events {
             if flagsRequireFullRescan(event.flags) {
-                // Schedule full refresh on main actor
+                // Clear cache and schedule full refresh on main actor
                 Task { @MainActor [weak self] in
+                    self?.clearDirectoryModDateCache() // Clear entire cache
                     await self?.refresh()
                 }
                 return
@@ -478,6 +573,7 @@ extension FileSystemSource {
         for p in paths {
             if let ancestor = nearestExpandedAncestor(of: p) {
                 Task { @MainActor in
+                    self.clearDirectoryModDateCache(for: ancestor) // Clear cache for ancestor path
                     await self.refreshFolderSlice(at: ancestor)
                 }
                 return
@@ -486,6 +582,7 @@ extension FileSystemSource {
 
         // Fallback if nothing is expanded or we can't localize
         Task { @MainActor in
+            self.clearDirectoryModDateCache() // Clear entire cache
             await self.refresh()
         }
     }
