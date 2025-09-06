@@ -167,6 +167,7 @@ struct ContentView: View {
                     appState.isSearchMode ? .secondary : (contentManager.activeSourceId == "prompts" ? Color(NSColor.controlAccentColor) : .secondary)
                   )
                   .opacity(appState.isSearchMode ? 0.5 : 0.9)
+                  .animation(.easeInOut(duration: 0.2), value: appState.isSearchMode)
               }
               .buttonStyle(PlainButtonStyle())
               .help(appState.isSearchMode ? "Exit search mode" : "Open Prompts")
@@ -190,6 +191,7 @@ struct ContentView: View {
                   .font(.system(size: 15))
                   .foregroundColor(dictationManager.isRecording ? .orange : .secondary)
                   .opacity(appState.isSearchMode ? 0.5 : (dictationManager.isRecording ? 1.0 : 0.8))
+                  .animation(.easeInOut(duration: 0.2), value: appState.isSearchMode)
                   .padding(.all, 2)
               }
               .buttonStyle(PlainButtonStyle())
@@ -213,6 +215,7 @@ struct ContentView: View {
                   .font(.system(size: 15))
                   .foregroundColor(.secondary)
                   .opacity(appState.isSearchMode ? 0.5 : 0.8)
+                  .animation(.easeInOut(duration: 0.2), value: appState.isSearchMode)
                   .padding(.all, 2)
               }
               .buttonStyle(PlainButtonStyle())
