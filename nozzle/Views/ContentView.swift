@@ -8,13 +8,51 @@ struct ContentView: View {
   @State private var selectedTab = "clipboard"
   @State private var contentManager = ContentManager.shared
   @State private var dictationManager = DictationManager.shared
+  
+  // Tab pagination state
+  @State private var currentTabPage = 0
+  @State private var tabsPerPage = 5
+  @State private var availableTabWidth: CGFloat = 400
 
   @FocusState private var inputFocused: Bool
   @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+  
+  // Tab pagination computed properties
+  private var maxTabWidth: CGFloat { 120 }
+  private var tabSpacing: CGFloat { 4 }
+  private var navigationButtonWidth: CGFloat { 32 }
+  private var aggregatedTabWidth: CGFloat { 32 }
+  
+  private var allTabs: [any ContentSource] {
+    contentManager.getAllSources().filter { $0.id != "prompts" }
+  }
+  
+  private var totalPages: Int {
+    max(1, Int(ceil(Double(allTabs.count) / Double(tabsPerPage))))
+  }
+  
+  private var visibleTabsForCurrentPage: [any ContentSource] {
+    let startIndex = currentTabPage * tabsPerPage
+    let endIndex = min(startIndex + tabsPerPage, allTabs.count)
+    return Array(allTabs[startIndex..<endIndex])
+  }
+  
+  private var hasMorePages: Bool {
+    currentTabPage < totalPages - 1
+  }
+  
+  private var showLeftNavButton: Bool {
+    currentTabPage > 0
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      KeyHandlingView(searchQuery: $appState.history.searchQuery, searchFocused: $inputFocused) {
+      KeyHandlingView(
+        searchQuery: $appState.history.searchQuery,
+        searchFocused: $inputFocused,
+        currentTabPage: $currentTabPage,
+        totalPages: totalPages
+      ) {
         VStack(spacing: 0) {
           // Header: chips (always show when present), input field, and controls with tabs
           VStack(spacing: 0) {
@@ -157,66 +195,82 @@ struct ContentView: View {
             Spacer()
               .frame(width: 16)
             
-            // Tab group with tight spacing
-            HStack(spacing: 4) {
-              // Aggregated tab with icon and badge
-              TabButtonWithIcon(
-                icon: "square.stack.3d.up.badge.automatic.fill",
-                badgeCount: contentManager.selectedItems.count,
-                isSelected: selectedTab == "aggregated"
-              ) {
-                selectedTab = "aggregated"
-                contentManager.activeSourceId = "aggregated"
-              }
-              
-              // Dynamic tabs from sources (exclude Prompts)
-              ForEach(contentManager.getAllSources().filter { $0.id != "prompts" }, id: \.id) { src in
-                TabButton(
-                  title: src.name,
-                  isSelected: selectedTab == src.id,
-                  showCloseButton: src.type == .folder,
-                  action: {
-                    selectedTab = src.id
-                    contentManager.activeSourceId = src.id
-                  },
-                  onClose: src.type == .folder ? {
-                    // Remove the folder source
-                    contentManager.removeSource(src.id)
-                    
-                    // Update selected tab if we just removed the active one
-                    if selectedTab == src.id {
-                      selectedTab = "clipboard"
+            // Tab group with pagination
+            GeometryReader { geometry in
+              HStack(spacing: 4) {
+                // Always visible: Aggregated tab
+                TabButtonWithIcon(
+                  icon: "square.stack.3d.up.badge.automatic.fill",
+                  badgeCount: contentManager.selectedItems.count,
+                  isSelected: selectedTab == "aggregated"
+                ) {
+                  selectedTab = "aggregated"
+                  contentManager.activeSourceId = "aggregated"
+                }
+                
+                // Left navigation (visible on page 2+)
+                if showLeftNavButton {
+                  NavigationTabButton(direction: .left) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                      currentTabPage = max(0, currentTabPage - 1)
                     }
-                  } : nil,
-                  source: src
-                )
-              }
-              
-              // "+" menu to add folder source
-              Menu {
-                Button("Add Folder…") {
-                  openFolderPickerAndRegister()
+                  }
                 }
-              } label: {
-                HStack(spacing: 4) {
-                  Text("+")
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundColor(.secondary)
-                    .opacity(0.8)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                  RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(NSColor.quaternaryLabelColor))
+                
+                // Current page tabs
+                TabPageContainer(
+                  tabs: visibleTabsForCurrentPage,
+                  currentPage: currentTabPage,
+                  maxTabWidth: maxTabWidth,
+                  selectedTab: selectedTab,
+                  onTabSelect: { tabId, source in
+                    selectedTab = tabId
+                    contentManager.activeSourceId = tabId
+                  },
+                  onTabClose: { source in
+                    contentManager.removeSource(source.id)
+                    // Handle tab removal and page navigation
+                    handleTabRemoval(source.id)
+                  }
                 )
+                
+                // Right navigation OR Add button
+                if hasMorePages {
+                  NavigationTabButton(direction: .right) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                      currentTabPage = min(totalPages - 1, currentTabPage + 1)
+                    }
+                  }
+                } else {
+                  // "+" menu to add folder source
+                  Menu {
+                    Button("Add Folder…") {
+                      openFolderPickerAndRegister()
+                    }
+                  } label: {
+                    HStack(spacing: 4) {
+                      Text("+")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(.secondary)
+                        .opacity(0.8)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .glassEffect(Glass.clear.tint(.white.opacity(0.05)).interactive(), in: .rect(cornerRadius: 8))
+                  }
+                  .buttonStyle(PlainButtonStyle())
+                  .menuStyle(BorderlessButtonMenuStyle())
+                  .menuIndicator(.hidden)
+                }
               }
-              .buttonStyle(PlainButtonStyle())
-              .menuStyle(BorderlessButtonMenuStyle())
-              .menuIndicator(.hidden)
+              .onAppear {
+                updateTabsPerPage(availableWidth: geometry.size.width)
+              }
+              .onChange(of: geometry.size.width) { _, newWidth in
+                updateTabsPerPage(availableWidth: newWidth)
+              }
             }
+            .frame(height: 32)
             
             Spacer()
             
@@ -435,6 +489,54 @@ struct ContentView: View {
     }
   }
   
+  // MARK: - Tab Pagination Helper Functions
+  
+  private func updateTabsPerPage(availableWidth: CGFloat) {
+    // Calculate available width for tabs (minus fixed elements)
+    let fixedWidth = aggregatedTabWidth + (showLeftNavButton ? navigationButtonWidth + tabSpacing : 0)
+    let addButtonWidth: CGFloat = 40 // Approximate width of add button
+    let usableWidth = availableWidth - fixedWidth - addButtonWidth - (tabSpacing * 2)
+    
+    // Calculate how many tabs fit
+    let tabWithSpacing = maxTabWidth + tabSpacing
+    let calculatedTabsPerPage = max(1, Int(usableWidth / tabWithSpacing))
+    
+    if calculatedTabsPerPage != tabsPerPage {
+      tabsPerPage = calculatedTabsPerPage
+      // Ensure current page is still valid
+      currentTabPage = min(currentTabPage, totalPages - 1)
+    }
+  }
+  
+  private func handleTabRemoval(_ removedTabId: String) {
+    // Update selected tab if we just removed the active one
+    if selectedTab == removedTabId {
+      selectedTab = "clipboard"
+      contentManager.activeSourceId = "clipboard"
+    }
+    
+    // If current page becomes empty after removal, go to previous page
+    if visibleTabsForCurrentPage.isEmpty && currentTabPage > 0 {
+      currentTabPage -= 1
+    }
+  }
+  
+  private func navigateToPreviousTabPage() {
+    if currentTabPage > 0 {
+      withAnimation(.easeInOut(duration: 0.2)) {
+        currentTabPage -= 1
+      }
+    }
+  }
+  
+  private func navigateToNextTabPage() {
+    if currentTabPage < totalPages - 1 {
+      withAnimation(.easeInOut(duration: 0.2)) {
+        currentTabPage += 1
+      }
+    }
+  }
+  
   @MainActor
   private func openFolderPickerAndRegister() {
     let panel = NSOpenPanel()
@@ -470,14 +572,16 @@ struct TabButton: View {
   let title: String
   let isSelected: Bool
   let showCloseButton: Bool
+  let maxWidth: CGFloat?
   let action: () -> Void
   let onClose: (() -> Void)?
   let source: (any ContentSource)?
   
-  init(title: String, isSelected: Bool, showCloseButton: Bool = false, action: @escaping () -> Void, onClose: (() -> Void)? = nil, source: (any ContentSource)? = nil) {
+  init(title: String, isSelected: Bool, showCloseButton: Bool = false, maxWidth: CGFloat? = nil, action: @escaping () -> Void, onClose: (() -> Void)? = nil, source: (any ContentSource)? = nil) {
     self.title = title
     self.isSelected = isSelected
     self.showCloseButton = showCloseButton
+    self.maxWidth = maxWidth
     self.action = action
     self.onClose = onClose
     self.source = source
@@ -493,6 +597,7 @@ struct TabButton: View {
             .opacity(isSelected ? 1.0 : 0.8)
             .lineLimit(1)
             .truncationMode(.tail)
+            .frame(maxWidth: maxWidth)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -623,6 +728,71 @@ struct LiquidGlassModifier: ViewModifier {
       content
         .glassEffect(.regular, in: .rect(cornerRadius: DesignConstants.panelCornerRadius))
     }
+  }
+}
+
+// Navigation tab button for pagination
+struct NavigationTabButton: View {
+  enum Direction {
+    case left
+    case right
+    
+    var iconName: String {
+      switch self {
+      case .left: return "chevron.left"
+      case .right: return "chevron.right"
+      }
+    }
+  }
+  
+  let direction: Direction
+  let action: () -> Void
+  
+  var body: some View {
+    Button(action: action) {
+      HStack(spacing: 4) {
+        Image(systemName: direction.iconName)
+          .font(.system(size: 13, weight: .regular))
+          .foregroundColor(.secondary)
+          .opacity(0.8)
+      }
+      .padding(.horizontal, 10)
+      .padding(.vertical, 4)
+      .glassEffect(Glass.clear.tint(.white.opacity(0.05)).interactive(), in: .rect(cornerRadius: 8))
+    }
+    .buttonStyle(PlainButtonStyle())
+    .help(direction == .left ? "Previous page" : "Next page")
+  }
+}
+
+// Container for paginated tabs with sliding animation
+struct TabPageContainer: View {
+  let tabs: [any ContentSource]
+  let currentPage: Int
+  let maxTabWidth: CGFloat?
+  let selectedTab: String
+  let onTabSelect: (String, any ContentSource) -> Void
+  let onTabClose: ((any ContentSource) -> Void)?
+  
+  var body: some View {
+    HStack(spacing: 4) {
+      ForEach(tabs, id: \.id) { source in
+        TabButton(
+          title: source.name,
+          isSelected: selectedTab == source.id,
+          showCloseButton: source.type == .folder,
+          maxWidth: maxTabWidth,
+          action: {
+            onTabSelect(source.id, source)
+          },
+          onClose: source.type == .folder ? {
+            onTabClose?(source)
+          } : nil,
+          source: source
+        )
+      }
+    }
+    .animation(.easeInOut(duration: 0.2), value: currentPage)
   }
 }
 
