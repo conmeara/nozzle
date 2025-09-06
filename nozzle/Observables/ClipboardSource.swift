@@ -29,6 +29,7 @@ final class ClipboardSource: ContentSource {
                 rtfData: decorator.item.rtfData,
                 htmlData: decorator.item.htmlData,
                 plainText: decorator.item.text,
+                applicationBundleId: decorator.item.application,
                 isSelected: decorator.isSelected,
                 isVisible: decorator.isVisible
             )

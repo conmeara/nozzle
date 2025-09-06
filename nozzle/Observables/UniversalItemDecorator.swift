@@ -12,6 +12,9 @@ final class UniversalItemDecorator: ListItemDecorator {
     // Cached thumbnail for performance
     private var _thumbnailImage: NSImage?
     
+    // App icon for clipboard items
+    private var _appIcon: ApplicationImage?
+    
     // Static thumbnail size to match HistoryItemDecorator
     static var thumbnailImageSize: NSSize { 
         NSSize(width: 340, height: Defaults[.imageMaxHeight]) 
@@ -42,8 +45,30 @@ final class UniversalItemDecorator: ListItemDecorator {
         return ApplicationImage(bundleIdentifier: nil, image: nsImage)
     }
     
+    // App icon for clipboard items
+    var clipboardAppIcon: ApplicationImage? {
+        if _appIcon == nil, base.sourceType == .clipboard, let bundleId = base.applicationBundleId {
+            Task {
+                let appIcon = await ApplicationImageCache.shared.getImage(
+                    universalClipboard: false, 
+                    application: bundleId
+                )
+                await MainActor.run {
+                    _appIcon = appIcon
+                }
+            }
+        }
+        return _appIcon
+    }
+    
     // Protocol conformance - ListItemDecorator
-    var appIcon: ApplicationImage? { typeBadgeImage }
+    var appIcon: ApplicationImage? { 
+        // For clipboard items, prefer app icon over file type badge
+        if base.sourceType == .clipboard {
+            return clipboardAppIcon ?? typeBadgeImage
+        }
+        return typeBadgeImage
+    }
     var image: NSImage? { 
         if _thumbnailImage == nil, 
            let imageData = base.imageData,
@@ -62,6 +87,19 @@ final class UniversalItemDecorator: ListItemDecorator {
         self.base = item
         self.sourceId = item.sourceId
         self.isVisible = item.isVisible
+        
+        // Initialize app icon for clipboard items
+        if item.sourceType == .clipboard, let bundleId = item.applicationBundleId {
+            Task {
+                let appIcon = await ApplicationImageCache.shared.getImage(
+                    universalClipboard: false, 
+                    application: bundleId
+                )
+                await MainActor.run {
+                    self._appIcon = appIcon
+                }
+            }
+        }
     }
     
     nonisolated func hash(into hasher: inout Hasher) {
