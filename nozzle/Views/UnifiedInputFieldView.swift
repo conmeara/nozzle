@@ -69,20 +69,38 @@ struct UnifiedInputFieldView: View {
       
       // Minimal transparent text field with multi-line support
       if isSearchMode {
-        // Single-line TextField for search mode with custom placeholder
+        // Single-line TextField for search mode with custom placeholder and clear button
         ZStack(alignment: .leading) {
-          TextField("", text: $query, axis: .horizontal)
-            .textFieldStyle(.plain)
-            .focused($isFocused)
-            .disableAutocorrection(true)
-            .lineLimit(1)
-            .font(.system(size: 13))
-            .onSubmit {
-              handleSubmit()
+          HStack(spacing: 0) {
+            TextField("", text: $query, axis: .horizontal)
+              .textFieldStyle(.plain)
+              .focused($isFocused)
+              .disableAutocorrection(true)
+              .lineLimit(1)
+              .font(.system(size: 13))
+              .onSubmit {
+                handleSubmit()
+              }
+              .onChange(of: query) { oldValue, newValue in
+                handleQueryChange(oldValue: oldValue, newValue: newValue)
+              }
+            
+            // Clear button for search mode
+            if !query.isEmpty {
+              Button(action: {
+                query = ""
+                isFocused = true
+              }) {
+                Image(systemName: "xmark.circle.fill")
+                  .font(.system(size: 12))
+                  .foregroundColor(.secondary)
+                  .opacity(0.6)
+              }
+              .buttonStyle(PlainButtonStyle())
+              .help("Clear")
+              .padding(.leading, 4)
             }
-            .onChange(of: query) { oldValue, newValue in
-              handleQueryChange(oldValue: oldValue, newValue: newValue)
-            }
+          }
           
           // Show placeholder when empty (matching prompt mode styling)
           if query.isEmpty {
@@ -94,33 +112,56 @@ struct UnifiedInputFieldView: View {
           }
         }
       } else {
-        // Multi-line TextEditor for prompt mode with scrolling
+        // Multi-line TextEditor for prompt mode with scrolling and clear button
         GeometryReader { geometry in
           ZStack(alignment: .topLeading) {
-            TextEditor(text: $query)
-              .focused($isFocused)
-              .disableAutocorrection(true)
-              .font(.system(size: 13))
-              .scrollContentBackground(.hidden)
-              .background(Color.clear)
-              .frame(height: textHeight)  // Dynamic height based on content
-              .onChange(of: query) { oldValue, newValue in
-                textHeight = calculateTextHeight(newValue, width: geometry.size.width)
-                handleQueryChange(oldValue: oldValue, newValue: newValue)
-              }
-              .onChange(of: geometry.size.width) { _, newWidth in
-                fieldWidth = newWidth
-                textHeight = calculateTextHeight(query, width: newWidth)
-              }
-              .onSubmit {
-                if !query.contains("\n") {
-                  handleSubmit()
+            HStack(alignment: .top, spacing: 0) {
+              TextEditor(text: $query)
+                .focused($isFocused)
+                .disableAutocorrection(true)
+                .font(.system(size: 13))
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+                .frame(height: textHeight)  // Dynamic height based on content
+                .onChange(of: query) { oldValue, newValue in
+                  textHeight = calculateTextHeight(newValue, width: geometry.size.width - 20) // Account for clear button space
+                  handleQueryChange(oldValue: oldValue, newValue: newValue)
                 }
+                .onChange(of: geometry.size.width) { _, newWidth in
+                  fieldWidth = newWidth
+                  textHeight = calculateTextHeight(query, width: newWidth - 20) // Account for clear button space
+                }
+                .onSubmit {
+                  if !query.contains("\n") {
+                    handleSubmit()
+                  }
+                }
+                .onAppear {
+                  fieldWidth = geometry.size.width
+                  textHeight = calculateTextHeight(query, width: geometry.size.width - 20) // Account for clear button space
+                }
+              
+              // Clear button for prompt mode - positioned at top right
+              if !query.isEmpty {
+                VStack {
+                  Button(action: {
+                    query = ""
+                    isFocused = true
+                  }) {
+                    Image(systemName: "xmark.circle.fill")
+                      .font(.system(size: 12))
+                      .foregroundColor(.secondary)
+                      .opacity(0.6)
+                  }
+                  .buttonStyle(PlainButtonStyle())
+                  .help("Clear")
+                  .padding(.top, 2)
+                  
+                  Spacer()
+                }
+                .padding(.leading, 4)
               }
-              .onAppear {
-                fieldWidth = geometry.size.width
-                textHeight = calculateTextHeight(query, width: geometry.size.width)
-              }
+            }
             
             // Show placeholder when empty (TextEditor doesn't support placeholders)
             if query.isEmpty {

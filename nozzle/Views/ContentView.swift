@@ -293,27 +293,9 @@ struct ContentView: View {
             .frame(height: 32)
             
             Spacer()
-            
-            // Clear button (conditional on having content)
-            if !appState.history.searchQuery.isEmpty || !appState.promptText.isEmpty {
-              Button(action: {
-                if appState.isSearchMode {
-                  appState.history.searchQuery = ""
-                } else {
-                  appState.promptText = ""
-                }
-                inputFocused = true
-              }) {
-                Image(systemName: "xmark.circle.fill")
-                  .font(.system(size: 14))
-                  .foregroundColor(.secondary)
-                  .opacity(0.8)
-              }
-              .buttonStyle(PlainButtonStyle())
-              .help("Clear")
             }
-            }
-            .padding(.horizontal, 8)
+            .padding(.leading, 8)
+            .padding(.trailing, 0)
             .padding(.vertical, 0)
           }
           .background {
@@ -513,10 +495,28 @@ struct ContentView: View {
   
   private func updateTabsPerPage(availableWidth: CGFloat) {
     // Calculate available width for tabs (minus fixed elements)
-    let fixedWidth = aggregatedTabWidth + (showLeftNavButton ? navigationButtonWidth + tabSpacing : 0)
-    let addButtonWidth: CGFloat = 40 // Approximate width of add button
-    let navigationWidth = hasMorePages ? navigationButtonWidth + tabSpacing : 0
-    let usableWidth = availableWidth - fixedWidth - addButtonWidth - navigationWidth - (tabSpacing * 2)
+    // Always account for aggregated tab and spacing
+    let aggregatedAndSpacing = aggregatedTabWidth + tabSpacing
+    
+    // Account for left navigation if on page > 0
+    let leftNavWidth = currentTabPage > 0 ? navigationButtonWidth + tabSpacing : 0
+    
+    // First, try to fit all tabs with just the add button
+    let addButtonWidth: CGFloat = 40
+    var usableWidth = availableWidth - aggregatedAndSpacing - leftNavWidth - addButtonWidth - tabSpacing
+    
+    // Calculate how many tabs fit
+    var totalTabWidth: CGFloat = 0
+    for tab in allTabs {
+      totalTabWidth += calculateTabWidth(for: tab.name) + tabSpacing
+    }
+    
+    // If all tabs don't fit, we need pagination, so account for nav buttons instead of add button
+    if totalTabWidth > usableWidth {
+      // Recalculate with navigation button instead of add button
+      let navigationButtonWidth: CGFloat = 32
+      usableWidth = availableWidth - aggregatedAndSpacing - leftNavWidth - navigationButtonWidth - tabSpacing
+    }
     
     // Calculate page breaks based on actual tab widths
     var pageBreaks: [Int] = [0] // Start of each page
