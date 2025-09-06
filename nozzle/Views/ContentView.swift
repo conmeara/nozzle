@@ -124,7 +124,7 @@ struct ContentView: View {
           }
           
             // Controls and tab buttons row
-            HStack(spacing: 0) {
+            HStack(alignment: .center, spacing: 0) {
             // Icon group with tight spacing
             HStack(spacing: 8) {
               // Mode icon (search or plus) that switches mode on click
@@ -218,7 +218,9 @@ struct ContentView: View {
             
             // Tab group with pagination
             GeometryReader { geometry in
-              HStack(spacing: 4) {
+              VStack {
+                Spacer(minLength: 0)
+                HStack(spacing: 4) {
                 // Always visible: Aggregated tab
                 TabButtonWithIcon(
                   icon: "square.stack.3d.up.badge.automatic.fill",
@@ -283,6 +285,8 @@ struct ContentView: View {
                   .menuIndicator(.hidden)
                 }
               }
+                Spacer(minLength: 0)
+              }
               .onAppear {
                 updateTabsPerPage(availableWidth: geometry.size.width)
               }
@@ -296,7 +300,7 @@ struct ContentView: View {
             }
             .padding(.leading, 8)
             .padding(.trailing, 0)
-            .padding(.vertical, 0)
+            .padding(.vertical, 4)
           }
           .background {
             GeometryReader { geo in
