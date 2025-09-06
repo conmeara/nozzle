@@ -251,6 +251,7 @@ struct UnifiedInputFieldView: View {
     // Default behavior for other sources
     appState.select()
   }
+  
 }
 
 
