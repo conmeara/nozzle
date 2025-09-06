@@ -28,7 +28,7 @@ struct UniversalItemView: View {
                     
                     ListItemView(
                         id: item.id,
-                        appIcon: (item.base.sourceId == "prompts" ? nil : item.typeBadgeImage),        // Hide file type badge for Prompts
+                        appIcon: (item.base.sourceId == "prompts" ? nil : item.appIcon),        // Show app icons for all sources except Prompts
                         image: item.image,
                         accessoryImage: nil,
                         attributedTitle: nil,
