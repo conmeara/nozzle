@@ -9,19 +9,27 @@ struct PromptChipsBarView: View {
       FlowLayout(spacing: 6, lineSpacing: 6) {
         ForEach(appState.promptChips) { chip in
           PromptChipView(chip: chip,
-                         isActive: appState.activePromptChipId == chip.id) {
+                         isActive: chipIsActive(chip)) {
             handleRemove(chip: chip)
           }
             .onTapGesture {
-              // Activate Prompts source and focus corresponding item for preview
-              contentManager.activeSourceId = "prompts"
-              if let item = contentManager.getItems(for: "prompts").first(where: { $0.fileURL == chip.url }) {
-                contentManager.focus(item.id)
-                appState.selectWithoutScrolling(item.id)
-              }
-              // Mark this chip as the only active one
+              // First activate the chip so it's highlighted immediately
               appState.activePromptChipId = chip.id
               appState.showPreviewPane = true
+              
+              // Switch to Prompts source first
+              contentManager.activeSourceId = "prompts"
+              
+              // Then focus the specific item after a small delay to ensure
+              // the tab switch completes and doesn't override our focus
+              Task { @MainActor in
+                // Small delay to let the onChange handler run first
+                try? await Task.sleep(for: .milliseconds(10))
+                if let item = contentManager.getItems(for: "prompts").first(where: { $0.fileURL == chip.url }) {
+                  contentManager.focus(item.id)
+                }
+              }
+              
               appState.requestFocusInput()
             }
         }
@@ -46,9 +54,22 @@ struct PromptChipsBarView: View {
     }
   }
 
-  // Active state is driven by appState.activePromptChipId only
-
-  // Removed plus button here; use the existing plus below the input
+  // Helper to determine if a chip should be active (blue)
+  private func chipIsActive(_ chip: PromptChip) -> Bool {
+    // Activate if explicitly clicked
+    if appState.activePromptChipId == chip.id {
+      return true
+    }
+    
+    // Also activate if we're on prompts tab and this chip's URL matches the focused item
+    if contentManager.activeSourceId == "prompts",
+       let focusedURL = contentManager.focusedContentItem?.fileURL,
+       focusedURL == chip.url {
+      return true
+    }
+    
+    return false
+  }
 
   private func handleRemove(chip: PromptChip) {
     let current = appState.promptChips
@@ -68,7 +89,6 @@ struct PromptChipsBarView: View {
         contentManager.activeSourceId = "prompts"
         if let item = contentManager.getItems(for: "prompts").first(where: { $0.fileURL == next.url }) {
           contentManager.focus(item.id)
-          appState.selectWithoutScrolling(item.id)
         }
         appState.activePromptChipId = next.id
       } else {
@@ -117,5 +137,5 @@ private struct PromptChipView: View {
 // Keep chip highlight only when chip-driven preview is showing
 extension PromptChipsBarView {
   // Helper mirrors previous signature for removal logic
-  fileprivate func isActive(_ chip: PromptChip) -> Bool { appState.activePromptChipId == chip.id }
+  fileprivate func isActive(_ chip: PromptChip) -> Bool { chipIsActive(chip) }
 }

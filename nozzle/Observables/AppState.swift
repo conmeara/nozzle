@@ -452,6 +452,11 @@ class AppState {
   // MARK: - Prompt chips helpers
 
   func addPromptChip(url: URL) {
+    // Check if a chip with this URL already exists
+    guard !promptChips.contains(where: { $0.url == url }) else {
+      return // Don't add duplicates
+    }
+    
     let chip = PromptChip(url: url)
     promptChips.append(chip)
   }
