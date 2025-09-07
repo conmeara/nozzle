@@ -1,5 +1,12 @@
 import Sauce
 import SwiftUI
+import Defaults
+
+// Keyboard navigation throttler to prevent preview pane lag
+@MainActor
+private enum KeyboardNavigationThrottle {
+  static let throttler = Throttler(minimumDelay: 0.05) // 50ms throttle for keyboard navigation
+}
 
 struct KeyHandlingView<Content: View>: View {
   @Binding var searchQuery: String
@@ -110,7 +117,10 @@ struct KeyHandlingView<Content: View>: View {
             return .ignored
           }
           if contentManager.activeSourceId == "clipboard" {
-            appState.highlightNext()
+            // Throttle clipboard navigation to prevent preview lag
+            KeyboardNavigationThrottle.throttler.throttle {
+              appState.highlightNext()
+            }
           } else {
             appState.isKeyboardNavigating = true
             let items: [ContentItem]
@@ -120,12 +130,16 @@ struct KeyHandlingView<Content: View>: View {
               items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
             }
             if items.isEmpty { return .handled }
-            if let focused = contentManager.focusedItemId,
-               let idx = items.firstIndex(where: { $0.id == focused }),
-               idx + 1 < items.count {
-              contentManager.focus(items[idx + 1].id)
-            } else {
-              contentManager.focus(items.first!.id)
+            
+            // Throttle focus changes to prevent preview pane lag
+            KeyboardNavigationThrottle.throttler.throttle {
+              if let focused = contentManager.focusedItemId,
+                 let idx = items.firstIndex(where: { $0.id == focused }),
+                 idx + 1 < items.count {
+                contentManager.focus(items[idx + 1].id)
+              } else {
+                contentManager.focus(items.first!.id)
+              }
             }
           }
           return .handled
@@ -134,7 +148,10 @@ struct KeyHandlingView<Content: View>: View {
             return .ignored
           }
           if contentManager.activeSourceId == "clipboard" {
-            appState.highlightLast()
+            // Throttle clipboard navigation to prevent preview lag
+            KeyboardNavigationThrottle.throttler.throttle {
+              appState.highlightLast()
+            }
           } else {
             appState.isKeyboardNavigating = true
             let items: [ContentItem]
@@ -143,7 +160,11 @@ struct KeyHandlingView<Content: View>: View {
             } else {
               items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
             }
-            if let last = items.last { contentManager.focus(last.id) }
+            
+            // Throttle focus changes to prevent preview pane lag
+            KeyboardNavigationThrottle.throttler.throttle {
+              if let last = items.last { contentManager.focus(last.id) }
+            }
           }
           return .handled
         case .moveToPrevious:
@@ -151,7 +172,10 @@ struct KeyHandlingView<Content: View>: View {
             return .ignored
           }
           if contentManager.activeSourceId == "clipboard" {
-            appState.highlightPrevious()
+            // Throttle clipboard navigation to prevent preview lag
+            KeyboardNavigationThrottle.throttler.throttle {
+              appState.highlightPrevious()
+            }
           } else {
             appState.isKeyboardNavigating = true
             let items: [ContentItem]
@@ -161,12 +185,16 @@ struct KeyHandlingView<Content: View>: View {
               items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
             }
             if items.isEmpty { return .handled }
-            if let focused = contentManager.focusedItemId,
-               let idx = items.firstIndex(where: { $0.id == focused }),
-               idx - 1 >= 0 {
-              contentManager.focus(items[idx - 1].id)
-            } else {
-              contentManager.focus(items.last!.id)
+            
+            // Throttle focus changes to prevent preview pane lag
+            KeyboardNavigationThrottle.throttler.throttle {
+              if let focused = contentManager.focusedItemId,
+                 let idx = items.firstIndex(where: { $0.id == focused }),
+                 idx - 1 >= 0 {
+                contentManager.focus(items[idx - 1].id)
+              } else {
+                contentManager.focus(items.last!.id)
+              }
             }
           }
           return .handled
@@ -175,7 +203,10 @@ struct KeyHandlingView<Content: View>: View {
             return .ignored
           }
           if contentManager.activeSourceId == "clipboard" {
-            appState.highlightFirst()
+            // Throttle clipboard navigation to prevent preview lag
+            KeyboardNavigationThrottle.throttler.throttle {
+              appState.highlightFirst()
+            }
           } else {
             appState.isKeyboardNavigating = true
             let items: [ContentItem]
@@ -184,7 +215,11 @@ struct KeyHandlingView<Content: View>: View {
             } else {
               items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
             }
-            if let first = items.first { contentManager.focus(first.id) }
+            
+            // Throttle focus changes to prevent preview pane lag
+            KeyboardNavigationThrottle.throttler.throttle {
+              if let first = items.first { contentManager.focus(first.id) }
+            }
           }
           return .handled
         case .openPreferences:
