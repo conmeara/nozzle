@@ -181,9 +181,7 @@ struct ContentView: View {
                   
                   Button("Add") {
                     let currentText = appState.promptText
-                    if !currentText.isEmpty {
-                      (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
-                    }
+                    (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
                   }
                   
                   Divider()
@@ -397,6 +395,11 @@ struct ContentView: View {
                   Spacer()
                 }
                 .frame(minWidth: 300, maxWidth: .infinity)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                  // Commit any active rename when clicking empty space
+                  NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
+                }
               } else {
                 ListView(contextItems: contextItems, exampleItems: exampleItems)
                   .contextMenu {
@@ -439,6 +442,10 @@ struct ContentView: View {
                   // Background that fills entire area and responds to right-clicks
                   Color.clear
                     .contentShape(Rectangle())
+                    .onTapGesture {
+                      // Commit any active rename when clicking empty space
+                      NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
+                    }
                   
                   if items.isEmpty {
                     VStack {
@@ -465,9 +472,7 @@ struct ContentView: View {
                   
                   Button("Add") {
                     let currentText = appState.isSearchMode ? appState.history.searchQuery : appState.promptText
-                    if !currentText.isEmpty {
-                      (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
-                    }
+                    (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
                   }
                 }
               } else {

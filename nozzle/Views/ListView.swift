@@ -236,6 +236,11 @@ struct ListView: View {
             .contentMargins(.leading, 10, for: .scrollIndicators)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            // Commit any active rename when clicking empty space in the list
+            NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
+        }
     }
     
     @ViewBuilder
