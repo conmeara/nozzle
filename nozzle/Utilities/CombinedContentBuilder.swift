@@ -30,10 +30,10 @@ enum CombinedContentBuilder {
         }
 
         if !chips.isEmpty {
-            for (index, chip) in chips.enumerated() {
-                pieces.append(.string("<prompt \(index + 1)>\n"))
+            for chip in chips {
+                pieces.append(.string("<prompt>\n"))
                 pieces.append(.chip(chip.url))
-                pieces.append(.string("\n"))
+                pieces.append(.string("\n</prompt>\n"))
             }
         }
 
