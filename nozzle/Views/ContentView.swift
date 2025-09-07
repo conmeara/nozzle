@@ -124,6 +124,13 @@ struct ContentView: View {
           }
           .onChange(of: scenePhase) {
             if scenePhase == .background {
+              // Stop dictation when app loses focus
+              if dictationManager.isRecording {
+                Task {
+                  await dictationManager.stopDictation(saveTranscription: true)
+                }
+              }
+              
               if !appState.history.searchQuery.isEmpty {
                 appState.history.searchQuery = ""
               }
@@ -491,6 +498,14 @@ struct ContentView: View {
                 fileItem: contentManager.activeSourceId == "clipboard" ? nil : contentManager.focusedContentItem
               )
               .frame(width: 350)
+            }
+          }
+          .onTapGesture {
+            // Stop dictation when clicking outside the input field
+            if dictationManager.isRecording {
+              Task {
+                await dictationManager.stopDictation(saveTranscription: true)
+              }
             }
           }
         }
