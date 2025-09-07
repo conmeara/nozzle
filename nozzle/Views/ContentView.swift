@@ -181,9 +181,7 @@ struct ContentView: View {
                   
                   Button("Add") {
                     let currentText = appState.promptText
-                    if !currentText.isEmpty {
-                      (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
-                    }
+                    (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
                   }
                   
                   Divider()
@@ -397,6 +395,11 @@ struct ContentView: View {
                   Spacer()
                 }
                 .frame(minWidth: 300, maxWidth: .infinity)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                  // Commit any active rename when clicking empty space
+                  NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
+                }
               } else {
                 ListView(contextItems: contextItems, exampleItems: exampleItems)
                   .contextMenu {
@@ -447,6 +450,11 @@ struct ContentView: View {
                     Spacer()
                   }
                   .frame(minWidth: 300, maxWidth: .infinity)
+                  .contentShape(Rectangle())
+                  .onTapGesture {
+                    // Commit any active rename when clicking empty space
+                    NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
+                  }
                   .contextMenu {
                     Button("New") {
                       (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt()
@@ -454,9 +462,7 @@ struct ContentView: View {
                     
                     Button("Add") {
                       let currentText = appState.isSearchMode ? appState.history.searchQuery : appState.promptText
-                      if !currentText.isEmpty {
-                        (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
-                      }
+                      (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
                     }
                   }
                 } else {
