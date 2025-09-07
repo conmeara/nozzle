@@ -245,7 +245,8 @@ struct ListView: View {
                 .id(item.id)
         } else if let universalItem = item as? UniversalItemDecorator {
             UniversalItemView(item: universalItem)
-                .id(item.id)
+                // Use a composite ID that includes the title to force view recreation on rename
+                .id("\(item.id):\(universalItem.title)")
         }
     }
 }

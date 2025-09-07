@@ -25,6 +25,11 @@ final class ContentManager {
     
     // Preview focus tracking
     private(set) var focusedItemId: UUID?
+    // Track active inline rename row globally so other clicks can cancel it
+    var renameActiveItemId: UUID?
+    
+    // Pending inline rename request for a specific item id
+    var pendingRenameItemId: UUID?
     
     // Cache for selected items to avoid repeated full scans and sorts
     @ObservationIgnored private var _selectedCache: [ContentItem] = []
@@ -214,6 +219,24 @@ final class ContentManager {
     
     func focus(_ id: UUID?) {
         focusedItemId = id
+    }
+    
+    // Request inline rename for a newly created/located item by URL (Prompts)
+    func requestRename(for url: URL) {
+        if let item = sources["prompts"]?.items.first(where: { $0.fileURL == url }) {
+            activeSourceId = "prompts"
+            focus(item.id)
+            pendingRenameItemId = item.id
+            renameActiveItemId = item.id
+        }
+    }
+
+    // Deterministic version that targets a known item id (avoids timing issues)
+    func requestRename(for id: UUID) {
+        activeSourceId = "prompts"
+        focus(id)
+        pendingRenameItemId = id
+        renameActiveItemId = id
     }
     
     // Called after folder expansion to handle selected folder states
@@ -422,6 +445,12 @@ final class ContentManager {
         if item.htmlData != nil { return true }
         return false
     }
+}
+
+// Global notifications for inline rename coordination
+extension Notification.Name {
+    static let CommitActiveRename = Notification.Name("ContentManager.CommitActiveRename")
+    static let CancelActiveRename = Notification.Name("ContentManager.CancelActiveRename")
 }
 
 // MARK: - Selected items caching helpers

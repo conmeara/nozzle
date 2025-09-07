@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct PreviewPaneView: View {
     let clipboardItem: HistoryItemDecorator?
     let fileItem: ContentItem?
+    @Environment(ContentManager.self) private var contentManager
 
     var body: some View {
         VStack(spacing: 0) {
@@ -82,6 +83,12 @@ struct PreviewPaneView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .previewSurfaceStyle()
+        // Clicking into the preview should commit any active inline rename first
+        .simultaneousGesture(TapGesture().onEnded {
+            if contentManager.renameActiveItemId != nil {
+                NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
+            }
+        })
     }
 }
 

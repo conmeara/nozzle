@@ -8,6 +8,8 @@ struct ContentView: View {
   @State private var selectedTab = "clipboard"
   @State private var contentManager = ContentManager.shared
   @State private var dictationManager = DictationManager.shared
+  @State private var renameCatcher = RenameEventCatcher()
+  @State private var hostWindow: NSWindow?
   
   // Tab pagination state
   @State private var currentTabPage = 0
@@ -509,6 +511,8 @@ struct ContentView: View {
       }
     }
     .modifier(LiquidGlassModifier(reduceTransparency: reduceTransparency))
+    // Host window accessor for global rename event monitors
+    .background(WindowAccessor { win in hostWindow = win })
     .onAppear {
       inputFocused = true
       // Ensure first item is selected on appear
@@ -520,6 +524,18 @@ struct ContentView: View {
           appState.isKeyboardNavigating = true
         }
       }
+    }
+    // Arm/disarm one-shot monitors when inline rename starts/ends
+    .onChange(of: contentManager.renameActiveItemId) { _, newValue in
+      if let win = hostWindow, newValue != nil {
+        if NSApp.modalWindow == nil { renameCatcher.arm(in: win) }
+      } else {
+        renameCatcher.disarm()
+      }
+    }
+    // Safety: disarm if window resigns key
+    .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
+      renameCatcher.disarm()
     }
     .onChange(of: contentManager.activeSourceId) { _, newSourceId in
       // Sync selectedTab when activeSourceId changes (e.g., from "/" shortcut)

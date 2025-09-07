@@ -86,7 +86,13 @@ final class PromptsSource: ContentSource {
         let url = uniqueURL(basename: base, ext: ext)
         do {
             try TextFileFormatter.save(string: initialContents, to: url, type: .plainText)
-            Task { @MainActor in await inner.refresh() }
+            // Compute stable id deterministically now to avoid racing the refresh
+            let snap = FileIdentity.snapshot(for: url)
+            let id = FileSystemSource.makeStableUUID(identity: snap.identity, fallbackPath: url.absoluteString)
+            Task { @MainActor in
+                await inner.refresh()
+                ContentManager.shared.requestRename(for: id)
+            }
             return url
         } catch {
             NSSound.beep()
@@ -114,6 +120,76 @@ final class PromptsSource: ContentSource {
         Task { @MainActor in await inner.refresh() }
     }
 
+    @discardableResult
+    func renamePrompt(at oldURL: URL, to newDisplayName: String) -> URL? {
+        let fm = FileManager.default
+        let ext = oldURL.pathExtension.isEmpty ? Defaults[.promptsFileExtension] : oldURL.pathExtension
+        // Sanitize base name and strip extension if user typed one
+        var base = newDisplayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if base.hasSuffix(".\(ext)") {
+            base = String(base.dropLast(ext.count + 1))
+        }
+        base = sanitizeFileName(base)
+        guard !base.isEmpty else { NSSound.beep(); return nil }
+
+        let newURL = folderURL.appendingPathComponent(base).appendingPathExtension(ext)
+
+        // No-op
+        if newURL == oldURL { return newURL }
+
+        // Conflict
+        if fm.fileExists(atPath: newURL.path) {
+            NSSound.beep(); return nil
+        }
+
+        do {
+            let currentBase = oldURL.deletingPathExtension().lastPathComponent
+            if currentBase.caseInsensitiveCompare(base) == .orderedSame {
+                // Case-only change on case-insensitive volumes: hop via a temp name
+                let tmp = uniqueURL(basename: "\(base)-tmp-\(UUID().uuidString.prefix(6))", ext: ext)
+                let coord = NSFileCoordinator()
+                var err: NSError?
+                // Move old -> tmp
+                coord.coordinate(writingItemAt: oldURL, options: .forMoving, writingItemAt: tmp, options: .forReplacing, error: &err) { src, dst in
+                    try? fm.moveItem(at: src, to: dst)
+                }
+                if err == nil {
+                    // Move tmp -> new
+                    coord.coordinate(writingItemAt: tmp, options: .forMoving, writingItemAt: newURL, options: .forReplacing, error: &err) { src, dst in
+                        try? fm.moveItem(at: src, to: dst)
+                    }
+                }
+                if err != nil { throw err! }
+            } else {
+                // Coordinated move so NSFilePresenter receives didMove
+                let coord = NSFileCoordinator()
+                var err: NSError?
+                coord.coordinate(writingItemAt: oldURL, options: .forMoving, writingItemAt: newURL, options: .forReplacing, error: &err) { src, dst in
+                    try? fm.moveItem(at: src, to: dst)
+                }
+                if let e = err { throw e }
+            }
+            
+            // Update UI and prompt chips
+            Task { @MainActor in
+                // First update the prompt chip URL immediately
+                AppState.shared.updatePromptChipURL(from: oldURL, to: newURL)
+                
+                // Then refresh the file list to show the new name
+                await self.inner.refresh()
+                
+                // Keep focus on the renamed item
+                if let renamedItem = self.items.first(where: { $0.fileURL == newURL }) {
+                    ContentManager.shared.focus(renamedItem.id)
+                }
+            }
+            return newURL
+        } catch {
+            NSSound.beep()
+            return nil
+        }
+    }
+
     func reveal(_ url: URL) {
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
@@ -135,5 +211,15 @@ final class PromptsSource: ContentSource {
             idx += 1
         }
         return candidate
+    }
+
+    private func sanitizeFileName(_ name: String) -> String {
+        // Remove disallowed characters and collapse whitespace
+        let bad = CharacterSet(charactersIn: "/:")
+            .union(.newlines)
+            .union(.controlCharacters)
+        let cleaned = name.components(separatedBy: bad).joined(separator: " ")
+        return cleaned.replacingOccurrences(of: #"[\s]+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

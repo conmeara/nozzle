@@ -128,6 +128,8 @@
 		F50C3E262E65F9B900420829 /* FolderPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50C3E252E65F9B900420829 /* FolderPreviewView.swift */; };
 		F55A77CA2E5E37F50039E760 /* PromptsSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A77C92E5E37F50039E760 /* PromptsSource.swift */; };
 		F55A77CC2E5E38000039E760 /* PromptEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A77CB2E5E38000039E760 /* PromptEditorView.swift */; };
+		F569FB182E6E1BFA0076D784 /* WindowAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB172E6E1BFA0076D784 /* WindowAccessor.swift */; };
+		F569FB192E6E1BFA0076D784 /* RenameEventCatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB162E6E1BFA0076D784 /* RenameEventCatcher.swift */; };
 		F57274592E56720D003A9299 /* ContentSourceType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274582E56720D003A9299 /* ContentSourceType.swift */; };
 		F572745A2E56720D003A9299 /* ContentSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274572E56720D003A9299 /* ContentSource.swift */; };
 		F572745B2E56720D003A9299 /* ContentItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274562E56720D003A9299 /* ContentItem.swift */; };
@@ -528,6 +530,8 @@
 		F50C3E252E65F9B900420829 /* FolderPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPreviewView.swift; sourceTree = "<group>"; };
 		F55A77C92E5E37F50039E760 /* PromptsSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptsSource.swift; sourceTree = "<group>"; };
 		F55A77CB2E5E38000039E760 /* PromptEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEditorView.swift; sourceTree = "<group>"; };
+		F569FB162E6E1BFA0076D784 /* RenameEventCatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenameEventCatcher.swift; sourceTree = "<group>"; };
+		F569FB172E6E1BFA0076D784 /* WindowAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAccessor.swift; sourceTree = "<group>"; };
 		F57274562E56720D003A9299 /* ContentItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentItem.swift; sourceTree = "<group>"; };
 		F57274572E56720D003A9299 /* ContentSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSource.swift; sourceTree = "<group>"; };
 		F57274582E56720D003A9299 /* ContentSourceType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSourceType.swift; sourceTree = "<group>"; };
@@ -866,6 +870,8 @@
 		F57274722E57C00B003A9299 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				F569FB162E6E1BFA0076D784 /* RenameEventCatcher.swift */,
+				F569FB172E6E1BFA0076D784 /* WindowAccessor.swift */,
 				F5C1805E2E63E4A5007ED483 /* CombinedContentBuilder.swift */,
 				F57274702E57C00B003A9299 /* FileTypeBadgeCache.swift */,
 				F57274712E57C00B003A9299 /* TextFileFormatter.swift */,
@@ -1210,6 +1216,8 @@
 				DAEE38471E3DBEB100DD2966 /* AppDelegate.swift in Sources */,
 				F57274692E567244003A9299 /* SecurityScopedBookmarks.swift in Sources */,
 				DAA072DF2C41C63C006DDFD2 /* ConfirmationView.swift in Sources */,
+				F569FB182E6E1BFA0076D784 /* WindowAccessor.swift in Sources */,
+				F569FB192E6E1BFA0076D784 /* RenameEventCatcher.swift in Sources */,
 				DAA365CE2C4BF9DD00A394F8 /* PinsSettingsPane.swift in Sources */,
 				DA3BCB8E2C3E015000B01BC1 /* ModifierFlags.swift in Sources */,
 				DA181177247D14DA00066D55 /* Settings.PaneIdentifier+Panes.swift in Sources */,

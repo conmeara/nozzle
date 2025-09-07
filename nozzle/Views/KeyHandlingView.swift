@@ -21,6 +21,11 @@ struct KeyHandlingView<Content: View>: View {
   var body: some View {
     content()
       .onKeyPress { _ in
+        // When inline rename is active anywhere, let focused controls (e.g., TextField/TextEditor)
+        // handle keys like Enter/Escape without global interception.
+        if contentManager.renameActiveItemId != nil {
+          return .ignored
+        }
         // Unfortunately, key presses don't allow access to
         // key code and don't properly work with multiple inputs,
         // so pressing ⌘, on non-English layout doesn't open
