@@ -323,12 +323,21 @@ private extension UniversalItemView {
             contentManager.renameActiveItemId = nil
             return
         }
+        // Build expected new URL for optimistic update
+        let ext = url.pathExtension.isEmpty ? Defaults[.promptsFileExtension] : url.pathExtension
+        let newURL = url.deletingLastPathComponent().appendingPathComponent(newBase).appendingPathExtension(ext)
+        
+        // Optimistic update - show new name immediately  
+        contentManager.optimisticallyUpdateItem(item.id, sourceId: "prompts", newFileURL: newURL, newTitle: newBase)
+        
         // Attempt rename; only exit on success
         if let _ = (contentManager.sources["prompts"] as? PromptsSource)?.renamePrompt(at: url, to: newBase) {
+            // Success: keep optimistic update, async refresh will sync any discrepancies
             isRenaming = false
             contentManager.renameActiveItemId = nil
         } else {
-            // Conflict or failure: keep editing and refocus so user can fix
+            // Failure: revert optimistic update and keep editing so user can fix
+            contentManager.revertOptimisticUpdate(item.id, sourceId: "prompts")
             DispatchQueue.main.async { renameFocused = true }
         }
     }

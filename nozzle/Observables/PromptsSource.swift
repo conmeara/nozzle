@@ -90,6 +90,7 @@ final class PromptsSource: ContentSource {
             let snap = FileIdentity.snapshot(for: url)
             let id = FileSystemSource.makeStableUUID(identity: snap.identity, fallbackPath: url.absoluteString)
             Task { @MainActor in
+                ContentManager.shared.markDecoratorsNeedRefresh(for: "prompts")
                 await inner.refresh()
                 ContentManager.shared.requestRename(for: id)
             }
@@ -107,7 +108,10 @@ final class PromptsSource: ContentSource {
         let dest = uniqueURL(basename: "\(base) copy", ext: ext)
         do {
             try FileManager.default.copyItem(at: url, to: dest)
-            Task { @MainActor in await inner.refresh() }
+            Task { @MainActor in 
+                ContentManager.shared.markDecoratorsNeedRefresh(for: "prompts")
+                await inner.refresh() 
+            }
             return dest
         } catch {
             NSSound.beep()
@@ -117,7 +121,10 @@ final class PromptsSource: ContentSource {
 
     func deletePrompt(at url: URL) {
         NSWorkspace.shared.recycle([url]) { _, _ in }
-        Task { @MainActor in await inner.refresh() }
+        Task { @MainActor in 
+            ContentManager.shared.markDecoratorsNeedRefresh(for: "prompts")
+            await inner.refresh() 
+        }
     }
 
     @discardableResult
@@ -174,6 +181,9 @@ final class PromptsSource: ContentSource {
             Task { @MainActor in
                 // First update the prompt chip URL immediately
                 AppState.shared.updatePromptChipURL(from: oldURL, to: newURL)
+                
+                // Mark decorators as needing refresh before refreshing the file list
+                ContentManager.shared.markDecoratorsNeedRefresh(for: "prompts")
                 
                 // Then refresh the file list to show the new name
                 await self.inner.refresh()
