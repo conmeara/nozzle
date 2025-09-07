@@ -208,14 +208,7 @@ struct UnifiedInputFieldView: View {
   
   @MainActor
   private func handleQueryChange(oldValue: String, newValue: String) {
-    // If user types "/" at the beginning in any mode, jump to Prompts
-    if oldValue.isEmpty && newValue == "/" {
-      contentManager.activeSourceId = "prompts"
-      // Set the search query to show slash commands
-      if let src = contentManager.sources["prompts"] {
-        src.searchQuery = newValue
-      }
-    }
+    // No special handling needed - query changes are handled by the binding
   }
   
   @MainActor
@@ -224,39 +217,9 @@ struct UnifiedInputFieldView: View {
     
     // Handle Prompts source specially
     if contentManager.activeSourceId == "prompts" {
-      // Slash commands
-      if text == "/add" {
-        let current = appState.promptText
-        guard !current.isEmpty,
-              let prompts = contentManager.sources["prompts"] as? PromptsSource else {
-          return
-        }
-        // Use first line as a sensible filename
-        let firstLine = current.split(whereSeparator: \.isNewline).first.map(String.init) ?? "Untitled"
-        _ = prompts.createNewPrompt(named: firstLine, initialContents: current)
-        query = "" // clear command
-        return
-      }
-      
-      if text == "/new" {
-        if let prompts = contentManager.sources["prompts"] as? PromptsSource,
-           let url = prompts.createNewPrompt() {
-          // After refresh, focus the new item and open editor in preview
-          Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(120))
-            if let item = contentManager.activeItems.first(where: { $0.fileURL == url }) {
-              contentManager.focus(item.id)
-            }
-          }
-        }
-        query = ""
-        return
-      }
-      
-      // No command: apply the first matching prompt
+      // Apply the first matching prompt
       if let first = contentManager.activeItems.first, 
-         let url = first.fileURL,
-         !(first.uniformTypeIdentifier?.hasPrefix("org.nozzle.command.") ?? false) {
+         let url = first.fileURL {
         (contentManager.sources["prompts"] as? PromptsSource)?.applyPrompt(at: url)
         appState.addPromptChip(url: url)
         // Switch to prompt mode so the user can keep editing the input
