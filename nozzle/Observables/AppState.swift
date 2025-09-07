@@ -480,4 +480,14 @@ class AppState {
     NotificationCenter.default.post(name: Self.focusInputNotification, object: nil)
   }
 
+  // Update a prompt chip's URL after a rename while preserving its id
+  func updatePromptChipURL(from oldURL: URL, to newURL: URL) {
+    if let idx = promptChips.firstIndex(where: { $0.url == oldURL }) {
+      let id = promptChips[idx].id
+      var updated = promptChips
+      updated[idx] = PromptChip(id: id, url: newURL)
+      promptChips = updated
+    }
+  }
+
 }

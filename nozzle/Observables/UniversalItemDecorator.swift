@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 @Observable @MainActor
 final class UniversalItemDecorator: ListItemDecorator {
     let id: UUID
-    private(set) var base: ContentItem
+    var base: ContentItem  // Made mutable so it can be updated
     let sourceId: String
     
     // Cached thumbnail for performance

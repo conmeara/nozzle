@@ -50,6 +50,10 @@ struct ListItemView<Title: View>: View {
   }
   
   private var shouldShowHoverBackground: Bool {
+    // Freeze to the renaming item as active; suppress hover background for others
+    if let activeRename = contentManager.renameActiveItemId, activeRename != id {
+      return false
+    }
     // Immediate hover background only when not keyboard navigating
     if isHovering && !appState.isKeyboardNavigating { return true }
 
@@ -191,6 +195,10 @@ struct ListItemView<Title: View>: View {
       appState.isKeyboardNavigating = false
     }
     .onHover { hovering in
+      // During inline rename anywhere, freeze hover-driven selection changes
+      if contentManager.renameActiveItemId != nil {
+        return
+      }
       isHovering = hovering
       // Track hovered row globally to coordinate background across rows
       if hovering {

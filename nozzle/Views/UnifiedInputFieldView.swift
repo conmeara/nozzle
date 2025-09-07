@@ -213,7 +213,7 @@ struct UnifiedInputFieldView: View {
   
   @MainActor
   private func handleSubmit() {
-    let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
+    // let _ = query.trimmingCharacters(in: .whitespacesAndNewlines) // trimming not used here currently
     
     // Handle Prompts source specially
     if contentManager.activeSourceId == "prompts" {

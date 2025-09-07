@@ -4,7 +4,8 @@ import Foundation
 
 // Inline file presenter to avoid additional dependencies
 private class InlineFilePresenter: NSObject, NSFilePresenter {
-    let presentedItemURL: URL?
+    // Must be mutable so we can follow file moves/renames
+    var presentedItemURL: URL?
     let presentedItemOperationQueue: OperationQueue = {
         let q = OperationQueue()
         q.maxConcurrentOperationCount = 1
@@ -12,6 +13,7 @@ private class InlineFilePresenter: NSObject, NSFilePresenter {
     }()
 
     var onChange: (() -> Void)?
+    var onMove: ((URL) -> Void)?
 
     init(url: URL, onChange: (() -> Void)? = nil) {
         self.presentedItemURL = url
@@ -21,6 +23,12 @@ private class InlineFilePresenter: NSObject, NSFilePresenter {
 
     func presentedItemDidChange() {
         onChange?()
+    }
+
+    // Follow file when it’s renamed or moved
+    func presentedItemDidMove(to newURL: URL) {
+        presentedItemURL = newURL
+        onMove?(newURL)
     }
 }
 
@@ -133,11 +141,27 @@ struct PromptEditorView: View {
             .onChange(of: item.id) { _, _ in
                 // Save and tear down previous bindings before switching
                 saveWork?.cancel()
-                saveImmediately() // save to previous file via currentFileURL
+                // Only save to the previous file if its URL hasn't just changed (rename case)
+                if item.fileURL == currentFileURL {
+                    saveImmediately() // save to previous file via currentFileURL
+                }
                 removePresenter()
 
                 // Reset state and switch to the new item
                 currentItemId = item.id
+                currentFileURL = item.fileURL
+                hasExternalChange = false
+                isDirty = false
+                isEditing = false
+                load()
+                setupPresenter()
+            }
+            .onChange(of: item.fileURL) { _, _ in
+                // Handle file renames/moves that keep the same identity/UUID
+                // Important: do NOT save to the old URL here, as that would resurrect the old filename.
+                saveWork?.cancel()
+                removePresenter()
+
                 currentFileURL = item.fileURL
                 hasExternalChange = false
                 isDirty = false
@@ -150,6 +174,8 @@ struct PromptEditorView: View {
                 saveImmediately()
                 removePresenter()
             }
+            // Guard against rename races: when a global rename commit happens, pause reactions briefly
+            // Note: rename commits are coordinated elsewhere; no special pause needed here
     }
     
     private func load() {
@@ -182,6 +208,14 @@ struct PromptEditorView: View {
                     return
                 }
                 self.load()
+            }
+        }
+        p.onMove = { newURL in
+            DispatchQueue.main.async {
+                // Point the editor at the new file path so future saves don’t resurrect the old name
+                self.currentFileURL = newURL
+                // Grace period to ignore our own subsequent change notifications
+                self.ignoreChangesUntil = Date().addingTimeInterval(1.0)
             }
         }
         NSFileCoordinator.addFilePresenter(p)

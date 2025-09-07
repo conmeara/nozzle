@@ -1,5 +1,6 @@
 import SwiftUI
 import Defaults
+import AppKit
 
 @MainActor
 private extension UniversalItemView {
@@ -7,10 +8,82 @@ private extension UniversalItemView {
     static var previewHoverThrottler = Throttler(minimumDelay: 0.2)
 }
 
+// Local inline text field that selects only the base name (excluding extension)
+private struct InlineBaseNameTextField: NSViewRepresentable {
+    @Binding var text: String
+    let ext: String
+    let onSubmit: () -> Void
+    let onCancel: () -> Void
+
+    func makeNSView(context: Context) -> NSTextField {
+        let tf = NSTextField(string: text)
+        tf.isBordered = false
+        tf.isBezeled = false
+        tf.drawsBackground = false
+        tf.focusRingType = .none
+        tf.target = context.coordinator
+        tf.action = #selector(Coordinator.submit(_:))
+        tf.delegate = context.coordinator
+        DispatchQueue.main.async { selectBase(tf) }
+        return tf
+    }
+
+    func updateNSView(_ tf: NSTextField, context: Context) {
+        if tf.stringValue != text { tf.stringValue = text }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        let parent: InlineBaseNameTextField
+        init(_ parent: InlineBaseNameTextField) { self.parent = parent }
+        
+        @objc func submit(_ sender: Any?) {
+            // Update the binding with the current text field value before submitting
+            if let textField = sender as? NSTextField {
+                parent.text = textField.stringValue
+            }
+            parent.onSubmit()
+        }
+        
+        func controlTextDidChange(_ obj: Notification) {
+            guard let textField = obj.object as? NSTextField else { return }
+            parent.text = textField.stringValue
+        }
+        
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            switch commandSelector {
+            case #selector(NSResponder.cancelOperation(_:)):
+                parent.onCancel(); return true
+            case #selector(NSResponder.insertNewline(_:)):
+                // Update text before submitting
+                if let textField = control as? NSTextField {
+                    parent.text = textField.stringValue
+                }
+                parent.onSubmit(); return true
+            default: return false
+            }
+        }
+    }
+
+    private func selectBase(_ tf: NSTextField) {
+        tf.window?.makeFirstResponder(tf)
+        let s = tf.stringValue as NSString
+        let hasExt = s.range(of: ".\(ext)", options: [.backwards, .anchored]).location != NSNotFound
+        let baseLen = hasExt ? max(0, s.length - (ext.count + 1)) : s.length
+        if let editor = tf.window?.fieldEditor(true, for: tf) {
+            editor.selectedRange = NSRange(location: 0, length: baseLen)
+        }
+    }
+}
+
 struct UniversalItemView: View {
     @Bindable var item: UniversalItemDecorator
     @Environment(AppState.self) private var appState
     @Environment(ContentManager.self) private var contentManager
+    @State private var isRenaming: Bool = false
+    @State private var editingName: String = ""
+    @FocusState private var renameFocused: Bool
     
     var body: some View {
         Group {
@@ -38,12 +111,14 @@ struct UniversalItemView: View {
                         selectionSymbolColor: (item.isExample ? .yellow : .white),
                         selectionBackgroundColor: (item.isExample ? .yellow : nil),
                         onCopyAction: { item.copyToClipboard() }
-                    ) {
-                        Text(verbatim: item.title)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
+                    ) { titleView() }
                     .onTapGesture { location in
+                        if isRenaming { finishRename(); return }
+                        // If another row is in rename mode, clicking here should exit rename mode and do nothing else
+                        if let activeRename = contentManager.renameActiveItemId, activeRename != item.id {
+                            NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
+                            return
+                        }
                         // Check if click is in the checkbox/selection area (right 60 pixels)
                         let selectionAreaThreshold: CGFloat = 42
                         let frameWidth: CGFloat = 300  // Approximate width
@@ -52,6 +127,11 @@ struct UniversalItemView: View {
                             // Toggle example state when clicking the selected checkmark area
                             contentManager.toggleExample(item.id)
                         } else {
+                            // Command-click to rename (Prompts only)
+                            if item.base.sourceId == "prompts", NSEvent.modifierFlags.contains(.command) {
+                                beginRename()
+                                return
+                            }
                             // Special handling for Prompts: add as chip instead of aggregated selection
                             if item.base.sourceId == "prompts",
                                !(item.base.uniformTypeIdentifier?.hasPrefix("org.nozzle.command.") ?? false),
@@ -77,6 +157,8 @@ struct UniversalItemView: View {
                         }
                     }
                     .onHover { hovering in
+                        // Freeze focus changes due to hover while any rename is active
+                        if contentManager.renameActiveItemId != nil { return }
                         if hovering {
                             // Debounce focus so we only preview when the pointer "dwells"
                             UniversalItemView.previewHoverThrottler.minimumDelay = Double(Defaults[.hoverPreviewDelay]) / 1000
@@ -119,6 +201,9 @@ struct UniversalItemView: View {
                 Button("Duplicate") {
                     (contentManager.sources["prompts"] as? PromptsSource)?.duplicatePrompt(at: url)
                 }
+                Button("Rename…") {
+                    beginRename()
+                }
                 Button("Delete", role: .destructive) {
                     (contentManager.sources["prompts"] as? PromptsSource)?.deletePrompt(at: url)
                 }
@@ -156,5 +241,107 @@ struct UniversalItemView: View {
                 }
             }
         }
+        .onChange(of: contentManager.pendingRenameItemId) { _, newValue in
+            guard let pending = newValue else { return }
+            if pending == item.id {
+                beginRename()
+                // Clear the request so other rows don't respond
+                contentManager.pendingRenameItemId = nil
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .CommitActiveRename)) { _ in
+            if isRenaming { finishRename() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .CancelActiveRename)) { _ in
+            if isRenaming { cancelRename() }
+        }
+        .onAppear {
+            // If a rename was requested before this row appeared, handle it now
+            if contentManager.pendingRenameItemId == item.id {
+                beginRename()
+                contentManager.pendingRenameItemId = nil
+            }
+        }
+        .onChange(of: contentManager.renameActiveItemId) { _, active in
+            // If another row becomes the active rename or rename is cleared, exit local rename mode
+            if let active, active != item.id { if isRenaming { isRenaming = false } }
+        }
+    }
+}
+
+// MARK: - Rename helpers (Prompts only)
+private extension UniversalItemView {
+    @ViewBuilder
+    func titleView() -> some View {
+        if isRenaming && item.base.sourceId == "prompts" && !item.base.isFolder {
+            let ext = (item.base.fileURL?.pathExtension.isEmpty == false)
+                ? (item.base.fileURL?.pathExtension ?? Defaults[.promptsFileExtension])
+                : Defaults[.promptsFileExtension]
+            InlineBaseNameTextField(
+                text: $editingName,
+                ext: ext,
+                onSubmit: { finishRename() },
+                onCancel: { cancelRename() }
+            )
+            .focused($renameFocused)
+            .onChange(of: renameFocused) { _, focused in
+                if !focused { finishRename() }
+            }
+            // Swallow row-level taps while renaming to ensure commit-first
+            .highPriorityGesture(TapGesture())
+            // Last-chance commit if the row disappears due to refresh/navigation
+            .onDisappear { if isRenaming { finishRename() } }
+        } else {
+            Text(verbatim: item.title)
+                .lineLimit(1)
+                .truncationMode(.middle)
+        }
+    }
+    func beginRename() {
+        guard item.base.sourceId == "prompts", !item.base.isFolder else { return }
+        contentManager.focus(item.id)
+        editingName = displayNameWithoutExtension()
+        isRenaming = true
+        contentManager.renameActiveItemId = item.id
+        DispatchQueue.main.async { renameFocused = true }
+    }
+
+    func finishRename() {
+        guard isRenaming else { return }
+        let newBase = editingName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let url = item.base.fileURL else { return }
+        let currentBase = url.deletingPathExtension().lastPathComponent
+        // Empty name: keep editing, beep, refocus
+        if newBase.isEmpty {
+            NSSound.beep()
+            DispatchQueue.main.async { renameFocused = true }
+            return
+        }
+        // No change: exit rename mode quietly
+        if newBase == currentBase {
+            isRenaming = false
+            contentManager.renameActiveItemId = nil
+            return
+        }
+        // Attempt rename; only exit on success
+        if let _ = (contentManager.sources["prompts"] as? PromptsSource)?.renamePrompt(at: url, to: newBase) {
+            isRenaming = false
+            contentManager.renameActiveItemId = nil
+        } else {
+            // Conflict or failure: keep editing and refocus so user can fix
+            DispatchQueue.main.async { renameFocused = true }
+        }
+    }
+
+    func displayNameWithoutExtension() -> String {
+        if let url = item.base.fileURL {
+            return url.deletingPathExtension().lastPathComponent
+        }
+        return item.title
+    }
+
+    func cancelRename() {
+        isRenaming = false
+        contentManager.renameActiveItemId = nil
     }
 }
