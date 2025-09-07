@@ -52,7 +52,8 @@ struct HistoryItemView: View {
       isSelected: item.isSelected,
       selectionSymbol: (contentManager.isExample(item.id) ? "pencil.circle" : "checkmark.circle.fill"),
       selectionSymbolColor: (contentManager.isExample(item.id) ? .yellow : .white),
-      selectionBackgroundColor: (contentManager.isExample(item.id) ? .yellow : nil)
+      selectionBackgroundColor: (contentManager.isExample(item.id) ? .yellow : nil),
+      onCopyAction: copyItemToClipboard
     ) {
       Text(verbatim: item.title)
     }
@@ -72,19 +73,14 @@ struct HistoryItemView: View {
       appState.isKeyboardNavigating = false
     }
     .onTapGesture { location in
-      // Check if click is in the copy button area (right 60 pixels)
+      // Check if click is in the checkbox/selection area (right 60 pixels)
       let frameWidth = copyButtonArea.width > 0 ? copyButtonArea.width : 300 // fallback width
-      let copyButtonAreaWidth: CGFloat = 42
-      let isCopyButtonClick = location.x > (frameWidth - copyButtonAreaWidth)
+      let selectionAreaWidth: CGFloat = 42
+      let isSelectionAreaClick = location.x > (frameWidth - selectionAreaWidth)
       
-      if isCopyButtonClick {
-        if !item.isSelected {
-          // Copy button clicked - copy to clipboard
-          copyItemToClipboard()
-        } else {
-          // Toggle example state when clicking the selected checkmark area  
-          contentManager.toggleExample(item.id)
-        }
+      if isSelectionAreaClick && item.isSelected {
+        // Toggle example state when clicking the selected checkmark area
+        contentManager.toggleExample(item.id)
       } else if NSEvent.modifierFlags.contains(.command) {
         // Command-click: immediate paste
         appState.history.select(item)

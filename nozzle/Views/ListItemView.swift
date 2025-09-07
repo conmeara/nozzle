@@ -20,6 +20,7 @@ struct ListItemView<Title: View>: View {
   var selectionSymbol: String = "checkmark.circle.fill"
   var selectionSymbolColor: Color = .white
   var selectionBackgroundColor: Color? = nil
+  var onCopyAction: (() -> Void)? = nil
   @ViewBuilder var title: () -> Title
 
   @Default(.showApplicationIcons) private var showIcons
@@ -27,6 +28,26 @@ struct ListItemView<Title: View>: View {
   @Environment(ContentManager.self) private var contentManager
   @Environment(ModifierFlags.self) private var modifierFlags
   @State private var isHovering = false
+  @State private var showCopiedFeedback = false
+  
+  private func triggerCopyFeedback() {
+    // Visual feedback
+    withAnimation(.easeInOut(duration: 0.2)) {
+      showCopiedFeedback = true
+    }
+    
+    // Audio feedback
+    if let sound = NSSound(named: "Write") {
+      sound.play()
+    }
+    
+    // Reset after delay
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+      withAnimation(.easeInOut(duration: 0.3)) {
+        showCopiedFeedback = false
+      }
+    }
+  }
   
   private var shouldShowHoverBackground: Bool {
     // Immediate hover background only when not keyboard navigating
@@ -102,12 +123,26 @@ struct ListItemView<Title: View>: View {
               .opacity(0.8)
               .frame(maxWidth: .infinity, alignment: .trailing)
           } else if isHovering {
-            // Show copy button when hovering - always show the clipboard icon
-            Image(systemName: "doc.on.doc")
-              .font(.system(size: 12))
-              .foregroundColor(.primary)
-              .opacity(0.6)
-              .frame(maxWidth: .infinity, alignment: .trailing)
+            // Show copy button when hovering, or checkmark when copied
+            if showCopiedFeedback {
+              Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.green)
+                .opacity(0.8)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .transition(.scale.combined(with: .opacity))
+            } else {
+              Image(systemName: "doc.on.doc")
+                .font(.system(size: 12))
+                .foregroundColor(.primary)
+                .opacity(0.6)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .transition(.scale.combined(with: .opacity))
+                .onTapGesture {
+                  onCopyAction?()
+                  triggerCopyFeedback()
+                }
+            }
           }
         }
         .frame(width: 30)

@@ -36,27 +36,21 @@ struct UniversalItemView: View {
                         isSelected: item.isSelected,
                         selectionSymbol: (item.isExample ? "pencil.circle" : "checkmark.circle.fill"),
                         selectionSymbolColor: (item.isExample ? .yellow : .white),
-                        selectionBackgroundColor: (item.isExample ? .yellow : nil)
+                        selectionBackgroundColor: (item.isExample ? .yellow : nil),
+                        onCopyAction: { item.copyToClipboard() }
                     ) {
                         Text(verbatim: item.title)
                             .lineLimit(1)
                             .truncationMode(.middle)
                     }
                     .onTapGesture { location in
-                        // Emulate HistoryItemView behavior: right area = copy; else toggle selection
-                        let copyAreaThreshold: CGFloat = 42
+                        // Check if click is in the checkbox/selection area (right 60 pixels)
+                        let selectionAreaThreshold: CGFloat = 42
                         let frameWidth: CGFloat = 300  // Approximate width
                         
-                        if location.x > (frameWidth - copyAreaThreshold) {
-                            if !item.isSelected {
-                                // Copy action
-                                item.copyToClipboard()
-                                // Optionally close the popup after copy
-                                appState.popup.close()
-                            } else {
-                                // Toggle example state when clicking the selected checkmark area
-                                contentManager.toggleExample(item.id)
-                            }
+                        if location.x > (frameWidth - selectionAreaThreshold) && item.isSelected {
+                            // Toggle example state when clicking the selected checkmark area
+                            contentManager.toggleExample(item.id)
                         } else {
                             // Special handling for Prompts: add as chip instead of aggregated selection
                             if item.base.sourceId == "prompts",
