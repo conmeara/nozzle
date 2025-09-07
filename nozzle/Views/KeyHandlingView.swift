@@ -55,6 +55,11 @@ struct KeyHandlingView<Content: View>: View {
               appState.performCombinedPaste()
               return .handled
             }
+          } else if modifierFlags == .shift {
+            // Shift+Enter in prompt mode - let TextEditor handle naturally for newlines
+            if !appState.isSearchMode {
+              return .ignored  // Let TextEditor handle the newline
+            }
           }
         }
         

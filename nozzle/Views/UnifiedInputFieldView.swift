@@ -63,11 +63,7 @@ struct UnifiedInputFieldView: View {
     _ = layoutManager.glyphRange(for: container)
     var measured = ceil(layoutManager.usedRect(for: container).height)
 
-    // Account for trailing newline which AppKit can treat as zero-width at end
-    if text.hasSuffix("\n") {
-      let lineHeight = ceil(layoutManager.defaultLineHeight(for: font))
-      measured += lineHeight
-    }
+    // Removed problematic trailing newline handling that was causing double newlines
 
     // Enforce min and max heights
     if measured < baseHeight { measured = baseHeight }
@@ -151,9 +147,14 @@ struct UnifiedInputFieldView: View {
                   fieldWidth = newWidth
                   textHeight = calculateTextHeight(query, width: newWidth - 20) // Account for clear button space
                 }
-                .onSubmit {
-                  if !query.contains("\n") {
+                .onKeyPress(keys: [.return]) { keyPress in
+                  if keyPress.modifiers.contains(.shift) {
+                    // Let TextEditor handle Shift+Enter naturally (creates newline)
+                    return .ignored
+                  } else {
+                    // Plain Enter - submit
                     handleSubmit()
+                    return .handled
                   }
                 }
                 .onAppear {
