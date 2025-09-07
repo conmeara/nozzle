@@ -26,7 +26,7 @@ struct FolderTreeItemView: View {
     private var selectionState: (isSelected: Bool, symbol: String) {
         // If marked as example, override UI to reflect example state
         if contentManager.isExample(item.id) {
-            return (true, "pencil.circle")
+            return (true, "pencil.circle.fill")
         }
         let folderSelectionState = contentManager.getFolderSelectionState(item.id)
         switch folderSelectionState {
