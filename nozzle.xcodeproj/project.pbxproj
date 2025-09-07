@@ -93,6 +93,7 @@
 		DA9C3C5E2C20E1190056795D /* IgnoreApplicationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA9C3C5D2C20E1190056795D /* IgnoreApplicationsSettingsView.swift */; };
 		DA9C3C602C20E1890056795D /* IgnorePasteboardTypesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA9C3C5F2C20E1890056795D /* IgnorePasteboardTypesSettingsView.swift */; };
 		DA9C3C622C20E1BF0056795D /* IgnoreRegexpsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA9C3C612C20E1BF0056795D /* IgnoreRegexpsSettingsView.swift */; };
+		DA9C3C642C20E1C00056795D /* IgnoreFileSystemPatternsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA9C3C632C20E1C00056795D /* IgnoreFileSystemPatternsSettingsView.swift */; };
 		DA9C3C652C211B5F0056795D /* AdvancedSettingsPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA9C3C642C211B5F0056795D /* AdvancedSettingsPane.swift */; };
 		DAA072D32C40A961006DDFD2 /* Color+Random.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D22C40A961006DDFD2 /* Color+Random.swift */; };
 		DAA072D72C41C574006DDFD2 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D62C41C574006DDFD2 /* AppState.swift */; };
@@ -422,6 +423,7 @@
 		DA9C3C5D2C20E1190056795D /* IgnoreApplicationsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnoreApplicationsSettingsView.swift; sourceTree = "<group>"; };
 		DA9C3C5F2C20E1890056795D /* IgnorePasteboardTypesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnorePasteboardTypesSettingsView.swift; sourceTree = "<group>"; };
 		DA9C3C612C20E1BF0056795D /* IgnoreRegexpsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnoreRegexpsSettingsView.swift; sourceTree = "<group>"; };
+		DA9C3C632C20E1C00056795D /* IgnoreFileSystemPatternsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnoreFileSystemPatternsSettingsView.swift; sourceTree = "<group>"; };
 		DA9C3C642C211B5F0056795D /* AdvancedSettingsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedSettingsPane.swift; sourceTree = "<group>"; };
 		DAA072D22C40A961006DDFD2 /* Color+Random.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Random.swift"; sourceTree = "<group>"; };
 		DAA072D62C41C574006DDFD2 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -779,6 +781,7 @@
 				DA9C3C5D2C20E1190056795D /* IgnoreApplicationsSettingsView.swift */,
 				DA9C3C5F2C20E1890056795D /* IgnorePasteboardTypesSettingsView.swift */,
 				DA9C3C612C20E1BF0056795D /* IgnoreRegexpsSettingsView.swift */,
+				DA9C3C632C20E1C00056795D /* IgnoreFileSystemPatternsSettingsView.swift */,
 			);
 			path = IgnoreSettingsPane;
 			sourceTree = "<group>";
@@ -1110,6 +1113,7 @@
 				DA13D7D22C19F91B00FA9E23 /* Defaults.Keys+Names.swift in Sources */,
 				DA1969102C3F0AAC00258481 /* KeyShortcut.swift in Sources */,
 				DA9C3C622C20E1BF0056795D /* IgnoreRegexpsSettingsView.swift in Sources */,
+				DA9C3C642C20E1C00056795D /* IgnoreFileSystemPatternsSettingsView.swift in Sources */,
 				DA243D142C2F66DD0012A27F /* Storage.swift in Sources */,
 				DA5078992CF2676B00215488 /* MouseMovedViewModifer.swift in Sources */,
 				DA19690E2C3EEFA900258481 /* KeyboardShortcutView.swift in Sources */,

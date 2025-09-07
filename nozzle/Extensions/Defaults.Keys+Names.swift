@@ -23,6 +23,15 @@ extension Defaults.Keys {
   static let ignoreOnlyNextEvent = Key<Bool>("ignoreOnlyNextEvent", default: false)
   static let ignoreRegexp = Key<[String]>("ignoreRegexp", default: [])
   static let ignoredApps = Key<[String]>("ignoredApps", default: [])
+  static let ignoredFilePatterns = Key<[String]>("ignoredFilePatterns", default: [
+    ".DS_Store", ".git", "node_modules", "build", ".idea", ".trash", 
+    ".gradle", ".xcuserdata", ".swiftpm", ".gitignore", ".venv",
+    "__pycache__", "*.pyc", ".pytest_cache", "target", ".next",
+    ".nuxt", "dist", ".cache", ".temp", ".tmp", "*.o", "*.class",
+    ".env", ".env.local", ".terraform", ".vscode", "*.log",
+    "DerivedData", ".bundle", "vendor/bundle", "Pods", "*.xcarchive",
+    ".nyc_output", "coverage", ".sass-cache", "*.dSYM", "*.app"
+  ])
   static let ignoredPasteboardTypes = Key<Set<String>>(
     "ignoredPasteboardTypes",
     default: Set([

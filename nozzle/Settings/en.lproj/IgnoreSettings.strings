@@ -7,3 +7,6 @@
 "IgnoredPasteboardTypesReset" = "Reset";
 "RegexpTab" = "Regular expressions";
 "IgnoredRegexpsDescription" = "It's possible to ignore certain copies from remembering based on defined regular expressions.";
+"FileSystemTab" = "File System";
+"IgnoredFilePatternsDescription" = "Patterns to exclude when monitoring folders. Supports wildcards (* and ?). These patterns help reduce noise from build artifacts, dependencies, and temporary files.";
+"IgnoredFilePatternsReset" = "Reset to Defaults";
