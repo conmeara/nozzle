@@ -92,12 +92,6 @@ struct NoSelectionView: View {
             Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 48))
                 .foregroundColor(.secondary.opacity(0.5))
-            Text("No item selected")
-                .font(.headline)
-                .foregroundColor(.secondary)
-            Text("Select an item to preview")
-                .font(.caption)
-                .foregroundColor(.secondary.opacity(0.8))
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
