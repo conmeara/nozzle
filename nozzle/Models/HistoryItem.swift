@@ -105,17 +105,25 @@ class HistoryItem {
 
   var previewableText: String {
     if !fileURLs.isEmpty {
-      fileURLs
-        .compactMap { $0.absoluteString.removingPercentEncoding }
+      // For file URLs, show just the filename instead of full file:// path
+      return fileURLs
+        .compactMap { url in
+          // If it's from universal clipboard, keep the existing behavior (just filename)
+          if universalClipboard {
+            return url.absoluteString.removingPercentEncoding
+          }
+          // For local file URLs, show just the filename
+          return url.lastPathComponent
+        }
         .joined(separator: "\n")
     } else if let text = text, !text.isEmpty {
-      text
+      return text
     } else if let rtf = rtf, !rtf.string.isEmpty {
-      rtf.string
+      return rtf.string
     } else if let html = html, !html.string.isEmpty {
-      html.string
+      return html.string
     } else {
-      title
+      return title
     }
   }
 

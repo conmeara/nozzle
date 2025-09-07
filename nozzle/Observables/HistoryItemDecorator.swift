@@ -56,10 +56,26 @@ class HistoryItemDecorator: ListItemDecorator {
   var isPinned: Bool { item.pin != nil }
   var isUnpinned: Bool { item.pin == nil }
   
+  // File URL detection and icon support
+  var hasFileURL: Bool { !item.fileURLs.isEmpty }
+  var fileIcon: NSImage? {
+    guard let firstFileURL = item.fileURLs.first else { return nil }
+    return FileTypeBadgeCache.shared.icon(forURL: firstFileURL)
+  }
+  
   // Protocol conformance
-  var appIcon: ApplicationImage? { applicationImage }
+  var appIcon: ApplicationImage? { 
+    if let fileIcon = fileIcon {
+      // For file URLs, show file icon as app icon for proper alignment
+      return ApplicationImage(bundleIdentifier: nil, image: fileIcon)
+    }
+    return applicationImage
+  }
   var image: NSImage? { thumbnailImage }
-  var accessoryImage: NSImage? { thumbnailImage != nil ? nil : ColorImage.from(title) }
+  var accessoryImage: NSImage? { 
+    // Only show colored circle when there's no thumbnail and no file icon
+    return thumbnailImage != nil || fileIcon != nil ? nil : ColorImage.from(title) 
+  }
   
   func copyToClipboard() {
     // Copy the item directly to avoid triggering clipboard monitoring

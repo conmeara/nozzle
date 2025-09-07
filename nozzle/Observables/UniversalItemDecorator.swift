@@ -26,6 +26,10 @@ final class UniversalItemDecorator: ListItemDecorator {
         if base.sourceId == "prompts", let url = base.fileURL {
             return url.deletingPathExtension().lastPathComponent
         }
+        // For clipboard items with file URLs, show just the filename
+        if base.sourceType == .clipboard, let url = base.fileURL {
+            return url.lastPathComponent
+        }
         return base.title
     }
     var isSelected: Bool {
@@ -63,7 +67,11 @@ final class UniversalItemDecorator: ListItemDecorator {
     
     // Protocol conformance - ListItemDecorator
     var appIcon: ApplicationImage? { 
-        // For clipboard items, prefer app icon over file type badge
+        // For clipboard items with file URLs, prefer file type badge over app icon
+        if base.sourceType == .clipboard, base.fileURL != nil {
+            return typeBadgeImage
+        }
+        // For other clipboard items, prefer app icon over file type badge
         if base.sourceType == .clipboard {
             return clipboardAppIcon ?? typeBadgeImage
         }

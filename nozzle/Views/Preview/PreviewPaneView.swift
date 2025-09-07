@@ -9,8 +9,14 @@ struct PreviewPaneView: View {
     var body: some View {
         VStack(spacing: 0) {
             if let clipboardItem = clipboardItem {
-                // Use plain text preview for clipboard
-                if let image = clipboardItem.previewImage {
+                // Check if clipboard item contains file URLs for QuickLook preview
+                if clipboardItem.hasFileURL, let fileURL = clipboardItem.item.fileURLs.first {
+                    // Use QuickLook for clipboard file URLs
+                    QuickLookPreview(url: fileURL)
+                        .id(fileURL)
+                        .padding()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let image = clipboardItem.previewImage {
                     // Image preview like pre-August 22nd
                     Image(nsImage: image)
                         .resizable()
@@ -34,7 +40,7 @@ struct PreviewPaneView: View {
                     // Editable preview for prompt files
                     PromptEditorView(item: fileItem)
                 } else if fileItem.sourceType == .clipboard {
-                    // Clipboard-backed selected item: render text or image directly
+                    // Clipboard-backed selected item: prioritize file URLs for QuickLook
                     if let data = fileItem.imageData, let image = NSImage(data: data) {
                         Image(nsImage: image)
                             .resizable()
@@ -43,18 +49,19 @@ struct PreviewPaneView: View {
                             .padding()
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .previewSurfaceStyle()
+                    } else if fileItem.isFolder, let fileURL = fileItem.fileURL {
+                        FolderPreviewView(folderURL: fileURL, item: fileItem)
+                    } else if !fileItem.isFolder, let fileURL = fileItem.fileURL {
+                        // Use QuickLook for clipboard file URLs before falling back to plain text
+                        QuickLookPreview(url: fileURL)
+                            .id(fileURL)
+                            .padding()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else if let text = fileItem.plainText {
                         PlainTextPreview(
                             text: text,
                             metadata: nil
                         )
-                    } else if fileItem.isFolder, let fileURL = fileItem.fileURL {
-                        FolderPreviewView(folderURL: fileURL, item: fileItem)
-                    } else if !fileItem.isFolder, let fileURL = fileItem.fileURL {
-                        QuickLookPreview(url: fileURL)
-                            .id(fileURL)
-                            .padding()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         EmptyPreviewView()
                     }
