@@ -15,6 +15,10 @@ struct IgnoreSettingsPane: View {
         .tabItem {
           Text("RegexpTab", tableName: "IgnoreSettings")
         }
+      IgnoreFileSystemPatternsSettingsView()
+        .tabItem {
+          Text("FileSystemTab", tableName: "IgnoreSettings")
+        }
     }
     .frame(maxWidth: 500, minHeight: 400)
     .padding()

@@ -2,6 +2,7 @@ import AppKit
 import UniformTypeIdentifiers
 import Observation
 import CoreServices
+import Defaults
 
 // MARK: - Sorting Enums
 
@@ -281,6 +282,11 @@ final class FileSystemSource: ContentSource {
             var files: [(url: URL, isDir: Bool)] = []
             
             for itemURL in urls {
+                // Skip excluded files/folders based on user patterns
+                if self.shouldExclude(filename: itemURL.lastPathComponent) {
+                    continue
+                }
+                
                 let isDir = (try? itemURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
                 if isDir {
                     folders.append((itemURL, isDir))
@@ -537,12 +543,8 @@ extension FileSystemSource {
             // Only process events within our folder
             guard event.path.hasPrefix(folderPath) else { continue }
             
-            // Skip certain system paths even within our folder
-            let relativePath = String(event.path.dropFirst(folderPath.count))
-            guard !relativePath.contains("/.DS_Store"),
-                  !relativePath.contains("/.git/"),
-                  !relativePath.contains("/.svn/"),
-                  !relativePath.contains("/.hg/") else {
+            // Skip excluded paths based on user patterns
+            if shouldExclude(path: event.path) {
                 continue
             }
             
@@ -621,10 +623,14 @@ extension FileSystemSource {
     }
     
     private func defaultExcludes() -> [String] {
-        // Keep simple for now; can be user-configurable later
-        return [".DS_Store", ".git", "node_modules"].map { 
-            folderURL.appendingPathComponent($0).path 
-        }
+        // Use user-configured patterns, converting exact matches to full paths
+        let patterns = Defaults[.ignoredFilePatterns]
+        
+        // Only convert exact patterns (no wildcards) to full paths for FSEvents exclusion
+        // Wildcard patterns will be handled during scanning and event processing
+        return patterns
+            .filter { !$0.contains("*") && !$0.contains("?") }
+            .map { folderURL.appendingPathComponent($0).path }
     }
     
     nonisolated private func lastEventIdForFolder() -> FSEventStreamEventId? {
@@ -633,6 +639,42 @@ extension FileSystemSource {
     
     nonisolated private func persistLastEventId(_ idValue: FSEventStreamEventId) {
         UserDefaults.standard.set(idValue, forKey: "FSEvents.lastId.\(id)")
+    }
+    
+    // MARK: - Pattern Matching for File Exclusions
+    
+    private nonisolated func shouldExclude(path: String) -> Bool {
+        let filename = URL(fileURLWithPath: path).lastPathComponent
+        return shouldExclude(filename: filename)
+    }
+    
+    private nonisolated func shouldExclude(filename: String) -> Bool {
+        let patterns = Defaults[.ignoredFilePatterns]
+        
+        for pattern in patterns {
+            if pattern.contains("*") || pattern.contains("?") {
+                // Wildcard pattern matching using NSPredicate
+                if matchesWildcardPattern(filename: filename, pattern: pattern) {
+                    return true
+                }
+            } else {
+                // Exact match
+                if filename == pattern {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+    
+    private nonisolated func matchesWildcardPattern(filename: String, pattern: String) -> Bool {
+        // Convert shell-style wildcards to NSPredicate LIKE pattern
+        let predicatePattern = pattern
+            .replacingOccurrences(of: "*", with: "*")  // Keep * as is for LIKE
+            .replacingOccurrences(of: "?", with: "?")  // Keep ? as is for LIKE
+        
+        let predicate = NSPredicate(format: "SELF LIKE %@", predicatePattern)
+        return predicate.evaluate(with: filename)
     }
 }
 
