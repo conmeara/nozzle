@@ -434,46 +434,41 @@ struct ContentView: View {
               let items = contentManager.getDecorators(for: contentManager.activeSourceId)
               
               if contentManager.activeSourceId == "prompts" {
-                // Add context menu for prompts view with empty state
-                if items.isEmpty {
-                  VStack {
-                    Spacer()
-                    Text("No prompts found")
-                      .font(.system(size: 14))
-                      .foregroundColor(.secondary)
-                    Text("Right-click to create your first prompt")
-                      .font(.system(size: 12))
-                      .foregroundColor(Color.secondary.opacity(0.7))
-                    Spacer()
+                // Wrap entire prompts view in a container with consistent context menu
+                ZStack {
+                  // Background that fills entire area and responds to right-clicks
+                  Color.clear
+                    .contentShape(Rectangle())
+                  
+                  if items.isEmpty {
+                    VStack {
+                      Spacer()
+                      Text("No prompts found")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                      Text("Right-click to create your first prompt")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color.secondary.opacity(0.7))
+                      Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                  } else {
+                    ListView(universalItems: items)
+                      .frame(minWidth: 300, maxHeight: .infinity)
                   }
-                  .frame(minWidth: 300, maxWidth: .infinity)
-                  .contextMenu {
-                    Button("New") {
-                      (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt()
-                    }
-                    
-                    Button("Add") {
-                      let currentText = appState.isSearchMode ? appState.history.searchQuery : appState.promptText
-                      if !currentText.isEmpty {
-                        (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
-                      }
+                }
+                .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
+                .contextMenu {
+                  Button("New") {
+                    (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt()
+                  }
+                  
+                  Button("Add") {
+                    let currentText = appState.isSearchMode ? appState.history.searchQuery : appState.promptText
+                    if !currentText.isEmpty {
+                      (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
                     }
                   }
-                } else {
-                  ListView(universalItems: items)
-                    .frame(minWidth: 300)
-                    .contextMenu {
-                      Button("New") {
-                        (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt()
-                      }
-                      
-                      Button("Add") {
-                        let currentText = appState.isSearchMode ? appState.history.searchQuery : appState.promptText
-                        if !currentText.isEmpty {
-                          (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
-                        }
-                      }
-                    }
                 }
               } else {
                 ListView(universalItems: items)
