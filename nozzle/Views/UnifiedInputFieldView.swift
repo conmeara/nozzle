@@ -8,6 +8,7 @@ struct UnifiedInputFieldView: View {
 
   @Environment(AppState.self) private var appState
   @Environment(ContentManager.self) private var contentManager
+  @State private var dictationManager = DictationManager.shared
   
   // State for dynamic text height
   @State private var textHeight: CGFloat = 20  // Start with single line height
@@ -97,6 +98,15 @@ struct UnifiedInputFieldView: View {
               .onSubmit {
                 handleSubmit()
               }
+              .onKeyPress(keys: [.escape]) { _ in
+                if dictationManager.isRecording {
+                  Task {
+                    await dictationManager.cancelDictation()
+                  }
+                  return .handled
+                }
+                return .ignored
+              }
               .onChange(of: query) { oldValue, newValue in
                 handleQueryChange(oldValue: oldValue, newValue: newValue)
               }
@@ -148,7 +158,13 @@ struct UnifiedInputFieldView: View {
                   textHeight = calculateTextHeight(query, width: newWidth - 20) // Account for clear button space
                 }
                 .onKeyPress(keys: [.return]) { keyPress in
-                  if keyPress.modifiers.contains(.shift) {
+                  if dictationManager.isRecording {
+                    // Enter key while recording - confirm and save transcription
+                    Task {
+                      await dictationManager.stopDictation(saveTranscription: true)
+                    }
+                    return .handled
+                  } else if keyPress.modifiers.contains(.shift) {
                     // Let TextEditor handle Shift+Enter naturally (creates newline)
                     return .ignored
                   } else {
@@ -156,6 +172,16 @@ struct UnifiedInputFieldView: View {
                     handleSubmit()
                     return .handled
                   }
+                }
+                .onKeyPress(keys: [.escape]) { _ in
+                  if dictationManager.isRecording {
+                    // Escape key while recording - cancel transcription
+                    Task {
+                      await dictationManager.cancelDictation()
+                    }
+                    return .handled
+                  }
+                  return .ignored
                 }
                 .onAppear {
                   fieldWidth = geometry.size.width

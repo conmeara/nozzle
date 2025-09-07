@@ -33,6 +33,8 @@ final class DictationManager {
     
     private var targetTextBinding: Binding<String>?
     private var analyzerFormat: AVAudioFormat?
+    // Store the original text before dictation starts to prevent duplication
+    private var originalText: String = ""
     // Streaming task so we don't block the main actor
     private var audioStreamTask: Task<Void, Never>?
     
@@ -65,7 +67,7 @@ final class DictationManager {
         debugLog("toggleDictation called, isRecording: \(isRecording)")
         
         if isRecording {
-            await stopDictation()
+            await stopDictation(saveTranscription: true)
         } else {
             await startDictation(for: textBinding)
         }
@@ -82,11 +84,12 @@ final class DictationManager {
         }
         
         targetTextBinding = textBinding
+        originalText = textBinding.wrappedValue
         finalizedTranscript = ""
         volatileTranscript = ""
         
-        // Play system sound for start recording
-        NSSound.beep()
+        // Play dictation start sound
+        NSSound.dictationBegin?.play()
         
         isRecording = true
         debugLog("Set isRecording = true")
@@ -113,13 +116,13 @@ final class DictationManager {
     }
     
     @MainActor
-    private func stopDictation() async {
+    func stopDictation(saveTranscription: Bool = true) async {
         debugLog("Stopping dictation session")
         isCleaningUp = true
         isRecording = false
         
-        // Play system sound for stop recording
-        NSSound.beep()
+        // Play dictation stop sound
+        NSSound.dictationConfirm?.play()
         
         // Clean shutdown sequence - follow proper order
         debugLog("Starting cleanup sequence")
@@ -163,12 +166,16 @@ final class DictationManager {
         recognitionTask?.cancel()
         recognitionTask = nil
         
-        // Update text binding with finalized transcript
-        if !finalizedTranscript.characters.isEmpty, let binding = targetTextBinding {
-            let currentText = binding.wrappedValue
-            let separator = currentText.isEmpty ? "" : " "
-            binding.wrappedValue = currentText + separator + String(finalizedTranscript.characters)
-            debugLog("Updated text binding with finalized transcript")
+        // Handle transcription based on saveTranscription parameter
+        if saveTranscription {
+            // Final text is already in the binding from updateTargetText() calls
+            debugLog("Dictation session completed - final text saved")
+        } else {
+            // Restore original text (cancel transcription)
+            if let binding = targetTextBinding {
+                binding.wrappedValue = originalText
+                debugLog("Dictation session cancelled - original text restored")
+            }
         }
         
         // Clean up
@@ -244,19 +251,20 @@ final class DictationManager {
     @MainActor
     private func updateTargetText() {
         guard let binding = targetTextBinding else { return }
-        let currentText = binding.wrappedValue
         
-        var baseText = currentText
-        if !finalizedTranscript.characters.isEmpty {
-            let separator = currentText.isEmpty ? "" : " "
-            baseText = currentText + separator + String(finalizedTranscript.characters)
+        // Build the complete transcription for this session
+        var sessionTranscript = String(finalizedTranscript.characters)
+        if !volatileTranscript.characters.isEmpty {
+            let separator = sessionTranscript.isEmpty ? "" : " "
+            sessionTranscript += separator + String(volatileTranscript.characters)
         }
         
-        if !volatileTranscript.characters.isEmpty {
-            let separator = baseText.isEmpty ? "" : " "
-            binding.wrappedValue = baseText + separator + String(volatileTranscript.characters)
+        // Show original text + current session transcription
+        if !sessionTranscript.isEmpty {
+            let separator = originalText.isEmpty ? "" : " "
+            binding.wrappedValue = originalText + separator + sessionTranscript
         } else {
-            binding.wrappedValue = baseText
+            binding.wrappedValue = originalText
         }
     }
     
@@ -436,6 +444,13 @@ final class DictationManager {
         }
         
         debugLog("=== CRASH TEST END ===")
+    }
+    
+    @MainActor
+    func cancelDictation() async {
+        // Play cancel sound and stop without saving
+        NSSound.dictationCancel?.play()
+        await stopDictation(saveTranscription: false)
     }
 }
 
