@@ -53,13 +53,13 @@ class HistoryItemTests: XCTestCase {
   func testFile() {
     let url = URL(fileURLWithPath: "/tmp/foo.bar")
     let item = historyItem(url)
-    XCTAssertEqual(item.title, "file:///tmp/foo.bar")
+    XCTAssertEqual(item.title, "foo.bar")
   }
 
   func testFileWithEscapedChars() {
     let url = URL(fileURLWithPath: "/tmp/产品培训/产品培训.txt")
     let item = historyItem(url)
-    XCTAssertEqual(item.title, "file:///tmp/产品培训/产品培训.txt")
+    XCTAssertEqual(item.title, "产品培训.txt")
   }
 
   func testTextFromUniversalClipboard() {

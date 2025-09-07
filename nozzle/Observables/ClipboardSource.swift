@@ -18,7 +18,17 @@ final class ClipboardSource: ContentSource {
     var items: [ContentItem] {
         // Map HistoryItemDecorator -> ContentItem
         history.items.map { decorator in
-            ContentItem(
+            // Get UTI for file URLs to enable proper file type badges
+            let uniformTypeIdentifier: String? = {
+                if let fileURL = decorator.item.fileURLs.first,
+                   let resourceValues = try? fileURL.resourceValues(forKeys: [.contentTypeKey]),
+                   let contentType = resourceValues.contentType {
+                    return contentType.identifier
+                }
+                return nil
+            }()
+            
+            return ContentItem(
                 id: decorator.id,
                 title: decorator.title,
                 timestamp: decorator.item.lastCopiedAt,
@@ -29,6 +39,7 @@ final class ClipboardSource: ContentSource {
                 rtfData: decorator.item.rtfData,
                 htmlData: decorator.item.htmlData,
                 plainText: decorator.item.text,
+                uniformTypeIdentifier: uniformTypeIdentifier,
                 applicationBundleId: decorator.item.application,
                 isSelected: decorator.isSelected,
                 isVisible: decorator.isVisible

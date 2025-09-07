@@ -411,9 +411,16 @@ class AppState {
       pasteboard.clearContents()
       pasteboard.writeObjects([image])
     } else if let fileURL = item.fileURL {
+      // Handle both file-based items and clipboard items with file URLs
       let pasteboard = NSPasteboard.general
       pasteboard.clearContents()
       pasteboard.writeObjects([fileURL as NSURL])
+    } else if item.sourceType == .clipboard {
+      // For clipboard items without fileURL, use the original HistoryItem copy method  
+      // to preserve all clipboard data types (like multiple file URLs)
+      if let historyDecorator = history.items.first(where: { $0.id == item.id }) {
+        Clipboard.shared.copy(historyDecorator.item)
+      }
     }
     
     // Wait for clipboard update, then paste
