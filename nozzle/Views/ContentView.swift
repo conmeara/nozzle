@@ -171,6 +171,30 @@ struct ContentView: View {
               }
               .buttonStyle(PlainButtonStyle())
               .help(appState.isSearchMode ? "Exit search mode" : "Open Prompts")
+              .contextMenu {
+                if !appState.isSearchMode {
+                  Button("New") {
+                    (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt()
+                  }
+                  
+                  Button("Add") {
+                    let currentText = appState.promptText
+                    if !currentText.isEmpty {
+                      (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
+                    }
+                  }
+                  
+                  Divider()
+                  
+                  Button("Open Prompts") {
+                    if contentManager.activeSourceId != "prompts" {
+                      contentManager.lastNonPromptsSourceId = contentManager.activeSourceId
+                      selectedTab = "prompts"
+                      contentManager.activeSourceId = "prompts"
+                    }
+                  }
+                }
+              }
               
               // Microphone button
               Button(action: {
@@ -407,8 +431,53 @@ struct ContentView: View {
               // Non-clipboard sources use unified ListView
               let items = contentManager.getItems(for: contentManager.activeSourceId)
                 .map(UniversalItemDecorator.init)
-              ListView(universalItems: items)
-                .frame(minWidth: 300)
+              
+              if contentManager.activeSourceId == "prompts" {
+                // Add context menu for prompts view with empty state
+                if items.isEmpty {
+                  VStack {
+                    Spacer()
+                    Text("No prompts found")
+                      .font(.system(size: 14))
+                      .foregroundColor(.secondary)
+                    Text("Right-click to create your first prompt")
+                      .font(.system(size: 12))
+                      .foregroundColor(Color.secondary.opacity(0.7))
+                    Spacer()
+                  }
+                  .frame(minWidth: 300, maxWidth: .infinity)
+                  .contextMenu {
+                    Button("New") {
+                      (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt()
+                    }
+                    
+                    Button("Add") {
+                      let currentText = appState.isSearchMode ? appState.history.searchQuery : appState.promptText
+                      if !currentText.isEmpty {
+                        (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
+                      }
+                    }
+                  }
+                } else {
+                  ListView(universalItems: items)
+                    .frame(minWidth: 300)
+                    .contextMenu {
+                      Button("New") {
+                        (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt()
+                      }
+                      
+                      Button("Add") {
+                        let currentText = appState.isSearchMode ? appState.history.searchQuery : appState.promptText
+                        if !currentText.isEmpty {
+                          (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
+                        }
+                      }
+                    }
+                }
+              } else {
+                ListView(universalItems: items)
+                  .frame(minWidth: 300)
+              }
             }
             
             // Preview pane (conditional with fixed width)

@@ -25,9 +25,9 @@ final class PromptsSource: ContentSource {
         self.inner = FileSystemSource(folderURL: folderURL)
     }
 
-    // Only show prompt-like files. Inject slash-commands when user typed "/".
+    // Only show prompt-like files.
     var items: [ContentItem] {
-        var base = inner.items
+        return inner.items
             .filter { !$0.isFolder }
             .filter { $0.isText || $0.isMarkdown || $0.uniformTypeIdentifier == UTType.plainText.identifier }
             .map { item in
@@ -53,12 +53,6 @@ final class PromptsSource: ContentSource {
                     isVisible: item.isVisible
                 )
             }
-
-        if searchQuery.hasPrefix("/") {
-            base.insert(commandItem(title: "/new – New empty prompt", command: .new), at: 0)
-            base.insert(commandItem(title: "/add – Save current input as new prompt", command: .add), at: 0)
-        }
-        return base
     }
 
     func startMonitoring() { inner.startMonitoring() }
@@ -66,7 +60,7 @@ final class PromptsSource: ContentSource {
     func refresh() async { await inner.refresh() }
 
     func search(query: String) -> [ContentItem] {
-        // Mirror filtering and slash commands
+        // Filter items based on title and content
         let filtered = items.filter {
             $0.title.localizedCaseInsensitiveContains(query) ||
             ($0.plainText ?? "").localizedCaseInsensitiveContains(query)
@@ -74,30 +68,7 @@ final class PromptsSource: ContentSource {
         return filtered
     }
 
-    // MARK: - Commands & helpers
-
-    private enum Command { case add, new }
-
-    private func commandItem(title: String, command: Command) -> ContentItem {
-        ContentItem(
-            id: UUID(),
-            title: title,
-            timestamp: Date(),
-            sourceType: .folder,
-            sourceId: id,
-            fileURL: nil,
-            imageData: nil,
-            rtfData: nil,
-            htmlData: nil,
-            plainText: nil,
-            fileIdentity: nil,
-            uniformTypeIdentifier: "org.nozzle.command.\(command == .add ? "add" : "new")",
-            fileSize: nil,
-            isFolder: false,
-            depth: 0,
-            parentPath: nil
-        )
-    }
+    // MARK: - Helpers
 
     static func defaultFolder() -> URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
