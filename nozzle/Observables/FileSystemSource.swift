@@ -152,6 +152,9 @@ final class FileSystemSource: ContentSource {
     }
     
     private func forceRefresh() async {
+        // Mark decorators as needing refresh before updating items
+        ContentManager.shared.markDecoratorsNeedRefresh(for: self.id)
+        
         // Build hierarchical structure starting from root
         let hierarchicalItems = await buildHierarchicalItems(at: folderURL, depth: 0, parentPath: nil)
         self.cachedItems = hierarchicalItems
@@ -239,7 +242,8 @@ final class FileSystemSource: ContentSource {
             cachedItems.replaceSubrange(start..<safeEnd, with: replacement)
         }
         rebuildIndexes()
-        // Visible slice changed; invalidate selectedItems cache
+        // Visible slice changed; invalidate selectedItems cache and decorators cache
+        ContentManager.shared.markDecoratorsNeedRefresh(for: self.id)
         ContentManager.shared.markSelectedDirty()
     }
 

@@ -35,6 +35,10 @@ final class ContentManager {
     @ObservationIgnored private var _selectedCache: [ContentItem] = []
     @ObservationIgnored private var _selectedCacheDirty: Bool = true
     
+    // Cache for UniversalItemDecorator instances to maintain consistency
+    @ObservationIgnored private var _decoratorCache: [String: [UUID: UniversalItemDecorator]] = [:] // sourceId -> [itemId -> decorator]
+    @ObservationIgnored private var _decoratorCacheDirty: Set<String> = [] // sourceIds that need cache refresh
+    
     var selectedItems: [ContentItem] {
         if _selectedCacheDirty {
             _selectedCache = makeSelectedItems()
@@ -324,6 +328,119 @@ final class ContentManager {
     
     func getItems(for sourceId: String) -> [ContentItem] {
         sources[sourceId]?.items ?? []
+    }
+    
+    // Get cached decorators for a source, creating/updating as needed
+    func getDecorators(for sourceId: String) -> [UniversalItemDecorator] {
+        let items = getItems(for: sourceId)
+        
+        // Initialize cache for this source if needed
+        if _decoratorCache[sourceId] == nil {
+            _decoratorCache[sourceId] = [:]
+        }
+        
+        // Check if this source needs cache refresh
+        if _decoratorCacheDirty.contains(sourceId) {
+            // Update existing decorators with new data
+            var sourceCache = _decoratorCache[sourceId]!
+            var updatedCache: [UUID: UniversalItemDecorator] = [:]
+            
+            for item in items {
+                if let existingDecorator = sourceCache[item.id] {
+                    // Update existing decorator with new data
+                    existingDecorator.updateBase(item)
+                    updatedCache[item.id] = existingDecorator
+                } else {
+                    // Create new decorator for new items
+                    updatedCache[item.id] = UniversalItemDecorator(item)
+                }
+            }
+            
+            _decoratorCache[sourceId] = updatedCache
+            _decoratorCacheDirty.remove(sourceId)
+        } else if _decoratorCache[sourceId]!.isEmpty && !items.isEmpty {
+            // First time loading - create all decorators
+            var sourceCache: [UUID: UniversalItemDecorator] = [:]
+            for item in items {
+                sourceCache[item.id] = UniversalItemDecorator(item)
+            }
+            _decoratorCache[sourceId] = sourceCache
+        }
+        
+        // Return decorators in the same order as items
+        return items.compactMap { _decoratorCache[sourceId]?[$0.id] }
+    }
+    
+    // Mark a source's decorator cache as dirty (needs refresh)
+    func markDecoratorsNeedRefresh(for sourceId: String) {
+        _decoratorCacheDirty.insert(sourceId)
+    }
+    
+    // Clear decorator cache for a source (when source is removed)
+    func clearDecoratorCache(for sourceId: String) {
+        _decoratorCache.removeValue(forKey: sourceId)
+        _decoratorCacheDirty.remove(sourceId)
+    }
+    
+    // Optimistically update a decorator's file info (for instant UI feedback)
+    func optimisticallyUpdateItem(_ itemId: UUID, sourceId: String, newFileURL: URL, newTitle: String) {
+        guard let decorator = _decoratorCache[sourceId]?[itemId] else { return }
+        
+        // Create updated ContentItem with new URL and title
+        var updatedItem = decorator.base
+        updatedItem = ContentItem(
+            id: updatedItem.id,
+            title: newTitle,
+            timestamp: updatedItem.timestamp,
+            sourceType: updatedItem.sourceType,
+            sourceId: updatedItem.sourceId,
+            fileURL: newFileURL,
+            imageData: updatedItem.imageData,
+            rtfData: updatedItem.rtfData,
+            htmlData: updatedItem.htmlData,
+            plainText: updatedItem.plainText,
+            fileIdentity: updatedItem.fileIdentity,
+            uniformTypeIdentifier: updatedItem.uniformTypeIdentifier,
+            fileSize: updatedItem.fileSize,
+            isFolder: updatedItem.isFolder,
+            depth: updatedItem.depth,
+            parentPath: updatedItem.parentPath,
+            isSelected: updatedItem.isSelected,
+            isVisible: updatedItem.isVisible
+        )
+        
+        // Update the decorator immediately
+        decorator.updateBase(updatedItem)
+    }
+    
+    // Revert optimistic update by refreshing from source data
+    func revertOptimisticUpdate(_ itemId: UUID, sourceId: String) {
+        guard let decorator = _decoratorCache[sourceId]?[itemId],
+              let source = sources[sourceId],
+              let originalItem = source.items.first(where: { $0.id == itemId }) else { return }
+        
+        // Revert to original data from source
+        decorator.updateBase(originalItem)
+    }
+    
+    // Get cached decorators for selected context items
+    var selectedContextDecorators: [UniversalItemDecorator] {
+        selectedContextItems.compactMap { item in
+            // Ensure the source decorators are loaded first
+            _ = getDecorators(for: item.sourceId)
+            // Find the decorator from the appropriate source cache
+            return _decoratorCache[item.sourceId]?[item.id]
+        }
+    }
+    
+    // Get cached decorators for selected example items  
+    var selectedExampleDecorators: [UniversalItemDecorator] {
+        selectedExampleItems.compactMap { item in
+            // Ensure the source decorators are loaded first
+            _ = getDecorators(for: item.sourceId)
+            // Find the decorator from the appropriate source cache
+            return _decoratorCache[item.sourceId]?[item.id]
+        }
     }
     
     // Search

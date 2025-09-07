@@ -383,8 +383,8 @@ struct ContentView: View {
               .frame(minWidth: 300)
             } else if contentManager.activeSourceId == "aggregated" {
               // Aggregated view showing selected items from all sources, split into Context and Examples
-              let contextItems = contentManager.selectedContextItems.map(UniversalItemDecorator.init)
-              let exampleItems = contentManager.selectedExampleItems.map(UniversalItemDecorator.init)
+              let contextItems = contentManager.selectedContextDecorators
+              let exampleItems = contentManager.selectedExampleDecorators
               if contextItems.isEmpty && exampleItems.isEmpty {
                 VStack {
                   Spacer()
@@ -430,9 +430,8 @@ struct ContentView: View {
                   .frame(minWidth: 300)
               }
             } else {
-              // Non-clipboard sources use unified ListView
-              let items = contentManager.getItems(for: contentManager.activeSourceId)
-                .map(UniversalItemDecorator.init)
+              // Non-clipboard sources use unified ListView with cached decorators
+              let items = contentManager.getDecorators(for: contentManager.activeSourceId)
               
               if contentManager.activeSourceId == "prompts" {
                 // Add context menu for prompts view with empty state

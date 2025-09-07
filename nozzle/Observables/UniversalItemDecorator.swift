@@ -110,6 +110,39 @@ final class UniversalItemDecorator: ListItemDecorator {
         }
     }
     
+    // Update the base ContentItem with new data while preserving decorator state
+    func updateBase(_ newItem: ContentItem) {
+        // Only update if the item is actually different
+        guard newItem.id == self.id else { return }
+        
+        // Clear cached thumbnail if the file has changed
+        if base.fileURL != newItem.fileURL || base.timestamp != newItem.timestamp {
+            _thumbnailImage = nil
+        }
+        
+        // Clear cached app icon if the application changed
+        if base.applicationBundleId != newItem.applicationBundleId {
+            _appIcon = nil
+        }
+        
+        // Update the base item
+        base = newItem
+        isVisible = newItem.isVisible
+        
+        // Re-initialize app icon for clipboard items if needed
+        if newItem.sourceType == .clipboard, let bundleId = newItem.applicationBundleId, _appIcon == nil {
+            Task {
+                let appIcon = await ApplicationImageCache.shared.getImage(
+                    universalClipboard: false, 
+                    application: bundleId
+                )
+                await MainActor.run {
+                    self._appIcon = appIcon
+                }
+            }
+        }
+    }
+    
     nonisolated func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
