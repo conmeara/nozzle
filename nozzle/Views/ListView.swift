@@ -192,8 +192,8 @@ struct ListView: View {
                         appState.scrollTarget = nil
                     }
                 }
-                .onChange(of: configuration.enableScrollTargeting ? nil : contentManager.focusedItemId) { _, newValue in
-                    guard !configuration.enableScrollTargeting,
+                .onChange(of: configuration.enableScrollTargeting ? contentManager.focusedItemId : nil) { _, newValue in
+                    guard configuration.enableScrollTargeting,
                           let id = newValue else { return }
                     withAnimation(.easeInOut(duration: 0.15)) {
                         proxy.scrollTo(id, anchor: .center)
