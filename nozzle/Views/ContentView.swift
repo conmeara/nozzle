@@ -239,18 +239,34 @@ struct ContentView: View {
                     inputFocused = true
                   }
                 } else {
-                  // Placeholder for enhance prompt functionality
+                  // Enhance prompt with AI
+                  Task {
+                    guard !appState.promptText.isEmpty else { return }
+                    appState.isEnhancingPrompt = true
+                    do {
+                      let enhanced = try await PromptEnhancer.shared.enhance(appState.promptText)
+                      appState.originalPromptBeforeEnhancement = appState.promptText
+                      appState.promptText = enhanced
+                    } catch {
+                      // Handle error - could show alert or tooltip
+                      print("Enhancement error: \(error.localizedDescription)")
+                    }
+                    appState.isEnhancingPrompt = false
+                  }
                 }
               }) {
-                Image(systemName: "sparkles")
+                Image(systemName: appState.isEnhancingPrompt ? "sparkles.circle.fill" : "sparkles")
                   .font(.system(size: 15))
                   .foregroundColor(.secondary)
-                  .opacity(appState.isSearchMode ? 0.5 : 0.8)
+                  .opacity(appState.isSearchMode ? 0.5 : (appState.isEnhancingPrompt ? 1.0 : 0.8))
+                  .symbolEffect(.pulse, isActive: appState.isEnhancingPrompt)
                   .animation(.easeInOut(duration: 0.2), value: appState.isSearchMode)
+                  .animation(.easeInOut(duration: 0.2), value: appState.isEnhancingPrompt)
                   .padding(.all, 2)
               }
               .buttonStyle(PlainButtonStyle())
-              .help(appState.isSearchMode ? "Exit search mode" : "Enhance prompt")
+              .disabled(appState.isEnhancingPrompt || (appState.promptText.isEmpty && !appState.isSearchMode))
+              .help(appState.isSearchMode ? "Exit search mode" : (appState.isEnhancingPrompt ? "Enhancing..." : "Enhance prompt with AI"))
             }
             
             // Padding between icon group and tab group

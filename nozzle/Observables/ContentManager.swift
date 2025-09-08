@@ -342,7 +342,7 @@ final class ContentManager {
         // Check if this source needs cache refresh
         if _decoratorCacheDirty.contains(sourceId) {
             // Update existing decorators with new data
-            var sourceCache = _decoratorCache[sourceId]!
+            let sourceCache = _decoratorCache[sourceId]!
             var updatedCache: [UUID: UniversalItemDecorator] = [:]
             
             for item in items {

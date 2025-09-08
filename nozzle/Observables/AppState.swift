@@ -19,6 +19,10 @@ class AppState {
   var isSearchMode: Bool = false  // Track search mode separately
   private var preservedSelections: Set<UUID> = []
   
+  // Prompt enhancement state
+  var isEnhancingPrompt: Bool = false
+  var originalPromptBeforeEnhancement: String?
+  
   // Prompt chips state
   var promptChips: [PromptChip] = [] {
     didSet {
