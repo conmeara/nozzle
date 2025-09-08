@@ -240,6 +240,12 @@ struct ListView: View {
         .onTapGesture {
             // Commit any active rename when clicking empty space in the list
             NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
+            // Stop dictation if recording
+            if DictationManager.shared.isRecording {
+                Task {
+                    await DictationManager.shared.stopDictation(saveTranscription: true)
+                }
+            }
         }
     }
     

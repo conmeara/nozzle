@@ -38,6 +38,13 @@ struct KeyHandlingView<Content: View>: View {
           let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock)
           
           if modifierFlags.isEmpty {
+            // Check if dictation is active first
+            if DictationManager.shared.isRecording {
+              Task {
+                await DictationManager.shared.stopDictation(saveTranscription: true)
+              }
+              return .handled
+            }
             // Plain Enter - immediately paste current item
             if let item = appState.history.selectedItem {
               appState.popup.close()
@@ -244,6 +251,14 @@ struct KeyHandlingView<Content: View>: View {
           appState.select()
           return .handled
         case .close:
+          // First check if dictation is recording - if so, cancel it instead of closing
+          if DictationManager.shared.isRecording {
+            Task {
+              await DictationManager.shared.cancelDictation()
+            }
+            return .handled
+          }
+          // Otherwise close the app as normal
           appState.popup.close()
           return .handled
         case .togglePreview:

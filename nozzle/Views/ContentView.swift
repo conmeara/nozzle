@@ -406,6 +406,12 @@ struct ContentView: View {
                 .onTapGesture {
                   // Commit any active rename when clicking empty space
                   NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
+                  // Stop dictation if recording
+                  if dictationManager.isRecording {
+                    Task {
+                      await dictationManager.stopDictation(saveTranscription: true)
+                    }
+                  }
                 }
               } else {
                 ListView(contextItems: contextItems, exampleItems: exampleItems)
@@ -452,6 +458,12 @@ struct ContentView: View {
                     .onTapGesture {
                       // Commit any active rename when clicking empty space
                       NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
+                      // Stop dictation if recording
+                      if dictationManager.isRecording {
+                        Task {
+                          await dictationManager.stopDictation(saveTranscription: true)
+                        }
+                      }
                     }
                   
                   if items.isEmpty {
@@ -501,7 +513,8 @@ struct ContentView: View {
             }
           }
           .onTapGesture {
-            // Stop dictation when clicking outside the input field
+            // Only handle tap if dictation is recording
+            // This allows clicking anywhere to stop dictation
             if dictationManager.isRecording {
               Task {
                 await dictationManager.stopDictation(saveTranscription: true)
