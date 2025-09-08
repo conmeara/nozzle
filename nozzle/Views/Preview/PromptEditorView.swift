@@ -48,6 +48,8 @@ struct PromptEditorView: View {
     @FocusState private var editorFocused: Bool
     // Grace period after our own save to ignore self-change notifications
     @State private var ignoreChangesUntil: Date? = nil
+    // Enhancement state
+    @State private var isEnhancing: Bool = false
     
     @Environment(ContentManager.self) private var contentManager
     
@@ -77,20 +79,63 @@ struct PromptEditorView: View {
             }
 
             if isEditing {
-                // Editing view - same look and feel (font, padding) as preview
-                TextEditor(text: $text)
-                    .id(currentItemId)
-                    .font(.body)
-                    .scrollContentBackground(.hidden)
-                    .padding()
-                    .focused($editorFocused)
-                    .onChange(of: editorFocused) { _, focused in
-                        if !focused {
-                            // Save and exit edit mode when focus leaves editor
-                            saveImmediately()
-                            isEditing = false
+                // Editing view with enhance button
+                HStack(alignment: .top, spacing: 0) {
+                    TextEditor(text: $text)
+                        .id(currentItemId)
+                        .font(.body)
+                        .scrollContentBackground(.hidden)
+                        .padding()
+                        .focused($editorFocused)
+                        .onChange(of: editorFocused) { _, focused in
+                            if !focused {
+                                // Save and exit edit mode when focus leaves editor
+                                saveImmediately()
+                                isEditing = false
+                            }
                         }
+                    
+                    // Enhance button in the top right corner while editing
+                    VStack {
+                        Button(action: {
+                            guard !isEnhancing else { return }
+                            Task {
+                                guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                                isEnhancing = true
+                                do {
+                                    let enhanced = try await PromptEnhancer.shared.enhance(text)
+                                    text = enhanced
+                                    isDirty = true
+                                    scheduleSave()
+                                } catch {
+                                    // Handle error - could show alert or tooltip
+                                    print("Enhancement error: \(error.localizedDescription)")
+                                }
+                                isEnhancing = false
+                            }
+                        }) {
+                            ZStack {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(isEnhancing ? .purple : .secondary)
+                                
+                                if isEnhancing {
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.purple)
+                                        .symbolEffect(.pulse.byLayer, options: .repeating, isActive: isEnhancing)
+                                }
+                            }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .help(isEnhancing ? "Enhancing..." : "Enhance prompt with AI")
+                        .disabled(text.isEmpty)
+                        .padding(.top, 12)
+                        .padding(.trailing, 12)
+                        
+                        Spacer()
                     }
+                }
             } else {
                 // Read-only preview matching PlainTextPreview style
                 ZStack {

@@ -34,6 +34,7 @@ private struct InlineBaseNameTextField: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
+    @MainActor
     final class Coordinator: NSObject, NSTextFieldDelegate {
         let parent: InlineBaseNameTextField
         init(_ parent: InlineBaseNameTextField) { self.parent = parent }

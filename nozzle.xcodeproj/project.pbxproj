@@ -130,6 +130,8 @@
 		F55A77CC2E5E38000039E760 /* PromptEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A77CB2E5E38000039E760 /* PromptEditorView.swift */; };
 		F569FB182E6E1BFA0076D784 /* WindowAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB172E6E1BFA0076D784 /* WindowAccessor.swift */; };
 		F569FB192E6E1BFA0076D784 /* RenameEventCatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB162E6E1BFA0076D784 /* RenameEventCatcher.swift */; };
+		F569FB1D2E6E87E90076D784 /* PromptEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB1B2E6E87E90076D784 /* PromptEnhancer.swift */; };
+		F569FB1F2E6E87F50076D784 /* PromptEnhancement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB1E2E6E87F50076D784 /* PromptEnhancement.swift */; };
 		F57274592E56720D003A9299 /* ContentSourceType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274582E56720D003A9299 /* ContentSourceType.swift */; };
 		F572745A2E56720D003A9299 /* ContentSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274572E56720D003A9299 /* ContentSource.swift */; };
 		F572745B2E56720D003A9299 /* ContentItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274562E56720D003A9299 /* ContentItem.swift */; };
@@ -532,6 +534,8 @@
 		F55A77CB2E5E38000039E760 /* PromptEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEditorView.swift; sourceTree = "<group>"; };
 		F569FB162E6E1BFA0076D784 /* RenameEventCatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenameEventCatcher.swift; sourceTree = "<group>"; };
 		F569FB172E6E1BFA0076D784 /* WindowAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAccessor.swift; sourceTree = "<group>"; };
+		F569FB1B2E6E87E90076D784 /* PromptEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEnhancer.swift; sourceTree = "<group>"; };
+		F569FB1E2E6E87F50076D784 /* PromptEnhancement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEnhancement.swift; sourceTree = "<group>"; };
 		F57274562E56720D003A9299 /* ContentItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentItem.swift; sourceTree = "<group>"; };
 		F57274572E56720D003A9299 /* ContentSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSource.swift; sourceTree = "<group>"; };
 		F57274582E56720D003A9299 /* ContentSourceType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSourceType.swift; sourceTree = "<group>"; };
@@ -639,6 +643,7 @@
 		DA05B50F2C234C1C006980FE /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F569FB1E2E6E87F50076D784 /* PromptEnhancement.swift */,
 				F50C3E212E64EDF800420829 /* DesignConstants.swift */,
 				F57274562E56720D003A9299 /* ContentItem.swift */,
 				F57274572E56720D003A9299 /* ContentSource.swift */,
@@ -818,6 +823,8 @@
 		DAEE38451E3DBEB100DD2966 /* nozzle */ = {
 			isa = PBXGroup;
 			children = (
+				F569FB1C2E6E87E90076D784 /* Services */,
+				F569FB1A2E6E87CF0076D784 /* New Group */,
 				F57274722E57C00B003A9299 /* Utilities */,
 				F572746D2E56B882003A9299 /* Filesystem */,
 				2FBB7A252B5FECBB00C65BBE /* Extensions */,
@@ -856,6 +863,21 @@
 				4762D6992467226100B3A2BA /* Localizable.strings */,
 			);
 			path = nozzle;
+			sourceTree = "<group>";
+		};
+		F569FB1A2E6E87CF0076D784 /* New Group */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = "New Group";
+			sourceTree = "<group>";
+		};
+		F569FB1C2E6E87E90076D784 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				F569FB1B2E6E87E90076D784 /* PromptEnhancer.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 		F572746D2E56B882003A9299 /* Filesystem */ = {
@@ -1134,6 +1156,7 @@
 				DA13D7D92C1A223E00FA9E23 /* Get.swift in Sources */,
 				F57274732E57C00B003A9299 /* TextFileFormatter.swift in Sources */,
 				F57274742E57C00B003A9299 /* FileTypeBadgeCache.swift in Sources */,
+				F569FB1D2E6E87E90076D784 /* PromptEnhancer.swift in Sources */,
 				DA1969182C3F327500258481 /* SearchFieldView.swift in Sources */,
 				DA1969192CF327500258481 /* UnifiedInputFieldView.swift in Sources */,
 				DAE8F5D42C43262B00851CA9 /* Popup.swift in Sources */,
@@ -1227,6 +1250,7 @@
 				DA20FA782B082E1A00056DD5 /* NSSound+Named.swift in Sources */,
 				F5F0C0072EE0000000000004 /* FlowLayout.swift in Sources */,
 				F5F0C0052EE0000000000003 /* PromptChipsBarView.swift in Sources */,
+				F569FB1F2E6E87F50076D784 /* PromptEnhancement.swift in Sources */,
 				F5F0C0032EE0000000000002 /* PromptChipsStore.swift in Sources */,
 				F5F0C0012EE0000000000001 /* PromptChip.swift in Sources */,
 				F5F0C00A2EE0000000000006 /* HistoryItem+Hashable.swift in Sources */,
