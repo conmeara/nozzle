@@ -15,13 +15,35 @@ class AppState {
   var footer: Footer
 
   var isPromptMode: Bool = true  // Default to prompt mode
-  var promptText: String = ""
+  var promptText: String = "" {
+    didSet {
+      // Clear undo buffer if user manually edits after enhancement
+      if originalPromptBeforeEnhancement != nil && 
+         promptText != originalPromptBeforeEnhancement && 
+         !isEnhancingPrompt {
+        originalPromptBeforeEnhancement = nil
+      }
+    }
+  }
   var isSearchMode: Bool = false  // Track search mode separately
   private var preservedSelections: Set<UUID> = []
   
   // Prompt enhancement state
   var isEnhancingPrompt: Bool = false
   var originalPromptBeforeEnhancement: String?
+  
+  // Undo the last prompt enhancement
+  func undoEnhancement() {
+    if let original = originalPromptBeforeEnhancement {
+      promptText = original
+      originalPromptBeforeEnhancement = nil
+    }
+  }
+  
+  // Check if undo is available
+  var canUndoEnhancement: Bool {
+    return originalPromptBeforeEnhancement != nil
+  }
   
   // Prompt chips state
   var promptChips: [PromptChip] = [] {

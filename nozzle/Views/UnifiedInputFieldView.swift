@@ -107,6 +107,16 @@ struct UnifiedInputFieldView: View {
                 }
                 return .ignored
               }
+              .onKeyPress { keyPress in
+                // Handle Cmd+Z for undo enhancement
+                if keyPress.key == "z" && keyPress.modifiers.contains(.command) && !keyPress.modifiers.contains(.shift) {
+                  if appState.canUndoEnhancement {
+                    appState.undoEnhancement()
+                    return .handled
+                  }
+                }
+                return .ignored
+              }
               .onChange(of: query) { oldValue, newValue in
                 handleQueryChange(oldValue: oldValue, newValue: newValue)
               }
@@ -183,6 +193,16 @@ struct UnifiedInputFieldView: View {
                   }
                   return .ignored
                 }
+                .onKeyPress { keyPress in
+                  // Handle Cmd+Z for undo enhancement
+                  if keyPress.key == "z" && keyPress.modifiers.contains(.command) && !keyPress.modifiers.contains(.shift) {
+                    if appState.canUndoEnhancement {
+                      appState.undoEnhancement()
+                      return .handled
+                    }
+                  }
+                  return .ignored
+                }
                 .onAppear {
                   fieldWidth = geometry.size.width
                   textHeight = calculateTextHeight(query, width: geometry.size.width - 20) // Account for clear button space
@@ -234,7 +254,10 @@ struct UnifiedInputFieldView: View {
   
   @MainActor
   private func handleQueryChange(oldValue: String, newValue: String) {
-    // No special handling needed - query changes are handled by the binding
+    // Clear enhancement undo buffer when user manually edits the text
+    if appState.originalPromptBeforeEnhancement != nil && newValue != appState.originalPromptBeforeEnhancement {
+      appState.originalPromptBeforeEnhancement = nil
+    }
   }
   
   @MainActor

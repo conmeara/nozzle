@@ -238,13 +238,14 @@ struct ContentView: View {
                     try? await Task.sleep(for: .milliseconds(50))
                     inputFocused = true
                   }
-                } else {
-                  // Enhance prompt with AI
+                } else if !appState.isEnhancingPrompt {
+                  // Enhance prompt with AI (only if not already enhancing)
                   Task {
                     guard !appState.promptText.isEmpty else { return }
                     appState.isEnhancingPrompt = true
                     do {
                       let enhanced = try await PromptEnhancer.shared.enhance(appState.promptText)
+                      // Save original for undo support
                       appState.originalPromptBeforeEnhancement = appState.promptText
                       appState.promptText = enhanced
                     } catch {
@@ -255,18 +256,26 @@ struct ContentView: View {
                   }
                 }
               }) {
-                Image(systemName: appState.isEnhancingPrompt ? "sparkles.circle.fill" : "sparkles")
-                  .font(.system(size: 15))
-                  .foregroundColor(.secondary)
-                  .opacity(appState.isSearchMode ? 0.5 : (appState.isEnhancingPrompt ? 1.0 : 0.8))
-                  .symbolEffect(.pulse, isActive: appState.isEnhancingPrompt)
-                  .animation(.easeInOut(duration: 0.2), value: appState.isSearchMode)
-                  .animation(.easeInOut(duration: 0.2), value: appState.isEnhancingPrompt)
-                  .padding(.all, 2)
+                ZStack {
+                  Image(systemName: "sparkles")
+                    .font(.system(size: 15))
+                    .foregroundColor(appState.isEnhancingPrompt ? .purple : .secondary)
+                    .opacity(appState.isSearchMode ? 0.5 : 0.8)
+                  
+                  if appState.isEnhancingPrompt {
+                    Image(systemName: "sparkles")
+                      .font(.system(size: 15))
+                      .foregroundColor(.purple)
+                      .symbolEffect(.pulse.byLayer, options: .repeating, isActive: appState.isEnhancingPrompt)
+                  }
+                }
+                .animation(.easeInOut(duration: 0.2), value: appState.isSearchMode)
+                .animation(.easeInOut(duration: 0.2), value: appState.isEnhancingPrompt)
+                .padding(.all, 2)
               }
               .buttonStyle(PlainButtonStyle())
-              .disabled(appState.isEnhancingPrompt || (appState.promptText.isEmpty && !appState.isSearchMode))
-              .help(appState.isSearchMode ? "Exit search mode" : (appState.isEnhancingPrompt ? "Enhancing..." : "Enhance prompt with AI"))
+              .disabled(appState.promptText.isEmpty && !appState.isSearchMode)
+              .help(appState.isSearchMode ? "Exit search mode" : (appState.isEnhancingPrompt ? "Enhancing..." : "Enhance prompt with AI (⌘⇧E)"))
             }
             
             // Padding between icon group and tab group

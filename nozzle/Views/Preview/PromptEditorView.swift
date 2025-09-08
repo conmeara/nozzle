@@ -98,6 +98,7 @@ struct PromptEditorView: View {
                     // Enhance button in the top right corner while editing
                     VStack {
                         Button(action: {
+                            guard !isEnhancing else { return }
                             Task {
                                 guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
                                 isEnhancing = true
@@ -113,14 +114,22 @@ struct PromptEditorView: View {
                                 isEnhancing = false
                             }
                         }) {
-                            Image(systemName: isEnhancing ? "sparkles.circle.fill" : "sparkles")
-                                .font(.system(size: 14))
-                                .foregroundColor(.secondary)
-                                .symbolEffect(.pulse, isActive: isEnhancing)
+                            ZStack {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(isEnhancing ? .purple : .secondary)
+                                
+                                if isEnhancing {
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.purple)
+                                        .symbolEffect(.pulse.byLayer, options: .repeating, isActive: isEnhancing)
+                                }
+                            }
                         }
                         .buttonStyle(PlainButtonStyle())
                         .help(isEnhancing ? "Enhancing..." : "Enhance prompt with AI")
-                        .disabled(text.isEmpty || isEnhancing)
+                        .disabled(text.isEmpty)
                         .padding(.top, 12)
                         .padding(.trailing, 12)
                         
