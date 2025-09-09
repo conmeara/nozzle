@@ -48,8 +48,6 @@ struct PromptEditorView: View {
     @FocusState private var editorFocused: Bool
     // Grace period after our own save to ignore self-change notifications
     @State private var ignoreChangesUntil: Date? = nil
-    // Enhancement state
-    @State private var isEnhancing: Bool = false
     
     @Environment(ContentManager.self) private var contentManager
     
@@ -79,63 +77,42 @@ struct PromptEditorView: View {
             }
 
             if isEditing {
-                // Editing view with enhance button
-                HStack(alignment: .top, spacing: 0) {
-                    TextEditor(text: $text)
-                        .id(currentItemId)
-                        .font(.body)
-                        .scrollContentBackground(.hidden)
-                        .padding()
-                        .focused($editorFocused)
-                        .onChange(of: editorFocused) { _, focused in
-                            if !focused {
-                                // Save and exit edit mode when focus leaves editor
-                                saveImmediately()
-                                isEditing = false
-                            }
+                // Editing view
+                TextEditor(text: $text)
+                    .id(currentItemId)
+                    .font(.body)
+                    .scrollContentBackground(.hidden)
+                    .padding()
+                    .focused($editorFocused)
+                    .onKeyPress(keys: [.return]) { keyPress in
+                        if keyPress.modifiers.contains(.command) {
+                            // Cmd+Enter: Save and exit edit mode
+                            saveImmediately()
+                            exitEditMode()
+                            return .handled
                         }
-                    
-                    // Enhance button in the top right corner while editing
-                    VStack {
-                        Button(action: {
-                            guard !isEnhancing else { return }
-                            Task {
-                                guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-                                isEnhancing = true
-                                do {
-                                    let enhanced = try await PromptEnhancer.shared.enhance(text)
-                                    text = enhanced
-                                    isDirty = true
-                                    scheduleSave()
-                                } catch {
-                                    // Handle error - could show alert or tooltip
-                                    print("Enhancement error: \(error.localizedDescription)")
-                                }
-                                isEnhancing = false
-                            }
-                        }) {
-                            ZStack {
-                                Image(systemName: "sparkles")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(isEnhancing ? .purple : .secondary)
-                                
-                                if isEnhancing {
-                                    Image(systemName: "sparkles")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.purple)
-                                        .symbolEffect(.pulse.byLayer, options: .repeating, isActive: isEnhancing)
-                                }
-                            }
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .help(isEnhancing ? "Enhancing..." : "Enhance prompt with AI")
-                        .disabled(text.isEmpty)
-                        .padding(.top, 12)
-                        .padding(.trailing, 12)
-                        
-                        Spacer()
+                        // Plain Enter: Allow normal line break behavior in TextEditor
+                        return .ignored
                     }
-                }
+                    .onKeyPress(keys: [.escape]) { _ in
+                        // Escape: Exit edit mode without saving pending changes
+                        isDirty = false
+                        // Reload from disk to revert any unsaved changes
+                        load()
+                        exitEditMode()
+                        return .handled
+                    }
+                    .onChange(of: editorFocused) { _, focused in
+                        if !focused {
+                            // Save and exit edit mode when focus leaves editor
+                            saveImmediately()
+                            exitEditMode()
+                        }
+                    }
+                    .onChange(of: text) { _, newText in
+                        // Update ContentManager with current editing text
+                        contentManager.updatePromptEditorText(newText)
+                    }
             } else {
                 // Read-only preview matching PlainTextPreview style
                 ZStack {
@@ -154,7 +131,7 @@ struct PromptEditorView: View {
                         .fill(Color.clear)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            isEditing = true
+                            enterEditMode()
                             DispatchQueue.main.async { editorFocused = true }
                         }
                         .allowsHitTesting(true)
@@ -163,13 +140,6 @@ struct PromptEditorView: View {
             }
         }
         .previewSurfaceStyle()
-        // Exit edit mode when pointer leaves the preview pane (user hovers back to list)
-        .onHover { inside in
-            if isEditing && !inside {
-                saveImmediately()
-                isEditing = false
-            }
-        }
             .onAppear {
                 // Initialize tracking for the first item
                 currentItemId = item.id
@@ -197,7 +167,7 @@ struct PromptEditorView: View {
                 currentFileURL = item.fileURL
                 hasExternalChange = false
                 isDirty = false
-                isEditing = false
+                exitEditMode()
                 load()
                 setupPresenter()
             }
@@ -210,7 +180,7 @@ struct PromptEditorView: View {
                 currentFileURL = item.fileURL
                 hasExternalChange = false
                 isDirty = false
-                isEditing = false
+                exitEditMode()
                 load()
                 setupPresenter()
             }
@@ -219,8 +189,38 @@ struct PromptEditorView: View {
                 saveImmediately()
                 removePresenter()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .CommitActiveRename)) { _ in
+                // Commit editing when user clicks outside (reuse existing rename notification system)
+                // Don't exit if enhance button was clicked
+                if isEditing && !contentManager.enhanceButtonClicked {
+                    saveImmediately()
+                    exitEditMode()
+                } else if contentManager.enhanceButtonClicked {
+                    // Reset the flag after handling
+                    contentManager.enhanceButtonClicked = false
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .promptEditorTextUpdated)) { notification in
+                // Update text when enhanced from outside
+                if isEditing, let enhancedText = notification.object as? String {
+                    text = enhancedText
+                    isDirty = true
+                    scheduleSave()
+                }
+            }
             // Guard against rename races: when a global rename commit happens, pause reactions briefly
             // Note: rename commits are coordinated elsewhere; no special pause needed here
+    }
+    
+    private func enterEditMode() {
+        isEditing = true
+        contentManager.setPromptEditorEditing(true)
+        contentManager.setPromptEditorText(text)
+    }
+    
+    private func exitEditMode() {
+        isEditing = false
+        contentManager.setPromptEditorEditing(false)
     }
     
     private func load() {

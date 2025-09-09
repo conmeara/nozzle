@@ -31,6 +31,11 @@ final class ContentManager {
     // Pending inline rename request for a specific item id
     var pendingRenameItemId: UUID?
     
+    // Prompt editor state tracking for enhanced button integration
+    var promptEditorText: String = ""
+    var isPromptEditorEditing: Bool = false
+    var enhanceButtonClicked: Bool = false // Flag to prevent editor exit on enhance
+    
     // Cache for selected items to avoid repeated full scans and sorts
     @ObservationIgnored private var _selectedCache: [ContentItem] = []
     @ObservationIgnored private var _selectedCacheDirty: Bool = true
@@ -562,12 +567,31 @@ final class ContentManager {
         if item.htmlData != nil { return true }
         return false
     }
+    
+    // MARK: - Prompt Editor State Management
+    
+    func setPromptEditorText(_ text: String) {
+        promptEditorText = text
+    }
+    
+    func setPromptEditorEditing(_ editing: Bool) {
+        isPromptEditorEditing = editing
+        if !editing {
+            // Reset text when exiting edit mode
+            promptEditorText = ""
+        }
+    }
+    
+    func updatePromptEditorText(_ text: String) {
+        promptEditorText = text
+    }
 }
 
 // Global notifications for inline rename coordination
 extension Notification.Name {
     static let CommitActiveRename = Notification.Name("ContentManager.CommitActiveRename")
     static let CancelActiveRename = Notification.Name("ContentManager.CancelActiveRename")
+    static let promptEditorTextUpdated = Notification.Name("ContentManager.promptEditorTextUpdated")
 }
 
 // MARK: - Selected items caching helpers
