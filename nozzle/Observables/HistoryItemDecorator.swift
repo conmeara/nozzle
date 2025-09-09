@@ -3,6 +3,7 @@ import Defaults
 import Foundation
 import Observation
 import Sauce
+import UniformTypeIdentifiers
 
 @Observable @MainActor
 class HistoryItemDecorator: ListItemDecorator {
@@ -62,11 +63,24 @@ class HistoryItemDecorator: ListItemDecorator {
     guard let firstFileURL = item.fileURLs.first else { return nil }
     return FileTypeBadgeCache.shared.icon(forURL: firstFileURL)
   }
+  // Heuristic: treat first file's extension as type; avoid touching the file system when possible
+  private var fileIsImage: Bool {
+    guard let first = item.fileURLs.first else { return false }
+    if let type = UTType(filenameExtension: first.pathExtension) {
+      return type.conforms(to: .image)
+    }
+    return false
+  }
   
   // Protocol conformance
-  var appIcon: ApplicationImage? { 
+  var appIcon: ApplicationImage? {
     if let fileIcon = fileIcon {
-      // For file URLs, show file icon as app icon for proper alignment
+      // For clipboard file URLs: if it is an image, prefer the source application icon
+      // to restore expected behavior for screenshots and copied images.
+      if fileIsImage {
+        return applicationImage
+      }
+      // Non-image files: show file type badge for alignment and quick recognition
       return ApplicationImage(bundleIdentifier: nil, image: fileIcon)
     }
     return applicationImage
@@ -123,12 +137,21 @@ class HistoryItemDecorator: ListItemDecorator {
     synchronizeItemTitle()
     Task {
       // Extract HistoryItem properties on MainActor before passing to actor
-      let (universalClipboard, application) = await MainActor.run {
-        (item.universalClipboard, item.application)
+      let (universalClipboard, application, fileURLs) = await MainActor.run {
+        (item.universalClipboard, item.application, item.fileURLs)
       }
+      // Heuristic override: if the only available hint is Nozzle or nil, infer from file path
+      var effectiveApp = application
+      if let nozzleId = Bundle.main.bundleIdentifier, effectiveApp == nozzleId, let url = fileURLs.first {
+        effectiveApp = ScreenshotSourceHeuristics.guessBundleId(for: url) ?? effectiveApp
+      }
+      if effectiveApp == nil, let url = fileURLs.first {
+        effectiveApp = ScreenshotSourceHeuristics.guessBundleId(for: url)
+      }
+
       self.applicationImage = await ApplicationImageCache.shared.getImage(
         universalClipboard: universalClipboard,
-        application: application
+        application: effectiveApp
       )
     }
     Task { @MainActor in

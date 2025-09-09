@@ -10,15 +10,8 @@ struct PreviewPaneView: View {
     var body: some View {
         VStack(spacing: 0) {
             if let clipboardItem = clipboardItem {
-                // Check if clipboard item contains file URLs for QuickLook preview
-                if clipboardItem.hasFileURL, let fileURL = clipboardItem.item.fileURLs.first {
-                    // Use QuickLook for clipboard file URLs
-                    QuickLookPreview(url: fileURL)
-                        .id(fileURL)
-                        .padding()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let image = clipboardItem.previewImage {
-                    // Image preview like pre-August 22nd
+                // Prefer in-memory image bytes for clipboard images to avoid sandbox issues with external URLs
+                if let image = clipboardItem.previewImage {
                     Image(nsImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
@@ -26,6 +19,12 @@ struct PreviewPaneView: View {
                         .padding()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .previewSurfaceStyle()
+                } else if clipboardItem.hasFileURL, let fileURL = clipboardItem.item.fileURLs.first {
+                    // Non-image clipboard files: use QuickLook
+                    QuickLookPreview(url: fileURL)
+                        .id(fileURL)
+                        .padding()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     // Plain text preview for clipboard text (no metadata)
                     PlainTextPreview(

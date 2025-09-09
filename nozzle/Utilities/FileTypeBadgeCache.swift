@@ -33,20 +33,18 @@ final class FileTypeBadgeCache {
     }
     
     func icon(forURL url: URL) -> NSImage? {
-        // Try to get UTType from URL
+        // Try to get UTType from URL (content-type based badge)
         if let vals = try? url.resourceValues(forKeys: [.contentTypeKey]),
            let type = vals.contentType {
             return icon(for: type)
         }
-        
         // Fall back to extension-based detection
         if let type = UTType(filenameExtension: url.pathExtension) {
             return icon(for: type)
         }
-        
         return nil
     }
-    
+
     func clearCache() {
         cache.removeAll()
     }
