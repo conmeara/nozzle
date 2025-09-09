@@ -18,9 +18,6 @@ final class DictationManager {
     private let bufferConverter = BufferConverter()
     private var audioStreamContinuation: AsyncStream<AVAudioPCMBuffer>.Continuation?
     
-    // Debug tracking
-    private var debugSessionId: UUID?
-    private let debugQueue = DispatchQueue(label: "DictationManager.Debug", qos: .utility)
     private var isCleaningUp: Bool = false
     
     var isRecording = false
@@ -40,32 +37,9 @@ final class DictationManager {
     
     init() {} // engine created above
     
-    // MARK: - Debug Logging
-    
-    private func debugLog(_ message: String, function: String = #function, line: Int = #line) {
-        let sessionId = debugSessionId?.uuidString.prefix(8) ?? "no-session"
-        
-        // Safe queue label extraction
-        let queueLabel: String
-        if let label = String(cString: __dispatch_queue_get_label(nil), encoding: .utf8), !label.isEmpty {
-            queueLabel = label
-        } else {
-            queueLabel = "unknown"
-        }
-        
-        let threadId = Thread.current.isMainThread ? "main" : "bg"
-        let timestamp = Date().timeIntervalSince1970
-        
-        // Use async logging to avoid queue issues
-        debugQueue.async {
-            print("🎤 [\(sessionId)] [\(String(format: "%.3f", timestamp))] \(function):\(line) [\(threadId)|\(queueLabel)] \(message)")
-        }
-    }
     
     @MainActor
     func toggleDictation(for textBinding: Binding<String>) async {
-        debugLog("toggleDictation called, isRecording: \(isRecording)")
-        
         if isRecording {
             await stopDictation(saveTranscription: true)
         } else {
@@ -75,11 +49,7 @@ final class DictationManager {
     
     @MainActor
     private func startDictation(for textBinding: Binding<String>) async {
-        debugSessionId = UUID()
-        debugLog("Starting dictation session")
-        
         guard await requestMicrophonePermission() else {
-            debugLog("Microphone permission denied")
             return
         }
         
@@ -92,11 +62,9 @@ final class DictationManager {
         NSSound.dictationBegin?.play()
         
         isRecording = true
-        debugLog("Set isRecording = true")
         
         do {
             try await setupTranscriber()
-            debugLog("Transcriber setup completed")
             
             // Start audio streaming on a detached task; don't await here
             audioStreamTask = Task.detached(priority: .userInitiated) { [weak self] in
@@ -105,19 +73,16 @@ final class DictationManager {
                     try await self.startAudioStream()
                 } catch {
                     // Hop to main for logging to avoid cross-actor diagnostics
-                    await MainActor.run { self.debugLog("Audio streaming error: \(error)") }
                 }
             }
         
         } catch {
-            debugLog("Failed to start dictation: \(error)")
             isRecording = false
         }
     }
     
     @MainActor
     func stopDictation(saveTranscription: Bool = true) async {
-        debugLog("Stopping dictation session")
         isCleaningUp = true
         isRecording = false
         
@@ -125,18 +90,14 @@ final class DictationManager {
         NSSound.dictationConfirm?.play()
         
         // Clean shutdown sequence - follow proper order
-        debugLog("Starting cleanup sequence")
-        
         // 0. Cancel streaming task if running
         audioStreamTask?.cancel()
         audioStreamTask = nil
 
         // 1. Stop audio engine
-        debugLog("Stopping audio engine")
         audioEngine.stop()
         
         // 2. Clear continuation to stop yielding buffers
-        debugLog("Clearing audio stream continuation")
         audioStreamContinuation?.finish()
         audioStreamContinuation = nil
         
@@ -144,37 +105,30 @@ final class DictationManager {
         try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
         
         // 4. Remove tap safely
-        debugLog("Removing audio tap")
         audioEngine.inputNode.removeTap(onBus: 0)
-        debugLog("Audio tap removed successfully")
         
         // 5. No file to clear; keep the engine instance (sample behavior)
         
         // Finish analyzer input
-        debugLog("Finishing input builder")
         inputBuilder?.finish()
         inputBuilder = nil
         
         // 6. Wait for analyzer to finish
         if let analyzer = analyzer {
-            debugLog("Finalizing analyzer")
             try? await analyzer.finalizeAndFinishThroughEndOfInput()
         }
         
         // 7. Cancel recognition task
-        debugLog("Cancelling recognition task")
         recognitionTask?.cancel()
         recognitionTask = nil
         
         // Handle transcription based on saveTranscription parameter
         if saveTranscription {
             // Final text is already in the binding from updateTargetText() calls
-            debugLog("Dictation session completed - final text saved")
         } else {
             // Restore original text (cancel transcription)
             if let binding = targetTextBinding {
                 binding.wrappedValue = originalText
-                debugLog("Dictation session cancelled - original text restored")
             }
         }
         
@@ -185,7 +139,6 @@ final class DictationManager {
         transcriber = nil
         analyzer = nil
         isCleaningUp = false
-        debugLog("Dictation session cleanup completed")
     }
     
     @MainActor
@@ -270,7 +223,6 @@ final class DictationManager {
     
     // Not @MainActor - audio operations need to run on appropriate threads
     private func startAudioStream() async throws {
-        debugLog("Setting up audio stream")
         
         #if os(iOS)
         let audioSession = AVAudioSession.sharedInstance()
@@ -280,32 +232,25 @@ final class DictationManager {
         
         // Setup audio engine
         try setupAudioEngine()
-        debugLog("Audio engine setup completed")
         
         // Create audio stream using the fixed pattern
         let audioStream = try audioStream()
-        debugLog("Audio stream created and ready")
         
         // Process buffers as they arrive (no timeout, sample parity)
         for await buffer in audioStream {
             guard isRecording else { break }
             try await streamAudioToTranscriber(buffer)
         }
-        debugLog("Audio stream processing completed")
     }
     
     private func setupAudioEngine() throws {
-        debugLog("Setting up audio engine (sample parity)")
         let inputNode = audioEngine.inputNode
         
         // Remove any existing tap
-        debugLog("Removing existing audio tap")
         inputNode.removeTap(onBus: 0)
-        debugLog("Audio engine initialization completed")
     }
     
     private func audioStream() throws -> AsyncStream<AVAudioPCMBuffer> {
-        debugLog("Setting up audio stream (Apple's exact pattern)")
         let inputNode = audioEngine.inputNode
         inputNode.removeTap(onBus: 0)
         inputNode.installTap(
@@ -315,19 +260,15 @@ final class DictationManager {
         ) { [weak self] (buffer, time) in
             guard let self else { return }
             
-            // DEBUG: Confirm tap callbacks are firing
-            print("🔊 TAP CALLBACK! frames=\(buffer.frameLength)")
             
             // Yield buffer to continuation
             self.audioStreamContinuation?.yield(buffer)
         }
         
-        debugLog("Audio tap installed")
         
         // Apple's exact sequence: prepare, start, THEN create stream
         audioEngine.prepare()
         try audioEngine.start()
-        debugLog("Audio engine started")
         
         return AsyncStream(AVAudioPCMBuffer.self, bufferingPolicy: .unbounded) { continuation in
             self.audioStreamContinuation = continuation
@@ -338,17 +279,14 @@ final class DictationManager {
     private func streamAudioToTranscriber(_ buffer: AVAudioPCMBuffer) async throws {
         guard let inputBuilder = inputBuilder,
               let analyzerFormat = analyzerFormat else {
-            debugLog("ERROR: Missing inputBuilder or analyzerFormat")
             throw DictationError.audioProcessingFailed
         }
         
-        // debugLog("Converting buffer: frames=\(buffer.frameLength)") // Too verbose, only enable if needed
         
         do {
             let converted = try bufferConverter.convertBuffer(buffer, to: analyzerFormat)
             inputBuilder.yield(AnalyzerInput(buffer: converted))
         } catch {
-            debugLog("ERROR: Buffer conversion failed: \(error)")
             throw error
         }
     }
@@ -358,22 +296,16 @@ final class DictationManager {
         #if os(macOS)
         // On macOS, check authorization status (no device enumeration to avoid CMIO errors)
         let currentStatus = AVCaptureDevice.authorizationStatus(for: .audio)
-        debugLog("Current microphone authorization status: \(currentStatus.rawValue)")
         
         switch currentStatus {
         case .authorized:
-            debugLog("Microphone access already authorized")
             return true
         case .notDetermined:
-            debugLog("Requesting microphone access")
             let granted = await AVCaptureDevice.requestAccess(for: .audio)
-            debugLog("Microphone access granted: \(granted)")
             return granted
         case .denied, .restricted:
-            debugLog("ERROR: Microphone access denied or restricted")
             return false
         @unknown default:
-            debugLog("ERROR: Unknown microphone authorization status")
             return false
         }
         #else
@@ -411,40 +343,6 @@ final class DictationManager {
         }
     }
     
-    // MARK: - Debug/Test Methods
-    
-    @MainActor
-    func testCrashScenarios() async {
-        debugLog("=== CRASH TEST START ===")
-        
-        // Test rapid start/stop cycles
-        for i in 1...3 {
-            debugLog("Test cycle \(i) - starting")
-            
-            let testBinding = Binding<String>(
-                get: { "" },
-                set: { value in
-                    print("🎤 Text updated: '\(value)'")
-                }
-            )
-            
-            // Start recording
-            await startDictation(for: testBinding)
-            
-            // Wait for audio processing
-            try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
-            
-            debugLog("Test cycle \(i) - stopping")
-            // Stop recording
-            await stopDictation()
-            
-            debugLog("Test cycle \(i) - completed")
-            // Wait between cycles
-            try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
-        }
-        
-        debugLog("=== CRASH TEST END ===")
-    }
     
     @MainActor
     func cancelDictation() async {
