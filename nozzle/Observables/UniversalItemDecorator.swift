@@ -51,14 +51,25 @@ final class UniversalItemDecorator: ListItemDecorator {
     
     // App icon for clipboard items
     var clipboardAppIcon: ApplicationImage? {
-        if _appIcon == nil, base.sourceType == .clipboard, let bundleId = base.applicationBundleId {
-            Task {
-                let appIcon = await ApplicationImageCache.shared.getImage(
-                    universalClipboard: false, 
-                    application: bundleId
-                )
-                await MainActor.run {
-                    _appIcon = appIcon
+        if _appIcon == nil, base.sourceType == .clipboard {
+            // Derive effective bundle identifier, with heuristics for common sources like CleanShot
+            var effectiveBundleId = base.applicationBundleId
+            if let nozzleId = Bundle.main.bundleIdentifier, effectiveBundleId == nozzleId,
+               let url = base.fileURL, let guess = ScreenshotSourceHeuristics.guessBundleId(for: url) {
+                effectiveBundleId = guess
+            }
+            if effectiveBundleId == nil, let url = base.fileURL,
+               let guess = ScreenshotSourceHeuristics.guessBundleId(for: url) {
+                effectiveBundleId = guess
+            }
+
+            if let bundleId = effectiveBundleId {
+                Task {
+                    let appIcon = await ApplicationImageCache.shared.getImage(
+                        universalClipboard: false,
+                        application: bundleId
+                    )
+                    await MainActor.run { self._appIcon = appIcon }
                 }
             }
         }
@@ -66,15 +77,26 @@ final class UniversalItemDecorator: ListItemDecorator {
     }
     
     // Protocol conformance - ListItemDecorator
-    var appIcon: ApplicationImage? { 
-        // For clipboard items with file URLs, prefer file type badge over app icon
-        if base.sourceType == .clipboard, base.fileURL != nil {
-            return typeBadgeImage
-        }
-        // For other clipboard items, prefer app icon over file type badge
+    var appIcon: ApplicationImage? {
+        // Clipboard items
         if base.sourceType == .clipboard {
+            // If this clipboard item represents an image file, prefer the source app icon
+            // to match historical behavior and user expectations. Detect via UTType or filename extension.
+            if let url = base.fileURL {
+                let isImageByUTI = base.isImage
+                let isImageByExt = UTType(filenameExtension: url.pathExtension)?.conforms(to: .image) == true
+                if isImageByUTI || isImageByExt {
+                    return clipboardAppIcon ?? typeBadgeImage
+                }
+            }
+            // For non-image file URLs copied to clipboard, use the file type badge
+            if base.fileURL != nil {
+                return typeBadgeImage
+            }
+            // Plain clipboard items (text, rich text, image data)
             return clipboardAppIcon ?? typeBadgeImage
         }
+        // Non-clipboard sources: show a type badge when available
         return typeBadgeImage
     }
     var image: NSImage? { 

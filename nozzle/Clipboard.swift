@@ -268,6 +268,36 @@ class Clipboard {
       }
     })
 
+    // If clipboard contains a file URL to an image but no image bytes, eagerly ingest the image data now
+    // while any temporary sandbox extension from the pasteboard is still valid. This fixes preview failures
+    // for sources like CleanShot that only provide a file URL.
+    do {
+      let presentTypes = Set(contents.map { NSPasteboard.PasteboardType($0.type) })
+      let hasImageBytes = presentTypes.contains(.tiff) || presentTypes.contains(.png) || presentTypes.contains(.jpeg) || presentTypes.contains(.heic)
+      if !hasImageBytes {
+        // Find first file URL
+        if let fileURLData = contents.first(where: { NSPasteboard.PasteboardType($0.type) == .fileURL })?.value,
+           let url = URL(dataRepresentation: fileURLData, relativeTo: nil, isAbsolute: true) {
+          // Heuristic: if the file looks like an image (by extension), read bytes now
+          let ext = url.pathExtension.lowercased()
+          let isImageExt = ["png", "jpg", "jpeg", "tif", "tiff", "heic"].contains(ext)
+          if isImageExt {
+            if let data = try? Data(contentsOf: url) {
+              let pbType: NSPasteboard.PasteboardType =
+                (ext == "png") ? .png :
+                (ext == "jpg" || ext == "jpeg") ? .jpeg :
+                (ext == "heic") ? .heic :
+                .tiff
+              contents.append(HistoryItemContent(type: pbType.rawValue, value: data))
+            }
+          }
+        }
+      }
+    }
+    // Swallow any errors silently; fallback behavior will still capture the URL
+    catch {
+    }
+
     guard !contents.isEmpty else {
       return
     }
