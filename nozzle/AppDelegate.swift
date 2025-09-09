@@ -115,6 +115,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     ) {
       ContentView()
     }
+    
+    // Show onboarding if this is the first launch
+    if !Defaults[.hasCompletedOnboarding] {
+      // Delay slightly to ensure app is fully initialized
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        OnboardingWindow.showIfNeeded()
+      }
+    }
   }
 
   func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

@@ -1,0 +1,148 @@
+import SwiftUI
+import Defaults
+@preconcurrency import AppKit
+import LaunchAtLogin
+import UserNotifications
+
+@Observable @MainActor
+final class OnboardingState {
+    enum Screen: Int, CaseIterable {
+        case welcome = 0
+        case permissions = 1
+        case shortcuts = 2
+        case resources = 3
+        case finish = 4
+        
+        var title: String {
+            switch self {
+            case .welcome:
+                return "Welcome to nozzle"
+            case .permissions:
+                return "Permissions"
+            case .shortcuts:
+                return "Keyboard Shortcuts"
+            case .resources:
+                return "Resources"
+            case .finish:
+                return "You're All Set!"
+            }
+        }
+        
+        var description: String {
+            switch self {
+            case .welcome:
+                return "Let’s do a quick setup to tailor nozzle to your needs."
+            case .permissions:
+                return "Grant permissions for the best experience"
+            case .shortcuts:
+                return "Customize your keyboard shortcuts"
+            case .resources:
+                return "Learn prompt engineering and get help"
+            case .finish:
+                return "nozzle is ready to boost your productivity"
+            }
+        }
+    }
+    
+    var currentScreen: Screen = .welcome
+    var hasAccessibilityPermission = false
+    var hasNotificationPermission = false
+    var launchAtLoginEnabled = false
+    
+    // Computed properties
+    var canContinue: Bool {
+        switch currentScreen {
+        case .welcome:
+            return true
+        case .permissions:
+            return hasAccessibilityPermission // Require accessibility at minimum
+        case .shortcuts, .resources:
+            return true
+        case .finish:
+            return false // No continue from finish
+        }
+    }
+    
+    var canGoBack: Bool {
+        currentScreen.rawValue > 0
+    }
+    
+    var progress: Double {
+        Double(currentScreen.rawValue) / Double(Screen.allCases.count - 1)
+    }
+    
+    init() {
+        checkPermissions()
+        
+        // Set up permission monitoring
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.checkPermissions()
+            }
+        }
+    }
+    
+    nonisolated func checkPermissions() {
+        Task { @MainActor in
+            hasAccessibilityPermission = AXIsProcessTrustedWithOptions(nil)
+            
+            // Check notification permission status
+            let settings = await UNUserNotificationCenter.current().notificationSettings()
+            hasNotificationPermission = settings.authorizationStatus == .authorized
+        }
+    }
+    
+    func requestAccessibilityPermission() {
+        // TODO: Implement accessibility permission request
+        // For now, just open System Settings manually
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+    
+    func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { [weak self] granted, _ in
+            DispatchQueue.main.async {
+                self?.hasNotificationPermission = granted
+            }
+        }
+    }
+    
+    func nextScreen() {
+        guard canContinue else { return }
+        
+        if currentScreen.rawValue < Screen.allCases.count - 1 {
+            currentScreen = Screen(rawValue: currentScreen.rawValue + 1) ?? currentScreen
+        }
+    }
+    
+    func previousScreen() {
+        guard canGoBack else { return }
+        
+        if currentScreen.rawValue > 0 {
+            currentScreen = Screen(rawValue: currentScreen.rawValue - 1) ?? currentScreen
+        }
+    }
+    
+    func skipToFinish() {
+        currentScreen = .finish
+    }
+    
+    func completeOnboarding() {
+        // Save launch at login preference
+        LaunchAtLogin.isEnabled = launchAtLoginEnabled
+        
+        // Mark onboarding as completed
+        Defaults[.hasCompletedOnboarding] = true
+        Defaults[.onboardingVersion] = 1
+        
+        // Close onboarding window
+        OnboardingWindow.shared?.close()
+        OnboardingWindow.shared = nil
+        
+        // Show the main app
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.panel?.toggle(height: AppState.shared.popup.height)
+        }
+    }
+}

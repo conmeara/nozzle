@@ -79,4 +79,8 @@ extension Defaults.Keys {
 
   // Prompt chips persistence (security-scoped bookmarks for each chip)
   static let promptChipsBookmarks = Key<[Data]>("promptChipsBookmarks", default: [])
+  
+  // Onboarding settings
+  static let hasCompletedOnboarding = Key<Bool>("hasCompletedOnboarding", default: false)
+  static let onboardingVersion = Key<Int>("onboardingVersion", default: 0)
 }
