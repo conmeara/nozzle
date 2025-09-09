@@ -239,20 +239,46 @@ struct ContentView: View {
                     inputFocused = true
                   }
                 } else if !appState.isEnhancingPrompt {
+                  // Set flag to prevent prompt editor from exiting
+                  contentManager.enhanceButtonClicked = true
+                  
                   // Enhance prompt with AI (only if not already enhancing)
                   Task {
-                    guard !appState.promptText.isEmpty else { return }
+                    let textToEnhance: String
+                    let isEnhancingEditor: Bool
+                    
+                    // Determine what text to enhance
+                    if contentManager.isPromptEditorEditing && !contentManager.promptEditorText.isEmpty {
+                      textToEnhance = contentManager.promptEditorText
+                      isEnhancingEditor = true
+                    } else if !appState.promptText.isEmpty {
+                      textToEnhance = appState.promptText
+                      isEnhancingEditor = false
+                    } else {
+                      contentManager.enhanceButtonClicked = false
+                      return
+                    }
+                    
                     appState.isEnhancingPrompt = true
                     do {
-                      let enhanced = try await PromptEnhancer.shared.enhance(appState.promptText)
-                      // Save original for undo support
-                      appState.originalPromptBeforeEnhancement = appState.promptText
-                      appState.promptText = enhanced
+                      let enhanced = try await PromptEnhancer.shared.enhance(textToEnhance)
+                      if isEnhancingEditor {
+                        // Update prompt editor text
+                        contentManager.updatePromptEditorText(enhanced)
+                        // Also trigger a refresh in the editor by posting a notification
+                        NotificationCenter.default.post(name: .promptEditorTextUpdated, object: enhanced)
+                      } else {
+                        // Save original for undo support
+                        appState.originalPromptBeforeEnhancement = appState.promptText
+                        appState.promptText = enhanced
+                      }
                     } catch {
                       // Handle error - could show alert or tooltip
                       print("Enhancement error: \(error.localizedDescription)")
                     }
                     appState.isEnhancingPrompt = false
+                    // Reset the flag
+                    contentManager.enhanceButtonClicked = false
                   }
                 }
               }) {
@@ -274,7 +300,6 @@ struct ContentView: View {
                 .padding(.all, 2)
               }
               .buttonStyle(PlainButtonStyle())
-              .disabled(appState.promptText.isEmpty && !appState.isSearchMode)
               .help(appState.isSearchMode ? "Exit search mode" : (appState.isEnhancingPrompt ? "Enhancing..." : "Enhance prompt with AI (⌘⇧E)"))
             }
             
