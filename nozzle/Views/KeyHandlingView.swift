@@ -55,6 +55,18 @@ struct KeyHandlingView<Content: View>: View {
             }
             return .handled
           } else if modifierFlags == .command {
+            // Special handling for prompts tab - paste just the prompt content
+            if contentManager.activeSourceId == "prompts",
+               let focusedItem = contentManager.focusedContentItem,
+               let url = focusedItem.fileURL {
+              // Load and paste prompt content directly
+              if let text = TextFileFormatter.loadPlainText(from: url) {
+                appState.popup.close()
+                Clipboard.shared.copyString(text)
+                Clipboard.shared.paste()
+              }
+              return .handled
+            }
             // Command-Enter - immediately paste current item (swapped behavior)
             if let item = appState.history.selectedItem {
               // Clipboard item
@@ -282,8 +294,29 @@ struct KeyHandlingView<Content: View>: View {
             appState.performEnhancePrompt()
           }
           return .handled
+        case .openPrompts:
+          // Toggle prompts tab - open if not active, close if active
+          if contentManager.activeSourceId == "prompts" {
+            // Already in prompts, return to previous tab
+            contentManager.activeSourceId = contentManager.lastNonPromptsSourceId
+          } else {
+            // Not in prompts, open prompts and save current tab
+            contentManager.lastNonPromptsSourceId = contentManager.activeSourceId
+            contentManager.activeSourceId = "prompts"
+          }
+          return .handled
         case .toggleSelection:
-          // Tab key - toggle selection
+          // Special behavior for prompts tab - add as chip and return to previous tab
+          if contentManager.activeSourceId == "prompts",
+             let focusedItem = contentManager.focusedContentItem,
+             let url = focusedItem.fileURL {
+            // Add as prompt chip
+            appState.addPromptChip(url: url)
+            // Return to previous tab
+            contentManager.activeSourceId = contentManager.lastNonPromptsSourceId
+            return .handled
+          }
+          // Default tab behavior for other sources
           if let item = appState.history.selectedItem {
             item.isSelected.toggle()
             appState.updateFooterItemVisibility()
