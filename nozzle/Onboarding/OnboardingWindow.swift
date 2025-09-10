@@ -57,6 +57,9 @@ class OnboardingWindow: NSWindowController {
     }
     
     static func show() {
+        // Reset onboarding completion state when manually showing from settings
+        Defaults[.hasCompletedOnboarding] = false
+        
         if shared == nil {
             shared = OnboardingWindow()
         }

@@ -141,6 +141,7 @@
 		F569FB302E6FBCE50076D784 /* OnboardingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB282E6FBCE50076D784 /* OnboardingWindow.swift */; };
 		F569FB312E6FBCE50076D784 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB272E6FBCE50076D784 /* OnboardingView.swift */; };
 		F56E49222E70EB9A003D6538 /* ScreenshotSourceHeuristics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56E49212E70EB9A003D6538 /* ScreenshotSourceHeuristics.swift */; };
+		F56E492A2E70F6A1003D6538 /* MenuBarTooltip.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56E49292E70F6A1003D6538 /* MenuBarTooltip.swift */; };
 		F57274592E56720D003A9299 /* ContentSourceType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274582E56720D003A9299 /* ContentSourceType.swift */; };
 		F572745A2E56720D003A9299 /* ContentSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274572E56720D003A9299 /* ContentSource.swift */; };
 		F572745B2E56720D003A9299 /* ContentItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274562E56720D003A9299 /* ContentItem.swift */; };
@@ -554,6 +555,7 @@
 		F569FB272E6FBCE50076D784 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		F569FB282E6FBCE50076D784 /* OnboardingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindow.swift; sourceTree = "<group>"; };
 		F56E49212E70EB9A003D6538 /* ScreenshotSourceHeuristics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotSourceHeuristics.swift; sourceTree = "<group>"; };
+		F56E49292E70F6A1003D6538 /* MenuBarTooltip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarTooltip.swift; sourceTree = "<group>"; };
 		F57274562E56720D003A9299 /* ContentItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentItem.swift; sourceTree = "<group>"; };
 		F57274572E56720D003A9299 /* ContentSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSource.swift; sourceTree = "<group>"; };
 		F57274582E56720D003A9299 /* ContentSourceType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSourceType.swift; sourceTree = "<group>"; };
@@ -906,6 +908,7 @@
 		F569FB292E6FBCE50076D784 /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
+				F56E49292E70F6A1003D6538 /* MenuBarTooltip.swift */,
 				F569FB252E6FBCE50076D784 /* Screens */,
 				F569FB262E6FBCE50076D784 /* OnboardingState.swift */,
 				F569FB272E6FBCE50076D784 /* OnboardingView.swift */,
@@ -1260,6 +1263,7 @@
 				DA6491B029ABCF2400837D93 /* NSScreen+ForPopup.swift in Sources */,
 				DA81D674252A056B009977BC /* Throttler.swift in Sources */,
 				DA05B5112C234CB2006980FE /* nozzleApp.swift in Sources */,
+				F56E492A2E70F6A1003D6538 /* MenuBarTooltip.swift in Sources */,
 				DA13D7DE2C1A436E00FA9E23 /* AppIntentError.swift in Sources */,
 				2F8B9DE62C5D6E5D0046EF69 /* NSPoint+DefaultsSerializable.swift in Sources */,
 				DAA072D72C41C574006DDFD2 /* AppState.swift in Sources */,

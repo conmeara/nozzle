@@ -4,7 +4,10 @@ import SwiftUI
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
+  static var shared: AppDelegate?
+  
   var panel: FloatingPanel<ContentView>!
+  private var menuBarTooltip: MenuBarTooltip?
 
   @objc
   private lazy var statusItem: NSStatusItem = {
@@ -25,6 +28,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   private var statusItemVisibilityObserver: NSKeyValueObservation?
 
   func applicationWillFinishLaunching(_ notification: Notification) { // swiftlint:disable:this function_body_length
+    // Store shared instance for access from other parts of the app
+    AppDelegate.shared = self
 
     // Bridge FloatingPanel via AppDelegate.
     AppState.shared.appDelegate = self
@@ -292,6 +297,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       if let name = notification.userInfo?["name"] as? KeyboardShortcuts.Name, names.contains(name) {
         KeyboardShortcuts.disable(name)
       }
+    }
+  }
+  
+  func showMenuBarTooltip() {
+    // Ensure status item is visible
+    guard let button = statusItem.button else {
+      return
+    }
+    
+    guard statusItem.isVisible else {
+      // If status bar is hidden, show main panel instead
+      panel?.toggle(height: AppState.shared.popup.height)
+      return
+    }
+    
+    // Create and show the tooltip
+    if menuBarTooltip == nil {
+      menuBarTooltip = MenuBarTooltip()
+    }
+    menuBarTooltip?.show(near: button)
+    
+    // Dismiss tooltip when panel opens
+    NotificationCenter.default.addObserver(
+      forName: NSWindow.didBecomeKeyNotification,
+      object: panel,
+      queue: .main
+    ) { [weak self] _ in
+      self?.menuBarTooltip?.dismiss()
     }
   }
 }

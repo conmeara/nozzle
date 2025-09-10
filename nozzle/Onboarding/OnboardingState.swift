@@ -130,6 +130,7 @@ final class OnboardingState {
     
     func completeOnboarding() {
         // Save launch at login preference
+        // Note: This may fail in some environments (e.g., sandboxed or development builds)
         LaunchAtLogin.isEnabled = launchAtLoginEnabled
         
         // Mark onboarding as completed
@@ -140,9 +141,18 @@ final class OnboardingState {
         OnboardingWindow.shared?.close()
         OnboardingWindow.shared = nil
         
-        // Show the main app
-        if let appDelegate = NSApp.delegate as? AppDelegate {
-            appDelegate.panel?.toggle(height: AppState.shared.popup.height)
+        // Show menu bar tooltip after a short delay
+        if let appDelegate = AppDelegate.shared {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                appDelegate.showMenuBarTooltip()
+            }
+        } else {
+            // Try alternative method
+            if let appDelegate = NSApp.delegate as? AppDelegate {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    appDelegate.showMenuBarTooltip()
+                }
+            }
         }
     }
 }
