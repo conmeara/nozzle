@@ -166,9 +166,11 @@ struct FolderTreeItemView: View {
     private func toggleExpansion() {
         guard let fileSystemSource = contentManager.sources[item.sourceId] as? FileSystemSource,
               let folderPath = item.base.fileURL?.path else { return }
-        
+
         Task {
             await fileSystemSource.toggleFolderExpansion(at: folderPath)
+            // Nudge dependent views to refresh
+            ContentManager.shared.markSelectedDirty()
         }
     }
 }

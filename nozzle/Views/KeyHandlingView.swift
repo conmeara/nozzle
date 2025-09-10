@@ -47,23 +47,43 @@ struct KeyHandlingView<Content: View>: View {
             }
             // Plain Enter - immediately paste current item
             if let item = appState.history.selectedItem {
+              // Clipboard item
               appState.popup.close()
               Clipboard.shared.copy(item.item)
               Clipboard.shared.paste()
+            } else if let focusedItem = contentManager.focusedContentItem {
+              // File source item - skip folders
+              appState.popup.close()
+              if let fileURL = focusedItem.fileURL, !focusedItem.isFolder {
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.writeObjects([fileURL as NSURL])
+                Clipboard.shared.paste()
+              }
             }
             return .handled
           } else if modifierFlags == [.command, .shift] {
             // Command-Shift-Enter - paste just the focused item
             if let item = appState.history.selectedItem {
+              // Clipboard item
               appState.popup.close()
               Clipboard.shared.copy(item.item)
               Clipboard.shared.paste()
+            } else if let focusedItem = contentManager.focusedContentItem {
+              // File source item - skip folders
+              appState.popup.close()
+              if let fileURL = focusedItem.fileURL, !focusedItem.isFolder {
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.writeObjects([fileURL as NSURL])
+                Clipboard.shared.paste()
+              }
             }
             return .handled
           } else if modifierFlags == .command {
             // Command-Enter (combined paste)
             // Only handle if we have multiple selections or prompt text
-            if !appState.history.selectedItems.isEmpty || !appState.promptText.isEmpty {
+            if !contentManager.selectedItems.isEmpty || !appState.promptText.isEmpty {
               appState.performCombinedPaste()
               return .handled
             }

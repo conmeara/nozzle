@@ -431,6 +431,14 @@ class AppState {
     }
     
     let item = mediaItems[index]
+    
+    // Skip folders - their contents are already captured in the selection
+    if item.isFolder {
+      // Move to next item without pasting
+      pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems)
+      return
+    }
+    
     // Copy content item to clipboard
     if let imageData = item.imageData, let image = NSImage(data: imageData) {
       let pasteboard = NSPasteboard.general
