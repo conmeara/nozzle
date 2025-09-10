@@ -49,6 +49,8 @@ enum KeyChord: CaseIterable {
   case togglePromptMode
   case toggleDictation
   case toggleSelection
+  case previousTab
+  case nextTab
   case previousTabPage
   case nextTabPage
   case unknown
@@ -132,8 +134,12 @@ enum KeyChord: CaseIterable {
     case (.tab, []):
       self = .toggleSelection
     case (.leftBracket, [.command]):
-      self = .previousTabPage
+      self = .previousTab
     case (.rightBracket, [.command]):
+      self = .nextTab
+    case (.leftBracket, [.command, .shift]):
+      self = .previousTabPage
+    case (.rightBracket, [.command, .shift]):
       self = .nextTabPage
     case (_, _) where !modifierFlags.isDisjoint(with: [.command, .control, .option]):
       self = .ignored
