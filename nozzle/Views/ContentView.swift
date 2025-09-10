@@ -284,7 +284,7 @@ struct ContentView: View {
                   .padding(.all, 2)
               }
               .buttonStyle(PlainButtonStyle())
-              .help(appState.isSearchMode ? "Exit search mode" : (dictationManager.isRecording ? "Stop dictation (fn)" : "Start dictation (fn)"))
+              .help(appState.isSearchMode ? "Exit search mode" : (dictationManager.isRecording ? "Stop dictation (⌥D)" : "Start dictation (⌥D)"))
               
               
               // Enhance prompt button
@@ -296,48 +296,9 @@ struct ContentView: View {
                     try? await Task.sleep(for: .milliseconds(50))
                     inputFocused = true
                   }
-                } else if !appState.isEnhancingPrompt {
-                  // Set flag to prevent prompt editor from exiting
-                  contentManager.enhanceButtonClicked = true
-                  
-                  // Enhance prompt with AI (only if not already enhancing)
-                  Task {
-                    let textToEnhance: String
-                    let isEnhancingEditor: Bool
-                    
-                    // Determine what text to enhance
-                    if contentManager.isPromptEditorEditing && !contentManager.promptEditorText.isEmpty {
-                      textToEnhance = contentManager.promptEditorText
-                      isEnhancingEditor = true
-                    } else if !appState.promptText.isEmpty {
-                      textToEnhance = appState.promptText
-                      isEnhancingEditor = false
-                    } else {
-                      contentManager.enhanceButtonClicked = false
-                      return
-                    }
-                    
-                    appState.isEnhancingPrompt = true
-                    do {
-                      let enhanced = try await PromptEnhancer.shared.enhance(textToEnhance)
-                      if isEnhancingEditor {
-                        // Update prompt editor text
-                        contentManager.updatePromptEditorText(enhanced)
-                        // Also trigger a refresh in the editor by posting a notification
-                        NotificationCenter.default.post(name: .promptEditorTextUpdated, object: enhanced)
-                      } else {
-                        // Save original for undo support
-                        appState.originalPromptBeforeEnhancement = appState.promptText
-                        appState.promptText = enhanced
-                      }
-                    } catch {
-                      // Handle error - could show alert or tooltip
-                      print("Enhancement error: \(error.localizedDescription)")
-                    }
-                    appState.isEnhancingPrompt = false
-                    // Reset the flag
-                    contentManager.enhanceButtonClicked = false
-                  }
+                } else {
+                  // Enhance prompt with AI
+                  appState.performEnhancePrompt()
                 }
               }) {
                 ZStack {

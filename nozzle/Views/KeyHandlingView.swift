@@ -54,24 +54,6 @@ struct KeyHandlingView<Content: View>: View {
               return .handled
             }
             return .handled
-          } else if modifierFlags == [.command, .shift] {
-            // Command-Shift-Enter - paste just the focused item
-            if let item = appState.history.selectedItem {
-              // Clipboard item
-              appState.popup.close()
-              Clipboard.shared.copy(item.item)
-              Clipboard.shared.paste()
-            } else if let focusedItem = contentManager.focusedContentItem {
-              // File source item - skip folders
-              appState.popup.close()
-              if let fileURL = focusedItem.fileURL, !focusedItem.isFolder {
-                let pasteboard = NSPasteboard.general
-                pasteboard.clearContents()
-                pasteboard.writeObjects([fileURL as NSURL])
-                Clipboard.shared.paste()
-              }
-            }
-            return .handled
           } else if modifierFlags == .command {
             // Command-Enter - immediately paste current item (swapped behavior)
             if let item = appState.history.selectedItem {
@@ -141,16 +123,6 @@ struct KeyHandlingView<Content: View>: View {
         case .deleteOneCharFromSearch:
           searchFocused = true
           _ = searchQuery.popLast()
-          return .handled
-        case .deleteLastWordFromSearch:
-          searchFocused = true
-          let newQuery = searchQuery.split(separator: " ").dropLast().joined(separator: " ")
-          if newQuery.isEmpty {
-            searchQuery = ""
-          } else {
-            searchQuery = "\(newQuery) "
-          }
-
           return .handled
         case .moveToNext:
           guard NSApp.characterPickerWindow == nil else {
@@ -302,6 +274,12 @@ struct KeyHandlingView<Content: View>: View {
               Binding(get: { appState.history.searchQuery }, set: { appState.history.searchQuery = $0 }) :
               Binding(get: { appState.promptText }, set: { appState.promptText = $0 })
             await DictationManager.shared.toggleDictation(for: binding)
+          }
+          return .handled
+        case .enhancePrompt:
+          // Enhance prompt if not in search mode
+          if !appState.isSearchMode {
+            appState.performEnhancePrompt()
           }
           return .handled
         case .toggleSelection:
