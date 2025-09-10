@@ -109,7 +109,7 @@ struct UniversalItemView: View {
                         shortcuts: [],                       // no numbered shortcuts for file sources in Phase 1
                         isSelected: item.isSelected,
                         selectionSymbol: (item.isExample ? "pencil.circle.fill" : "checkmark.circle.fill"),
-                        selectionSymbolColor: (item.isExample ? .yellow : .white),
+                        selectionSymbolColor: .white,
                         selectionBackgroundColor: (item.isExample ? .yellow : nil),
                         onCopyAction: { item.copyToClipboard() }
                     ) { titleView() }

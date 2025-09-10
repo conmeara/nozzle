@@ -51,7 +51,7 @@ struct HistoryItemView: View {
       shortcuts: item.shortcuts,
       isSelected: item.isSelected,
       selectionSymbol: (contentManager.isExample(item.id) ? "pencil.circle.fill" : "checkmark.circle.fill"),
-      selectionSymbolColor: (contentManager.isExample(item.id) ? .yellow : .white),
+      selectionSymbolColor: .white,
       selectionBackgroundColor: (contentManager.isExample(item.id) ? .yellow : nil),
       onCopyAction: copyItemToClipboard
     ) {
