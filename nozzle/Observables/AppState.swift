@@ -523,5 +523,51 @@ class AppState {
       promptChips = updated
     }
   }
+  
+  // Enhance the current prompt using AI
+  func performEnhancePrompt() {
+    guard !isEnhancingPrompt else { return }
+    
+    // Set flag to prevent prompt editor from exiting if applicable
+    ContentManager.shared.enhanceButtonClicked = true
+    
+    Task { @MainActor in
+      let textToEnhance: String
+      let isEnhancingEditor: Bool
+      
+      // Determine what text to enhance
+      if ContentManager.shared.isPromptEditorEditing && !ContentManager.shared.promptEditorText.isEmpty {
+        textToEnhance = ContentManager.shared.promptEditorText
+        isEnhancingEditor = true
+      } else if !promptText.isEmpty {
+        textToEnhance = promptText
+        isEnhancingEditor = false
+      } else {
+        ContentManager.shared.enhanceButtonClicked = false
+        return
+      }
+      
+      isEnhancingPrompt = true
+      do {
+        let enhanced = try await PromptEnhancer.shared.enhance(textToEnhance)
+        if isEnhancingEditor {
+          // Update prompt editor text
+          ContentManager.shared.updatePromptEditorText(enhanced)
+          // Also trigger a refresh in the editor by posting a notification
+          NotificationCenter.default.post(name: .promptEditorTextUpdated, object: enhanced)
+        } else {
+          // Save original for undo support
+          originalPromptBeforeEnhancement = promptText
+          promptText = enhanced
+        }
+      } catch {
+        // Handle error - could show alert or tooltip
+        print("Enhancement error: \(error.localizedDescription)")
+      }
+      isEnhancingPrompt = false
+      // Reset the flag
+      ContentManager.shared.enhanceButtonClicked = false
+    }
+  }
 
 }

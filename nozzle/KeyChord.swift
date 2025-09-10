@@ -29,13 +29,15 @@ enum KeyChord: CaseIterable {
   static var toggleDictationKey: Key? { Sauce.shared.key(shortcut: .toggleDictation) }
   static var toggleDictationModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .toggleDictation)?.modifiers }
 
+  static var enhancePromptKey: Key? { Sauce.shared.key(shortcut: .enhancePrompt) }
+  static var enhancePromptModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .enhancePrompt)?.modifiers }
+
   case clearHistory
   case clearHistoryAll
   case clearSearch
   case clearSelection
   case deleteCurrentItem
   case deleteOneCharFromSearch
-  case deleteLastWordFromSearch
   case ignored
   case moveToNext
   case moveToLast
@@ -48,6 +50,7 @@ enum KeyChord: CaseIterable {
   case togglePreview
   case togglePromptMode
   case toggleDictation
+  case enhancePrompt
   case toggleSelection
   case previousTab
   case nextTab
@@ -94,8 +97,6 @@ enum KeyChord: CaseIterable {
       self = .deleteCurrentItem
     case (.h, [.control]):
       self = .deleteOneCharFromSearch
-    case (.w, [.control]):
-      self = .deleteLastWordFromSearch
     case (.downArrow, []),
          (.downArrow, [.shift]),
          (.n, [.control]),
@@ -131,6 +132,8 @@ enum KeyChord: CaseIterable {
       self = .togglePromptMode
     case (KeyChord.toggleDictationKey, KeyChord.toggleDictationModifiers):
       self = .toggleDictation
+    case (KeyChord.enhancePromptKey, KeyChord.enhancePromptModifiers):
+      self = .enhancePrompt
     case (.tab, []):
       self = .toggleSelection
     case (.leftBracket, [.command]):

@@ -58,7 +58,7 @@ struct PromptHeaderView: View {
             .opacity(dictationManager.isRecording ? 1.0 : 0.8)
         }
         .buttonStyle(.plain)
-        .help(dictationManager.isRecording ? "Stop dictation (fn)" : "Start dictation (fn)")
+        .help(dictationManager.isRecording ? "Stop dictation (⌥D)" : "Start dictation (⌥D)")
         
         Spacer()
       }
