@@ -6,6 +6,7 @@ struct FolderTreeItemView: View {
     @Bindable var item: UniversalItemDecorator
     @Environment(AppState.self) private var appState
     @Environment(ContentManager.self) private var contentManager
+    @State private var itemFrameWidth: CGFloat = 0
     
     private var isExpanded: Bool {
         if let fileSystemSource = contentManager.sources[item.sourceId] as? FileSystemSource,
@@ -78,7 +79,7 @@ struct FolderTreeItemView: View {
             .onTapGesture { location in
                 // Handle folder selection and focus
                 let copyAreaThreshold: CGFloat = 42
-                let frameWidth: CGFloat = 300
+                let frameWidth = itemFrameWidth > 0 ? itemFrameWidth : 300  // fallback width
                 
                 if location.x > (frameWidth - copyAreaThreshold) {
                     if !contentManager.isSelected(item.id) {
@@ -107,6 +108,17 @@ struct FolderTreeItemView: View {
                     FolderTreeItemView.previewHoverThrottler.cancel()
                 }
             }
+            .background(
+                GeometryReader { geometry in
+                    Color.clear
+                        .onAppear {
+                            itemFrameWidth = geometry.size.width
+                        }
+                        .onChange(of: geometry.size) { _, newSize in
+                            itemFrameWidth = newSize.width
+                        }
+                }
+            )
             .contextMenu {
                 if let url = item.base.fileURL {
                     Button("Copy Path") {
