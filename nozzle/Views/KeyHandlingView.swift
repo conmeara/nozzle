@@ -13,6 +13,8 @@ struct KeyHandlingView<Content: View>: View {
   @FocusState.Binding var searchFocused: Bool
   @Binding var currentTabPage: Int
   let totalPages: Int
+  let onPreviousTab: () -> Void
+  let onNextTab: () -> Void
   @ViewBuilder let content: () -> Content
 
   @Environment(AppState.self) private var appState
@@ -308,8 +310,14 @@ struct KeyHandlingView<Content: View>: View {
             appState.updateFooterItemVisibility()
           }
           return .handled
+        case .previousTab:
+          onPreviousTab()
+          return .handled
+        case .nextTab:
+          onNextTab()
+          return .handled
         case .previousTabPage:
-          // Cmd+[ - navigate to previous tab page
+          // Cmd+Shift+[ - navigate to previous tab page
           if currentTabPage > 0 {
             withAnimation(.easeInOut(duration: 0.2)) {
               currentTabPage -= 1
@@ -317,7 +325,7 @@ struct KeyHandlingView<Content: View>: View {
           }
           return .handled
         case .nextTabPage:
-          // Cmd+] - navigate to next tab page
+          // Cmd+Shift+] - navigate to next tab page
           if currentTabPage < totalPages - 1 {
             withAnimation(.easeInOut(duration: 0.2)) {
               currentTabPage += 1

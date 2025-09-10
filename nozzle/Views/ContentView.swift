@@ -81,7 +81,65 @@ struct ContentView: View {
         searchQuery: $appState.history.searchQuery,
         searchFocused: $inputFocused,
         currentTabPage: $currentTabPage,
-        totalPages: totalPages
+        totalPages: totalPages,
+        onPreviousTab: {
+          let ids = ["aggregated"] + allTabs.map { $0.id }
+          let currentId = ids.contains(selectedTab) ? selectedTab : (ids.contains(contentManager.activeSourceId) ? contentManager.activeSourceId : "aggregated")
+          guard let idx = ids.firstIndex(of: currentId) else { return }
+          let newIdx = (idx - 1 + ids.count) % ids.count
+          let newId = ids[newIdx]
+          selectedTab = newId
+          contentManager.activeSourceId = newId
+          if let fileSource = contentManager.sources[newId] as? FileSystemSource {
+            Task { await fileSource.refreshIfNeeded() }
+          }
+          if newId != "aggregated" {
+            if let tabIndex = allTabs.firstIndex(where: { $0.id == newId }) {
+              // Find page containing tabIndex using pageBreaks
+              var targetPage = 0
+              for i in 0..<pageBreaks.count {
+                let start = pageBreaks[i]
+                let end = (i + 1 < pageBreaks.count) ? pageBreaks[i + 1] : allTabs.count
+                if tabIndex >= start && tabIndex < end {
+                  targetPage = i
+                  break
+                }
+              }
+              if targetPage != currentTabPage {
+                withAnimation(.easeInOut(duration: 0.2)) { currentTabPage = targetPage }
+              }
+            }
+          }
+        },
+        onNextTab: {
+          let ids = ["aggregated"] + allTabs.map { $0.id }
+          let currentId = ids.contains(selectedTab) ? selectedTab : (ids.contains(contentManager.activeSourceId) ? contentManager.activeSourceId : "aggregated")
+          guard let idx = ids.firstIndex(of: currentId) else { return }
+          let newIdx = (idx + 1) % ids.count
+          let newId = ids[newIdx]
+          selectedTab = newId
+          contentManager.activeSourceId = newId
+          if let fileSource = contentManager.sources[newId] as? FileSystemSource {
+            Task { await fileSource.refreshIfNeeded() }
+          }
+          if newId != "aggregated" {
+            if let tabIndex = allTabs.firstIndex(where: { $0.id == newId }) {
+              // Find page containing tabIndex using pageBreaks
+              var targetPage = 0
+              for i in 0..<pageBreaks.count {
+                let start = pageBreaks[i]
+                let end = (i + 1 < pageBreaks.count) ? pageBreaks[i + 1] : allTabs.count
+                if tabIndex >= start && tabIndex < end {
+                  targetPage = i
+                  break
+                }
+              }
+              if targetPage != currentTabPage {
+                withAnimation(.easeInOut(duration: 0.2)) { currentTabPage = targetPage }
+              }
+            }
+          }
+        }
       ) {
         VStack(spacing: 0) {
           // Header: chips (always show when present), input field, and controls with tabs
