@@ -33,7 +33,7 @@ final class UniversalItemDecorator: ListItemDecorator {
         return base.title
     }
     var isSelected: Bool {
-        ContentManager.shared.isSelected(id)
+        ContentManager.shared.isSelected(effectively: base)
     }
     var isExample: Bool {
         ContentManager.shared.isExample(id)

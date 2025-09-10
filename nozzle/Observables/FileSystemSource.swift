@@ -404,6 +404,67 @@ final class FileSystemSource: ContentSource {
         }
     }
     
+    // Find items by their IDs, even if they're not currently visible (collapsed folders)
+    func findItemsById(_ ids: Set<UUID>) -> [ContentItem] {
+        guard !ids.isEmpty else { return [] }
+        
+        var foundItems: [ContentItem] = []
+        let fm = FileManager.default
+        
+        // Recursively scan the folder to find matching items
+        if let enumerator = fm.enumerator(
+            at: folderURL,
+            includingPropertiesForKeys: [.isDirectoryKey, .contentTypeKey, .contentModificationDateKey, .fileSizeKey],
+            options: [.skipsHiddenFiles]
+        ) {
+            for case let url as URL in enumerator {
+                // Generate stable UUID for this URL
+                let itemId = Self.makeStableUUID(
+                    identity: FileIdentity.snapshot(for: url).identity,
+                    fallbackPath: url.absoluteString
+                )
+                
+                // Check if this ID is one we're looking for
+                if ids.contains(itemId) {
+                    do {
+                        let vals = try url.resourceValues(forKeys: [.isDirectoryKey, .contentTypeKey, .contentModificationDateKey, .fileSizeKey])
+                        
+                        // Calculate depth and parent path
+                        let relativePath = url.path.replacingOccurrences(of: folderURL.path + "/", with: "")
+                        let depth = relativePath.components(separatedBy: "/").count
+                        let parentPath = url.deletingLastPathComponent().path
+                        
+                        let contentItem = ContentItem(
+                            id: itemId,
+                            title: url.lastPathComponent,
+                            timestamp: vals.contentModificationDate ?? Date(),
+                            sourceType: .folder,
+                            sourceId: self.id,
+                            fileURL: url,
+                            uniformTypeIdentifier: vals.contentType?.identifier,
+                            fileSize: Int64(vals.fileSize ?? 0),
+                            isFolder: vals.isDirectory == true,
+                            depth: depth,
+                            parentPath: parentPath == folderURL.path ? nil : parentPath,
+                            isSelected: true // These are selected items
+                        )
+                        
+                        foundItems.append(contentItem)
+                        
+                        // Stop early if we've found all items
+                        if foundItems.count == ids.count {
+                            break
+                        }
+                    } catch {
+                        continue
+                    }
+                }
+            }
+        }
+        
+        return foundItems
+    }
+    
     // MARK: - Folder expansion methods
     
     func toggleFolderExpansion(at path: String) async {
