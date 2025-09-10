@@ -317,8 +317,13 @@ struct KeyHandlingView<Content: View>: View {
             return .handled
           }
           // Default tab behavior for other sources
-          if let item = appState.history.selectedItem {
-            item.isSelected.toggle()
+          if contentManager.activeSourceId == "clipboard" {
+            if let item = appState.history.selectedItem {
+              contentManager.toggleSelection(item.id)
+              appState.updateFooterItemVisibility()
+            }
+          } else if let focusedItem = contentManager.focusedContentItem {
+            contentManager.toggleSelection(focusedItem.id)
             appState.updateFooterItemVisibility()
           }
           return .handled
@@ -355,7 +360,7 @@ struct KeyHandlingView<Content: View>: View {
            let key = Sauce.shared.key(for: Int(event.keyCode)),
            let item = appState.history.items.first(where: { $0.shortcuts.contains(where: { $0.key == key }) }) {
           // Toggle the item's selection
-          item.isSelected.toggle()
+          contentManager.toggleSelection(item.id)
           appState.selection = item.id
           appState.updateFooterItemVisibility()
           return .handled

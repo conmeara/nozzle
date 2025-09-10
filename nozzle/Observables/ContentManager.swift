@@ -22,6 +22,8 @@ final class ContentManager {
     private(set) var selectedItemIds: Set<UUID> = []
     // Subset of selected items that are marked as examples
     private(set) var exampleItemIds: Set<UUID> = []
+    // Observable version counter to trigger UI updates when selection changes
+    private(set) var selectionVersion: Int = 0
     
     // Preview focus tracking
     private(set) var focusedItemId: UUID?
@@ -47,6 +49,7 @@ final class ContentManager {
     // (Removed) Aggregated display version tracking; Aggregated now shows only pasteable items
     
     var selectedItems: [ContentItem] {
+        _ = selectionVersion  // Establish dependency for SwiftUI observation
         if _selectedCacheDirty {
             _selectedCache = makeSelectedItems()
             _selectedCacheDirty = false
@@ -306,6 +309,16 @@ final class ContentManager {
         sources[source.id] = source
         if !orderedSourceIds.contains(source.id) {
             orderedSourceIds.append(source.id)
+        }
+        
+        // Sync initial selection state for clipboard items
+        if source is ClipboardSource {
+            for item in History.shared.items where item.isSelected {
+                selectedItemIds.insert(item.id)
+            }
+            if !selectedItemIds.isEmpty {
+                markSelectedDirty()
+            }
         }
     }
     
@@ -636,6 +649,7 @@ extension Notification.Name {
 extension ContentManager {
     func markSelectedDirty() {
         _selectedCacheDirty = true
+        selectionVersion += 1  // Force UI update
     }
     
     private func makeSelectedItems() -> [ContentItem] {
