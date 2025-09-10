@@ -110,7 +110,7 @@ class Clipboard {
   }
 
   // Simple data structure to hold clipboard content without SwiftData dependencies
-  struct ClipboardContentData {
+  struct ClipboardContentData: Sendable {
     let type: String
     let value: Data?
   }
@@ -134,7 +134,9 @@ class Clipboard {
       pasteItem.setData(value, forType: NSPasteboard.PasteboardType(item.type))
       return pasteItem
     }
-    pasteboard.writeObjects(fileURLItems)
+    if !fileURLItems.isEmpty {
+      pasteboard.writeObjects(fileURLItems)
+    }
     
     // Add nozzle markers
     pasteboard.setString("", forType: .fromnozzle)
@@ -289,10 +291,9 @@ class Clipboard {
     // Sync our internal state
     sync()
     
-    // Update change count to prevent detection of this restoration
-    if isPerformingMultiPaste {
-      changeCount = pasteboard.changeCount
-    }
+    // Update change count to prevent detection of this restoration even
+    // if multi-paste mode was already disabled.
+    changeCount = pasteboard.changeCount
   }
 
   func setMultiPasteMode(_ enabled: Bool) {

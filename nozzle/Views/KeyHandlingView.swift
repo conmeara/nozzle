@@ -317,8 +317,13 @@ struct KeyHandlingView<Content: View>: View {
             return .handled
           }
           // Default tab behavior for other sources
-          if let item = appState.history.selectedItem {
-            contentManager.toggleSelection(item.id)
+          if contentManager.activeSourceId == "clipboard" {
+            if let item = appState.history.selectedItem {
+              contentManager.toggleSelection(item.id)
+              appState.updateFooterItemVisibility()
+            }
+          } else if let focusedItem = contentManager.focusedContentItem {
+            contentManager.toggleSelection(focusedItem.id)
             appState.updateFooterItemVisibility()
           }
           return .handled

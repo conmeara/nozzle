@@ -412,24 +412,35 @@ class AppState {
   ) {
     // Step 1: Combine and paste all text content as one operation (off main thread)
     if !contextTextItems.isEmpty || !exampleTextItems.isEmpty || !promptText.isEmpty || !promptChips.isEmpty {
-      Task.detached { [contextTextItems, exampleTextItems, promptText, promptChips, originalClipboardState, clipboardContentCache] in
-        let plain = await CombinedContentBuilder.build(
-          context: contextTextItems,
-          examples: exampleTextItems,
-          prompt: promptText,
-          chips: promptChips
-        )
-        await MainActor.run {
-          Clipboard.shared.copyString(plain)
-          // Wait for clipboard update, then paste
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
-            Clipboard.shared.paste()
-            // Step 2: After text is pasted, paste media items sequentially
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-              // Paste context media first, then example media to preserve order
-              let allMedia = contextMediaItems + exampleMediaItems
-              self.pasteMediaItems(allMedia, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
-            }
+      // Compute the combined text off the main thread, then orchestrate pastes on MainActor
+      Task { @MainActor in
+        // Capture prompt chips explicitly to avoid capturing self in detached task
+        let chips = self.promptChips
+        let plain = await Task.detached(priority: nil) { () -> String in
+          await CombinedContentBuilder.build(
+            context: contextTextItems,
+            examples: exampleTextItems,
+            prompt: promptText,
+            chips: chips
+          )
+        }.value
+
+        Clipboard.shared.copyString(plain)
+        // Wait for clipboard update, then paste
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
+          Clipboard.shared.paste()
+          // Step 2: After text is pasted, paste media items sequentially
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // Paste context media first, then example media to preserve order
+            let allMedia = contextMediaItems + exampleMediaItems
+            self.pasteMediaItems(
+              allMedia,
+              index: 0,
+              promptText: promptText,
+              hasClipboardItems: hasClipboardItems,
+              originalClipboardState: originalClipboardState,
+              clipboardContentCache: clipboardContentCache
+            )
           }
         }
       }
