@@ -177,10 +177,18 @@ struct UnifiedInputFieldView: View {
                   } else if keyPress.modifiers.contains(.shift) {
                     // Let TextEditor handle Shift+Enter naturally (creates newline)
                     return .ignored
-                  } else {
-                    // Plain Enter - submit
+                  } else if keyPress.modifiers.contains(.command) {
+                    // Command+Enter - submit (swapped behavior)
                     handleSubmit()
                     return .handled
+                  } else {
+                    // Plain Enter - perform combined paste (swapped behavior)
+                    // Only if we have content to combine
+                    if !ContentManager.shared.selectedItems.isEmpty || !appState.promptText.isEmpty {
+                      appState.performCombinedPaste()
+                      return .handled
+                    }
+                    return .ignored
                   }
                 }
                 .onKeyPress(keys: [.escape]) { _ in

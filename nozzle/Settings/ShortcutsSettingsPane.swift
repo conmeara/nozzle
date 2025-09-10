@@ -63,7 +63,7 @@ struct ShortcutsSettingsPane: View {
       Settings.Section(title: "") {
         VStack(spacing: 12) {
           HStack {
-            Text("Toggle selection:", tableName: "ShortcutsSettings")
+            Text("Paste combined:", tableName: "ShortcutsSettings")
               .frame(width: 160, alignment: .trailing)
             Text("⏎")
               .font(.system(.body, design: .monospaced))
@@ -75,7 +75,7 @@ struct ShortcutsSettingsPane: View {
           }
           
           HStack {
-            Text("Paste combined:", tableName: "ShortcutsSettings")
+            Text("Paste current item:", tableName: "ShortcutsSettings")
               .frame(width: 160, alignment: .trailing)
             Text("⌘⏎")
               .font(.system(.body, design: .monospaced))

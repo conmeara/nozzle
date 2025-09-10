@@ -45,21 +45,11 @@ struct KeyHandlingView<Content: View>: View {
               }
               return .handled
             }
-            // Plain Enter - immediately paste current item
-            if let item = appState.history.selectedItem {
-              // Clipboard item
-              appState.popup.close()
-              Clipboard.shared.copy(item.item)
-              Clipboard.shared.paste()
-            } else if let focusedItem = contentManager.focusedContentItem {
-              // File source item - skip folders
-              appState.popup.close()
-              if let fileURL = focusedItem.fileURL, !focusedItem.isFolder {
-                let pasteboard = NSPasteboard.general
-                pasteboard.clearContents()
-                pasteboard.writeObjects([fileURL as NSURL])
-                Clipboard.shared.paste()
-              }
+            // Plain Enter - combined paste (swapped behavior)
+            // Only handle if we have multiple selections or prompt text
+            if !contentManager.selectedItems.isEmpty || !appState.promptText.isEmpty {
+              appState.performCombinedPaste()
+              return .handled
             }
             return .handled
           } else if modifierFlags == [.command, .shift] {
@@ -81,12 +71,23 @@ struct KeyHandlingView<Content: View>: View {
             }
             return .handled
           } else if modifierFlags == .command {
-            // Command-Enter (combined paste)
-            // Only handle if we have multiple selections or prompt text
-            if !contentManager.selectedItems.isEmpty || !appState.promptText.isEmpty {
-              appState.performCombinedPaste()
-              return .handled
+            // Command-Enter - immediately paste current item (swapped behavior)
+            if let item = appState.history.selectedItem {
+              // Clipboard item
+              appState.popup.close()
+              Clipboard.shared.copy(item.item)
+              Clipboard.shared.paste()
+            } else if let focusedItem = contentManager.focusedContentItem {
+              // File source item - skip folders
+              appState.popup.close()
+              if let fileURL = focusedItem.fileURL, !focusedItem.isFolder {
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.writeObjects([fileURL as NSURL])
+                Clipboard.shared.paste()
+              }
             }
+            return .handled
           } else if modifierFlags == .shift {
             // Shift+Enter in prompt mode - let TextEditor handle naturally for newlines
             if !appState.isSearchMode {
