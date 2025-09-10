@@ -109,6 +109,45 @@ class Clipboard {
     }
   }
 
+  // Simple data structure to hold clipboard content without SwiftData dependencies
+  struct ClipboardContentData {
+    let type: String
+    let value: Data?
+  }
+  
+  @MainActor
+  func copyContentData(_ contentData: [ClipboardContentData]) {
+    pasteboard.clearContents()
+    
+    for content in contentData {
+      guard content.type != NSPasteboard.PasteboardType.fileURL.rawValue else { continue }
+      pasteboard.setData(content.value, forType: NSPasteboard.PasteboardType(content.type))
+    }
+    
+    // Use writeObjects for file URLs so that multiple files that are copied actually work.
+    // Only do this for file URLs because it causes an issue with some other data types (like formatted text)
+    // where the item is pasted more than once.
+    let fileURLItems: [NSPasteboardItem] = contentData.compactMap { item in
+      guard item.type == NSPasteboard.PasteboardType.fileURL.rawValue else { return nil }
+      guard let value = item.value else { return nil }
+      let pasteItem = NSPasteboardItem()
+      pasteItem.setData(value, forType: NSPasteboard.PasteboardType(item.type))
+      return pasteItem
+    }
+    pasteboard.writeObjects(fileURLItems)
+    
+    // Add nozzle markers
+    pasteboard.setString("", forType: .fromnozzle)
+    sync()
+    
+    if isPerformingMultiPaste {
+      // Update changeCount to prevent the timer from detecting this change
+      changeCount = pasteboard.changeCount
+    } else {
+      checkForChangesInPasteboard()
+    }
+  }
+
   @MainActor
   func copy(_ item: HistoryItem?, removeFormatting: Bool = false) {
     guard let item else { return }
@@ -187,6 +226,73 @@ class Clipboard {
     }
 
     pasteboard.clearContents()
+  }
+
+  // MARK: - Clipboard Backup/Restore for Multi-Paste Operations
+  
+  struct ClipboardSnapshot {
+    let changeCount: Int
+    let items: [PasteboardItemSnapshot]
+    
+    struct PasteboardItemSnapshot {
+      let types: [NSPasteboard.PasteboardType]
+      let data: [NSPasteboard.PasteboardType: Data]
+    }
+  }
+  
+  func captureClipboardState() -> ClipboardSnapshot {
+    var itemSnapshots: [ClipboardSnapshot.PasteboardItemSnapshot] = []
+    
+    pasteboard.pasteboardItems?.forEach { item in
+      var data: [NSPasteboard.PasteboardType: Data] = [:]
+      let types = item.types
+      
+      for type in types {
+        if let itemData = item.data(forType: type) {
+          data[type] = itemData
+        }
+      }
+      
+      itemSnapshots.append(ClipboardSnapshot.PasteboardItemSnapshot(
+        types: types,
+        data: data
+      ))
+    }
+    
+    return ClipboardSnapshot(
+      changeCount: pasteboard.changeCount,
+      items: itemSnapshots
+    )
+  }
+  
+  func restoreClipboardState(_ snapshot: ClipboardSnapshot) {
+    pasteboard.clearContents()
+    
+    // Create new pasteboard items from the snapshot
+    var pasteboardItems: [NSPasteboardItem] = []
+    
+    for itemSnapshot in snapshot.items {
+      let item = NSPasteboardItem()
+      
+      for (type, data) in itemSnapshot.data {
+        item.setData(data, forType: type)
+      }
+      
+      pasteboardItems.append(item)
+    }
+    
+    // Write all items back to the pasteboard
+    if !pasteboardItems.isEmpty {
+      pasteboard.writeObjects(pasteboardItems)
+    }
+    
+    // Sync our internal state
+    sync()
+    
+    // Update change count to prevent detection of this restoration
+    if isPerformingMultiPaste {
+      changeCount = pasteboard.changeCount
+    }
   }
 
   func setMultiPasteMode(_ enabled: Bool) {

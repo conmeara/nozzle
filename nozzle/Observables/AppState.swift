@@ -357,6 +357,20 @@ class AppState {
     // Store current selection states and prompt text
     let currentPromptText = promptText
     
+    // Capture original clipboard state before any operations
+    let originalClipboardState = Clipboard.shared.captureClipboardState()
+    
+    // Capture clipboard content data early to avoid SwiftData context issues
+    var clipboardContentCache: [UUID: [Clipboard.ClipboardContentData]] = [:]
+    for item in (contextSelectedItems + exampleSelectedItems) where item.sourceType == .clipboard {
+      if let historyDecorator = history.items.first(where: { $0.id == item.id }) {
+        let contentData = historyDecorator.item.contents.map { content in
+          Clipboard.ClipboardContentData(type: content.type, value: content.value)
+        }
+        clipboardContentCache[item.id] = contentData
+      }
+    }
+    
     // Enable multi-paste mode to prevent clipboard monitoring (only for clipboard items)
     let hasClipboardItems = (contextSelectedItems + exampleSelectedItems).contains { $0.sourceType == .clipboard }
     if hasClipboardItems {
@@ -379,7 +393,9 @@ class AppState {
       contextMediaItems: contextMediaItems,
       exampleMediaItems: exampleMediaItems,
       promptText: currentPromptText,
-      hasClipboardItems: hasClipboardItems
+      hasClipboardItems: hasClipboardItems,
+      originalClipboardState: originalClipboardState,
+      clipboardContentCache: clipboardContentCache
     )
   }
   
@@ -390,11 +406,13 @@ class AppState {
     contextMediaItems: [ContentItem],
     exampleMediaItems: [ContentItem],
     promptText: String,
-    hasClipboardItems: Bool
+    hasClipboardItems: Bool,
+    originalClipboardState: Clipboard.ClipboardSnapshot,
+    clipboardContentCache: [UUID: [Clipboard.ClipboardContentData]]
   ) {
     // Step 1: Combine and paste all text content as one operation (off main thread)
     if !contextTextItems.isEmpty || !exampleTextItems.isEmpty || !promptText.isEmpty || !promptChips.isEmpty {
-      Task.detached { [contextTextItems, exampleTextItems, promptText, promptChips] in
+      Task.detached { [contextTextItems, exampleTextItems, promptText, promptChips, originalClipboardState, clipboardContentCache] in
         let plain = await CombinedContentBuilder.build(
           context: contextTextItems,
           examples: exampleTextItems,
@@ -410,7 +428,7 @@ class AppState {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
               // Paste context media first, then example media to preserve order
               let allMedia = contextMediaItems + exampleMediaItems
-              self.pasteMediaItems(allMedia, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems)
+              self.pasteMediaItems(allMedia, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
             }
           }
         }
@@ -418,15 +436,15 @@ class AppState {
     } else {
       // No text content, just paste media items
       let allMedia = contextMediaItems + exampleMediaItems
-      pasteMediaItems(allMedia, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems)
+      pasteMediaItems(allMedia, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
     }
   }
   
   @MainActor
-  private func pasteMediaItems(_ mediaItems: [ContentItem], index: Int, promptText: String, hasClipboardItems: Bool) {
+  private func pasteMediaItems(_ mediaItems: [ContentItem], index: Int, promptText: String, hasClipboardItems: Bool, originalClipboardState: Clipboard.ClipboardSnapshot, clipboardContentCache: [UUID: [Clipboard.ClipboardContentData]]) {
     guard index < mediaItems.count else {
       // All operations complete, restore state
-      finalizeCombinedPaste(promptText: promptText, hasClipboardItems: hasClipboardItems)
+      finalizeCombinedPaste(promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState)
       return
     }
     
@@ -435,7 +453,7 @@ class AppState {
     // Skip folders - their contents are already captured in the selection
     if item.isFolder {
       // Move to next item without pasting
-      pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems)
+      pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
       return
     }
     
@@ -450,10 +468,10 @@ class AppState {
       pasteboard.clearContents()
       pasteboard.writeObjects([fileURL as NSURL])
     } else if item.sourceType == .clipboard {
-      // For clipboard items without fileURL, use the original HistoryItem copy method  
-      // to preserve all clipboard data types (like multiple file URLs)
-      if let historyDecorator = history.items.first(where: { $0.id == item.id }) {
-        Clipboard.shared.copy(historyDecorator.item)
+      // For clipboard items without fileURL, use cached content data
+      // to avoid SwiftData context issues
+      if let contentData = clipboardContentCache[item.id] {
+        Clipboard.shared.copyContentData(contentData)
       }
     }
     
@@ -463,17 +481,20 @@ class AppState {
       
       // Wait before next media item
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-        self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems)
+        self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
       }
     }
   }
   
   @MainActor
-  private func finalizeCombinedPaste(promptText: String, hasClipboardItems: Bool) {
+  private func finalizeCombinedPaste(promptText: String, hasClipboardItems: Bool, originalClipboardState: Clipboard.ClipboardSnapshot) {
     // Disable multi-paste mode (only if we had clipboard items)
     if hasClipboardItems {
       Clipboard.shared.setMultiPasteMode(false)
     }
+    
+    // Restore original clipboard content to prevent combined text from lingering
+    Clipboard.shared.restoreClipboardState(originalClipboardState)
     
     // Only call this in the App Store version.
     AppStoreReview.ask()
