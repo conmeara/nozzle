@@ -84,6 +84,7 @@ struct UniversalItemView: View {
     @Environment(ContentManager.self) private var contentManager
     @State private var isRenaming: Bool = false
     @State private var editingName: String = ""
+    @State private var itemFrameWidth: CGFloat = 0
     @FocusState private var renameFocused: Bool
     
     var body: some View {
@@ -94,10 +95,10 @@ struct UniversalItemView: View {
             } else {
                 // Use regular file view with indentation
                 HStack(spacing: 0) {
-                    // Indentation for depth - files align with folder content 
-                    if item.base.depth > 0 {
+                    // Indentation for depth (skip in Aggregated view — flat list of pasteable items)
+                    if item.base.depth > 0 && contentManager.activeSourceId != "aggregated" {
                         Spacer()
-                            .frame(width: CGFloat(item.base.depth) * 24.0)  // Increased from 20 to 24 for more child indentation
+                            .frame(width: CGFloat(item.base.depth) * 24.0)
                     }
                     
                     ListItemView(
@@ -109,7 +110,7 @@ struct UniversalItemView: View {
                         shortcuts: [],                       // no numbered shortcuts for file sources in Phase 1
                         isSelected: item.isSelected,
                         selectionSymbol: (item.isExample ? "pencil.circle.fill" : "checkmark.circle.fill"),
-                        selectionSymbolColor: (item.isExample ? .yellow : .white),
+                        selectionSymbolColor: .white,
                         selectionBackgroundColor: (item.isExample ? .yellow : nil),
                         onCopyAction: { item.copyToClipboard() }
                     ) { titleView() }
@@ -120,9 +121,9 @@ struct UniversalItemView: View {
                             NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
                             return
                         }
-                        // Check if click is in the checkbox/selection area (right 60 pixels)
+                        // Check if click is in the checkbox/selection area (right 42 pixels)
                         let selectionAreaThreshold: CGFloat = 42
-                        let frameWidth: CGFloat = 300  // Approximate width
+                        let frameWidth = itemFrameWidth > 0 ? itemFrameWidth : 300  // fallback width
                         
                         if location.x > (frameWidth - selectionAreaThreshold) && item.isSelected {
                             // Toggle example state when clicking the selected checkmark area
@@ -174,6 +175,17 @@ struct UniversalItemView: View {
                 }
             }
         }
+        .background(
+            GeometryReader { geometry in
+                Color.clear
+                    .onAppear {
+                        itemFrameWidth = geometry.size.width
+                    }
+                    .onChange(of: geometry.size) { _, newSize in
+                        itemFrameWidth = newSize.width
+                    }
+            }
+        )
         .contextMenu {
             if item.base.sourceId == "prompts", let url = item.base.fileURL {
                 Button("New") {

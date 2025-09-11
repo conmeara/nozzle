@@ -22,6 +22,8 @@ final class ContentManager {
     private(set) var selectedItemIds: Set<UUID> = []
     // Subset of selected items that are marked as examples
     private(set) var exampleItemIds: Set<UUID> = []
+    // Observable version counter to trigger UI updates when selection changes
+    private(set) var selectionVersion: Int = 0
     
     // Preview focus tracking
     private(set) var focusedItemId: UUID?
@@ -44,7 +46,10 @@ final class ContentManager {
     @ObservationIgnored private var _decoratorCache: [String: [UUID: UniversalItemDecorator]] = [:] // sourceId -> [itemId -> decorator]
     @ObservationIgnored private var _decoratorCacheDirty: Set<String> = [] // sourceIds that need cache refresh
     
+    // (Removed) Aggregated display version tracking; Aggregated now shows only pasteable items
+    
     var selectedItems: [ContentItem] {
+        _ = selectionVersion  // Establish dependency for SwiftUI observation
         if _selectedCacheDirty {
             _selectedCache = makeSelectedItems()
             _selectedCacheDirty = false
@@ -59,6 +64,11 @@ final class ContentManager {
     
     var selectedExampleItems: [ContentItem] {
         selectedItems.filter { exampleItemIds.contains($0.id) }
+    }
+    
+    // Count of selected files only (excludes folders for badge display)
+    var selectedFileCount: Int {
+        selectedItems.filter { !$0.isFolder }.count
     }
     
     var focusedContentItem: ContentItem? {
@@ -99,40 +109,30 @@ final class ContentManager {
     private func toggleFolderSelection(_ folderId: UUID) {
         guard let folderItem = allItems.first(where: { $0.id == folderId }),
               folderItem.isFolder,
-              let folderPath = folderItem.fileURL?.path else { return }
+              let folderPath = folderItem.fileURL?.path,
+              let folderURL = folderItem.fileURL else { return }
         
         let children = allItems.filter { $0.parentPath == folderPath }
         let currentState = getFolderSelectionState(folderId)
-        
         
         switch currentState {
         case .none:
             // No children selected - select everything
             if children.isEmpty {
-                // Collapsed folder - select the folder itself
-                selectedItemIds.insert(folderId)
+                // Collapsed folder - enumerate and select all descendant files
+                selectAllDescendantFiles(in: folderURL)
             } else {
-                // Expanded folder - select all children
+                // Expanded folder - select all visible children
                 selectFolderChildren(folderId)
             }
             
-        case .partial:
-            // Some children selected - deselect everything
+        case .partial, .all:
+            // Some or all children selected - deselect everything
             if children.isEmpty {
-                // Collapsed folder - deselect the folder itself
-                selectedItemIds.remove(folderId)
+                // Collapsed folder - enumerate and deselect all descendant files
+                deselectAllDescendantFiles(in: folderURL)
             } else {
-                // Expanded folder - deselect all children
-                deselectFolderChildren(folderId)
-            }
-            
-        case .all:
-            // Everything selected - deselect everything
-            if children.isEmpty {
-                // Collapsed folder - deselect the folder itself
-                selectedItemIds.remove(folderId)
-            } else {
-                // Expanded folder - deselect all children
+                // Expanded folder - deselect all visible children
                 deselectFolderChildren(folderId)
             }
         }
@@ -144,22 +144,20 @@ final class ContentManager {
               folderItem.isFolder,
               let folderPath = folderItem.fileURL?.path else { return }
         
-        // Select all visible children of this folder
+        // Select all visible children of this folder (but not the folder itself)
         for item in allItems {
             if item.parentPath == folderPath {
-                selectedItemIds.insert(item.id)
-                // Children are selected as context by default (not examples)
-                exampleItemIds.remove(item.id)
-                // Recursively select nested folder children
                 if item.isFolder {
+                    // Recursively select nested folder children
                     selectFolderChildren(item.id)
+                } else {
+                    // Only add file IDs to selectedItemIds, not folder IDs
+                    selectedItemIds.insert(item.id)
+                    // Children are selected as context by default (not examples)
+                    exampleItemIds.remove(item.id)
                 }
             }
         }
-        
-        // Also select the folder itself (for consistency when expanding/collapsing)
-        selectedItemIds.insert(folderId)
-        exampleItemIds.remove(folderId)
         markSelectedDirty()
     }
     
@@ -168,23 +166,41 @@ final class ContentManager {
               folderItem.isFolder,
               let folderPath = folderItem.fileURL?.path else { return }
         
-        // Deselect all children of this folder
+        // Deselect all children of this folder (but not the folder itself)
         for item in allItems {
             if item.parentPath == folderPath {
-                selectedItemIds.remove(item.id)
-                // Remove example flag when deselecting children
-                exampleItemIds.remove(item.id)
-                // Recursively deselect nested folder children
                 if item.isFolder {
+                    // Recursively deselect nested folder children
                     deselectFolderChildren(item.id)
+                } else {
+                    // Only remove file IDs from selectedItemIds, not folder IDs
+                    selectedItemIds.remove(item.id)
+                    // Remove example flag when deselecting children
+                    exampleItemIds.remove(item.id)
                 }
             }
         }
-        
-        // Also deselect the folder itself
-        selectedItemIds.remove(folderId)
-        exampleItemIds.remove(folderId)
         markSelectedDirty()
+    }
+    
+    // Helper functions for collapsed folder selection
+    private func selectAllDescendantFiles(in folderURL: URL) {
+        let descendantURLs = enumerateDescendantFiles(at: folderURL)
+        for url in descendantURLs {
+            let fileId = stableUUID(for: url)
+            selectedItemIds.insert(fileId)
+            // Files are selected as context by default (not examples)
+            exampleItemIds.remove(fileId)
+        }
+    }
+    
+    private func deselectAllDescendantFiles(in folderURL: URL) {
+        let descendantURLs = enumerateDescendantFiles(at: folderURL)
+        for url in descendantURLs {
+            let fileId = stableUUID(for: url)
+            selectedItemIds.remove(fileId)
+            exampleItemIds.remove(fileId)
+        }
     }
     
     func clearSelection() {
@@ -197,29 +213,67 @@ final class ContentManager {
         markSelectedDirty()
     }
     
-    func isSelected(_ id: UUID) -> Bool {
-        selectedItemIds.contains(id)
+    func isSelected(_ id: UUID) -> Bool { selectedItemIds.contains(id) }
+
+    // Treat an item as selected if:
+    // - It is explicitly selected, or
+    // - It is a file inside any selected folder (use path prefix check)
+    func isSelected(effectively item: ContentItem) -> Bool {
+        if selectedItemIds.contains(item.id) { return true }
+        guard item.sourceType == .folder, let itemPath = item.fileURL?.path else { return false }
+        // Any selected folder that is an ancestor of this item implies effective selection
+        for fid in selectedItemIds {
+            if let folder = allItems.first(where: { $0.id == fid && $0.isFolder }),
+               let folderPath = folder.fileURL?.path,
+               itemPath.hasPrefix(folderPath.hasSuffix("/") ? folderPath : folderPath + "/") {
+                // Ensure not the folder itself
+                if folder.id != item.id { return true }
+            }
+        }
+        return false
     }
     
     func getFolderSelectionState(_ folderId: UUID) -> FolderSelectionState {
         guard let folderItem = allItems.first(where: { $0.id == folderId }),
               folderItem.isFolder,
               let folderPath = folderItem.fileURL?.path else { return .none }
-        
+
         // Get all visible children of this folder
         let children = allItems.filter { $0.parentPath == folderPath }
-        
-        // If folder is collapsed (no visible children), check if folder itself is selected
+
+        // If folder is collapsed (no visible children), compute state from real descendants on disk
         if children.isEmpty {
-            return selectedItemIds.contains(folderId) ? .all : .none
+            let urls = enumerateDescendantFiles(at: URL(fileURLWithPath: folderPath))
+            guard !urls.isEmpty else { return .none }
+            let selectedCount = urls.reduce(0) { acc, url in
+                let id = stableUUID(for: url)
+                return acc + (selectedItemIds.contains(id) ? 1 : 0)
+            }
+            if selectedCount == 0 { return .none }
+            if selectedCount == urls.count { return .all }
+            return .partial
         }
         
-        // For expanded folders, calculate based on children selection
-        let selectedChildren = children.filter { selectedItemIds.contains($0.id) }
+        // For expanded folders, calculate based on children selection (only count files, not subfolders)
+        let fileChildren = children.filter { !$0.isFolder }
+        let selectedFileChildren = fileChildren.filter { selectedItemIds.contains($0.id) }
         
-        if selectedChildren.count == 0 {
+        // Also need to check if any subfolders have selected descendants
+        let subfolders = children.filter { $0.isFolder }
+        var hasSelectedInSubfolders = false
+        for subfolder in subfolders {
+            if getFolderSelectionState(subfolder.id) != .none {
+                hasSelectedInSubfolders = true
+                break
+            }
+        }
+        
+        let totalSelected = selectedFileChildren.count + (hasSelectedInSubfolders ? 1 : 0)
+        let totalItems = fileChildren.count + (subfolders.isEmpty ? 0 : 1)
+        
+        if totalSelected == 0 {
             return .none
-        } else if selectedChildren.count == children.count {
+        } else if totalSelected == totalItems && selectedFileChildren.count == fileChildren.count {
             return .all
         } else {
             return .partial
@@ -277,6 +331,16 @@ final class ContentManager {
         sources[source.id] = source
         if !orderedSourceIds.contains(source.id) {
             orderedSourceIds.append(source.id)
+        }
+        
+        // Sync initial selection state for clipboard items
+        if source is ClipboardSource {
+            for item in History.shared.items where item.isSelected {
+                selectedItemIds.insert(item.id)
+            }
+            if !selectedItemIds.isEmpty {
+                markSelectedDirty()
+            }
         }
     }
     
@@ -428,24 +492,33 @@ final class ContentManager {
         decorator.updateBase(originalItem)
     }
     
-    // Get cached decorators for selected context items
+    // Get cached decorators for selected context items (Aggregated shows only pasteable files)
     var selectedContextDecorators: [UniversalItemDecorator] {
-        selectedContextItems.compactMap { item in
+        let displayItems = filteredForAggregatedDisplay(selectedContextItems)
+        return displayItems.compactMap { item in
             // Ensure the source decorators are loaded first
             _ = getDecorators(for: item.sourceId)
-            // Find the decorator from the appropriate source cache
-            return _decoratorCache[item.sourceId]?[item.id]
+            // Prefer cached decorator; fall back to ad-hoc for ephemeral items
+            return _decoratorCache[item.sourceId]?[item.id] ?? UniversalItemDecorator(item)
         }
     }
     
-    // Get cached decorators for selected example items  
+    // Get cached decorators for selected example items (Aggregated shows only pasteable files)
     var selectedExampleDecorators: [UniversalItemDecorator] {
-        selectedExampleItems.compactMap { item in
+        let displayItems = filteredForAggregatedDisplay(selectedExampleItems)
+        return displayItems.compactMap { item in
             // Ensure the source decorators are loaded first
             _ = getDecorators(for: item.sourceId)
-            // Find the decorator from the appropriate source cache
-            return _decoratorCache[item.sourceId]?[item.id]
+            // Prefer cached decorator; fall back to ad-hoc for ephemeral items
+            return _decoratorCache[item.sourceId]?[item.id] ?? UniversalItemDecorator(item)
         }
+    }
+
+    // In Aggregated tab, show only pasteable leaf items (no folder rows)
+    private func filteredForAggregatedDisplay(_ items: [ContentItem]) -> [ContentItem] {
+        guard activeSourceId == "aggregated" else { return items }
+        // Drop folders; keep everything else (files, clipboard entries, images)
+        return items.filter { !$0.isFolder }
     }
     
     // Search
@@ -529,7 +602,7 @@ final class ContentManager {
         return false
     }
     
-    private func stableUUID(for url: URL) -> UUID {
+    func stableUUID(for url: URL) -> UUID {
         let snap = FileIdentity.snapshot(for: url)
         return FileSystemSource.makeStableUUID(identity: snap.identity, fallbackPath: url.absoluteString)
     }
@@ -598,46 +671,65 @@ extension Notification.Name {
 extension ContentManager {
     func markSelectedDirty() {
         _selectedCacheDirty = true
+        selectionVersion += 1  // Force UI update
     }
     
     private func makeSelectedItems() -> [ContentItem] {
         let items = allItems
-        guard !selectedItemIds.isEmpty, !items.isEmpty else { return [] }
-        
+        guard !selectedItemIds.isEmpty else { return [] }
+
+        // For folder sources, we need to handle collapsed folders with selected children
+        var hiddenSelectedItems: [ContentItem] = []
+
+        // Check each source for selected items that might be hidden (files in collapsed folders)
+        for sourceId in orderedSourceIds {
+            guard let source = sources[sourceId] as? FileSystemSource else { continue }
+            // Get all selected IDs that aren't visible in current items
+            let visibleIds = Set(items.map { $0.id })
+            let hiddenSelectedIds = selectedItemIds.subtracting(visibleIds)
+
+            if !hiddenSelectedIds.isEmpty {
+                // Scan the filesystem to find these hidden selected files
+                let foundItems = source.findItemsById(hiddenSelectedIds)
+                hiddenSelectedItems.append(contentsOf: foundItems.filter { !$0.isFolder })
+            }
+        }
+
+        // Combine visible and hidden selected items
+        let allItemsIncludingHidden = items + hiddenSelectedItems
+
         // Index folders by path for fast parent lookup
         var folderByPath: [String: ContentItem] = [:]
-        folderByPath.reserveCapacity(items.count)
-        for item in items where item.isFolder {
+        folderByPath.reserveCapacity(allItemsIncludingHidden.count)
+        for item in allItemsIncludingHidden where item.isFolder {
             if let path = item.fileURL?.path { folderByPath[path] = item }
         }
         
-        // Determine which parent folders need to be included due to selected children
+        // Determine which parent folders need to be included for display due to selected children
         var neededParentIds: Set<UUID> = []
-        for item in items {
+        for item in allItemsIncludingHidden {
             guard selectedItemIds.contains(item.id) else { continue }
             if let parentPath = item.parentPath, let parent = folderByPath[parentPath] {
-                if !selectedItemIds.contains(parent.id) {
-                    neededParentIds.insert(parent.id)
-                }
+                neededParentIds.insert(parent.id)
             }
         }
         
-        // Build result with better hierarchical grouping
+        // Build result with hierarchical grouping: parent folders followed by their selected children
         var result: [ContentItem] = []
         result.reserveCapacity(selectedItemIds.count + neededParentIds.count)
         var seen: Set<UUID> = []
-        
-        // Process items in hierarchical order: folders followed immediately by their children
-        for item in items {
-            // Add folders (both needed parents and explicitly selected)
-            if item.isFolder && (neededParentIds.contains(item.id) || selectedItemIds.contains(item.id)) {
+
+        // Process items in hierarchical order: folders followed by their children
+        for item in allItemsIncludingHidden {
+            // Add parent folders that need to be shown for context
+            if item.isFolder && neededParentIds.contains(item.id) {
                 if !seen.contains(item.id) {
                     result.append(item)
                     seen.insert(item.id)
-                    
+
                     // Immediately add children of this folder that are selected
                     let folderPath = item.fileURL?.path
-                    for childItem in items {
+                    for childItem in allItemsIncludingHidden {
                         if selectedItemIds.contains(childItem.id) && 
                            !seen.contains(childItem.id) && 
                            childItem.parentPath == folderPath {
@@ -650,7 +742,7 @@ extension ContentManager {
         }
         
         // Add any remaining selected items that don't have a parent (e.g., clipboard items)
-        for item in items {
+        for item in allItemsIncludingHidden {
             if selectedItemIds.contains(item.id) && !seen.contains(item.id) {
                 result.append(item)
                 seen.insert(item.id)

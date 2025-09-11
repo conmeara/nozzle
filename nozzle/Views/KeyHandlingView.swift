@@ -13,6 +13,8 @@ struct KeyHandlingView<Content: View>: View {
   @FocusState.Binding var searchFocused: Bool
   @Binding var currentTabPage: Int
   let totalPages: Int
+  let onPreviousTab: () -> Void
+  let onNextTab: () -> Void
   @ViewBuilder let content: () -> Content
 
   @Environment(AppState.self) private var appState
@@ -45,28 +47,43 @@ struct KeyHandlingView<Content: View>: View {
               }
               return .handled
             }
-            // Plain Enter - immediately paste current item
-            if let item = appState.history.selectedItem {
-              appState.popup.close()
-              Clipboard.shared.copy(item.item)
-              Clipboard.shared.paste()
-            }
-            return .handled
-          } else if modifierFlags == [.command, .shift] {
-            // Command-Shift-Enter - paste just the focused item
-            if let item = appState.history.selectedItem {
-              appState.popup.close()
-              Clipboard.shared.copy(item.item)
-              Clipboard.shared.paste()
-            }
-            return .handled
-          } else if modifierFlags == .command {
-            // Command-Enter (combined paste)
+            // Plain Enter - combined paste (swapped behavior)
             // Only handle if we have multiple selections or prompt text
-            if !appState.history.selectedItems.isEmpty || !appState.promptText.isEmpty {
+            if !contentManager.selectedItems.isEmpty || !appState.promptText.isEmpty {
               appState.performCombinedPaste()
               return .handled
             }
+            return .handled
+          } else if modifierFlags == .command {
+            // Special handling for prompts tab - paste just the prompt content
+            if contentManager.activeSourceId == "prompts",
+               let focusedItem = contentManager.focusedContentItem,
+               let url = focusedItem.fileURL {
+              // Load and paste prompt content directly
+              if let text = TextFileFormatter.loadPlainText(from: url) {
+                appState.popup.close()
+                Clipboard.shared.copyString(text)
+                Clipboard.shared.paste()
+              }
+              return .handled
+            }
+            // Command-Enter - immediately paste current item (swapped behavior)
+            if let item = appState.history.selectedItem {
+              // Clipboard item
+              appState.popup.close()
+              Clipboard.shared.copy(item.item)
+              Clipboard.shared.paste()
+            } else if let focusedItem = contentManager.focusedContentItem {
+              // File source item - skip folders
+              appState.popup.close()
+              if let fileURL = focusedItem.fileURL, !focusedItem.isFolder {
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.writeObjects([fileURL as NSURL])
+                Clipboard.shared.paste()
+              }
+            }
+            return .handled
           } else if modifierFlags == .shift {
             // Shift+Enter in prompt mode - let TextEditor handle naturally for newlines
             if !appState.isSearchMode {
@@ -118,16 +135,6 @@ struct KeyHandlingView<Content: View>: View {
         case .deleteOneCharFromSearch:
           searchFocused = true
           _ = searchQuery.popLast()
-          return .handled
-        case .deleteLastWordFromSearch:
-          searchFocused = true
-          let newQuery = searchQuery.split(separator: " ").dropLast().joined(separator: " ")
-          if newQuery.isEmpty {
-            searchQuery = ""
-          } else {
-            searchQuery = "\(newQuery) "
-          }
-
           return .handled
         case .moveToNext:
           guard NSApp.characterPickerWindow == nil else {
@@ -281,15 +288,53 @@ struct KeyHandlingView<Content: View>: View {
             await DictationManager.shared.toggleDictation(for: binding)
           }
           return .handled
+        case .enhancePrompt:
+          // Enhance prompt if not in search mode
+          if !appState.isSearchMode {
+            appState.performEnhancePrompt()
+          }
+          return .handled
+        case .openPrompts:
+          // Toggle prompts tab - open if not active, close if active
+          if contentManager.activeSourceId == "prompts" {
+            // Already in prompts, return to previous tab
+            contentManager.activeSourceId = contentManager.lastNonPromptsSourceId
+          } else {
+            // Not in prompts, open prompts and save current tab
+            contentManager.lastNonPromptsSourceId = contentManager.activeSourceId
+            contentManager.activeSourceId = "prompts"
+          }
+          return .handled
         case .toggleSelection:
-          // Tab key - toggle selection
-          if let item = appState.history.selectedItem {
-            item.isSelected.toggle()
+          // Special behavior for prompts tab - add as chip and return to previous tab
+          if contentManager.activeSourceId == "prompts",
+             let focusedItem = contentManager.focusedContentItem,
+             let url = focusedItem.fileURL {
+            // Add as prompt chip
+            appState.addPromptChip(url: url)
+            // Return to previous tab
+            contentManager.activeSourceId = contentManager.lastNonPromptsSourceId
+            return .handled
+          }
+          // Default tab behavior for other sources
+          if contentManager.activeSourceId == "clipboard" {
+            if let item = appState.history.selectedItem {
+              contentManager.toggleSelection(item.id)
+              appState.updateFooterItemVisibility()
+            }
+          } else if let focusedItem = contentManager.focusedContentItem {
+            contentManager.toggleSelection(focusedItem.id)
             appState.updateFooterItemVisibility()
           }
           return .handled
+        case .previousTab:
+          onPreviousTab()
+          return .handled
+        case .nextTab:
+          onNextTab()
+          return .handled
         case .previousTabPage:
-          // Cmd+[ - navigate to previous tab page
+          // Cmd+Shift+[ - navigate to previous tab page
           if currentTabPage > 0 {
             withAnimation(.easeInOut(duration: 0.2)) {
               currentTabPage -= 1
@@ -297,7 +342,7 @@ struct KeyHandlingView<Content: View>: View {
           }
           return .handled
         case .nextTabPage:
-          // Cmd+] - navigate to next tab page
+          // Cmd+Shift+] - navigate to next tab page
           if currentTabPage < totalPages - 1 {
             withAnimation(.easeInOut(duration: 0.2)) {
               currentTabPage += 1
@@ -315,7 +360,7 @@ struct KeyHandlingView<Content: View>: View {
            let key = Sauce.shared.key(for: Int(event.keyCode)),
            let item = appState.history.items.first(where: { $0.shortcuts.contains(where: { $0.key == key }) }) {
           // Toggle the item's selection
-          item.isSelected.toggle()
+          contentManager.toggleSelection(item.id)
           appState.selection = item.id
           appState.updateFooterItemVisibility()
           return .handled

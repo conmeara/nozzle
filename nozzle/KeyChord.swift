@@ -29,13 +29,18 @@ enum KeyChord: CaseIterable {
   static var toggleDictationKey: Key? { Sauce.shared.key(shortcut: .toggleDictation) }
   static var toggleDictationModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .toggleDictation)?.modifiers }
 
+  static var enhancePromptKey: Key? { Sauce.shared.key(shortcut: .enhancePrompt) }
+  static var enhancePromptModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .enhancePrompt)?.modifiers }
+
+  static var openPromptsKey: Key? { Sauce.shared.key(shortcut: .openPrompts) }
+  static var openPromptsModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .openPrompts)?.modifiers }
+
   case clearHistory
   case clearHistoryAll
   case clearSearch
   case clearSelection
   case deleteCurrentItem
   case deleteOneCharFromSearch
-  case deleteLastWordFromSearch
   case ignored
   case moveToNext
   case moveToLast
@@ -48,7 +53,11 @@ enum KeyChord: CaseIterable {
   case togglePreview
   case togglePromptMode
   case toggleDictation
+  case enhancePrompt
+  case openPrompts
   case toggleSelection
+  case previousTab
+  case nextTab
   case previousTabPage
   case nextTabPage
   case unknown
@@ -92,8 +101,6 @@ enum KeyChord: CaseIterable {
       self = .deleteCurrentItem
     case (.h, [.control]):
       self = .deleteOneCharFromSearch
-    case (.w, [.control]):
-      self = .deleteLastWordFromSearch
     case (.downArrow, []),
          (.downArrow, [.shift]),
          (.n, [.control]),
@@ -129,11 +136,19 @@ enum KeyChord: CaseIterable {
       self = .togglePromptMode
     case (KeyChord.toggleDictationKey, KeyChord.toggleDictationModifiers):
       self = .toggleDictation
+    case (KeyChord.enhancePromptKey, KeyChord.enhancePromptModifiers):
+      self = .enhancePrompt
+    case (KeyChord.openPromptsKey, KeyChord.openPromptsModifiers):
+      self = .openPrompts
     case (.tab, []):
       self = .toggleSelection
     case (.leftBracket, [.command]):
-      self = .previousTabPage
+      self = .previousTab
     case (.rightBracket, [.command]):
+      self = .nextTab
+    case (.leftBracket, [.command, .shift]):
+      self = .previousTabPage
+    case (.rightBracket, [.command, .shift]):
       self = .nextTabPage
     case (_, _) where !modifierFlags.isDisjoint(with: [.command, .control, .option]):
       self = .ignored

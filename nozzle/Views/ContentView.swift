@@ -81,7 +81,65 @@ struct ContentView: View {
         searchQuery: $appState.history.searchQuery,
         searchFocused: $inputFocused,
         currentTabPage: $currentTabPage,
-        totalPages: totalPages
+        totalPages: totalPages,
+        onPreviousTab: {
+          let ids = ["aggregated"] + allTabs.map { $0.id }
+          let currentId = ids.contains(selectedTab) ? selectedTab : (ids.contains(contentManager.activeSourceId) ? contentManager.activeSourceId : "aggregated")
+          guard let idx = ids.firstIndex(of: currentId) else { return }
+          let newIdx = (idx - 1 + ids.count) % ids.count
+          let newId = ids[newIdx]
+          selectedTab = newId
+          contentManager.activeSourceId = newId
+          if let fileSource = contentManager.sources[newId] as? FileSystemSource {
+            Task { await fileSource.refreshIfNeeded() }
+          }
+          if newId != "aggregated" {
+            if let tabIndex = allTabs.firstIndex(where: { $0.id == newId }) {
+              // Find page containing tabIndex using pageBreaks
+              var targetPage = 0
+              for i in 0..<pageBreaks.count {
+                let start = pageBreaks[i]
+                let end = (i + 1 < pageBreaks.count) ? pageBreaks[i + 1] : allTabs.count
+                if tabIndex >= start && tabIndex < end {
+                  targetPage = i
+                  break
+                }
+              }
+              if targetPage != currentTabPage {
+                withAnimation(.easeInOut(duration: 0.2)) { currentTabPage = targetPage }
+              }
+            }
+          }
+        },
+        onNextTab: {
+          let ids = ["aggregated"] + allTabs.map { $0.id }
+          let currentId = ids.contains(selectedTab) ? selectedTab : (ids.contains(contentManager.activeSourceId) ? contentManager.activeSourceId : "aggregated")
+          guard let idx = ids.firstIndex(of: currentId) else { return }
+          let newIdx = (idx + 1) % ids.count
+          let newId = ids[newIdx]
+          selectedTab = newId
+          contentManager.activeSourceId = newId
+          if let fileSource = contentManager.sources[newId] as? FileSystemSource {
+            Task { await fileSource.refreshIfNeeded() }
+          }
+          if newId != "aggregated" {
+            if let tabIndex = allTabs.firstIndex(where: { $0.id == newId }) {
+              // Find page containing tabIndex using pageBreaks
+              var targetPage = 0
+              for i in 0..<pageBreaks.count {
+                let start = pageBreaks[i]
+                let end = (i + 1 < pageBreaks.count) ? pageBreaks[i + 1] : allTabs.count
+                if tabIndex >= start && tabIndex < end {
+                  targetPage = i
+                  break
+                }
+              }
+              if targetPage != currentTabPage {
+                withAnimation(.easeInOut(duration: 0.2)) { currentTabPage = targetPage }
+              }
+            }
+          }
+        }
       ) {
         VStack(spacing: 0) {
           // Header: chips (always show when present), input field, and controls with tabs
@@ -226,7 +284,7 @@ struct ContentView: View {
                   .padding(.all, 2)
               }
               .buttonStyle(PlainButtonStyle())
-              .help(appState.isSearchMode ? "Exit search mode" : (dictationManager.isRecording ? "Stop dictation (fn)" : "Start dictation (fn)"))
+              .help(appState.isSearchMode ? "Exit search mode" : (dictationManager.isRecording ? "Stop dictation (⌥D)" : "Start dictation (⌥D)"))
               
               
               // Enhance prompt button
@@ -238,48 +296,9 @@ struct ContentView: View {
                     try? await Task.sleep(for: .milliseconds(50))
                     inputFocused = true
                   }
-                } else if !appState.isEnhancingPrompt {
-                  // Set flag to prevent prompt editor from exiting
-                  contentManager.enhanceButtonClicked = true
-                  
-                  // Enhance prompt with AI (only if not already enhancing)
-                  Task {
-                    let textToEnhance: String
-                    let isEnhancingEditor: Bool
-                    
-                    // Determine what text to enhance
-                    if contentManager.isPromptEditorEditing && !contentManager.promptEditorText.isEmpty {
-                      textToEnhance = contentManager.promptEditorText
-                      isEnhancingEditor = true
-                    } else if !appState.promptText.isEmpty {
-                      textToEnhance = appState.promptText
-                      isEnhancingEditor = false
-                    } else {
-                      contentManager.enhanceButtonClicked = false
-                      return
-                    }
-                    
-                    appState.isEnhancingPrompt = true
-                    do {
-                      let enhanced = try await PromptEnhancer.shared.enhance(textToEnhance)
-                      if isEnhancingEditor {
-                        // Update prompt editor text
-                        contentManager.updatePromptEditorText(enhanced)
-                        // Also trigger a refresh in the editor by posting a notification
-                        NotificationCenter.default.post(name: .promptEditorTextUpdated, object: enhanced)
-                      } else {
-                        // Save original for undo support
-                        appState.originalPromptBeforeEnhancement = appState.promptText
-                        appState.promptText = enhanced
-                      }
-                    } catch {
-                      // Handle error - could show alert or tooltip
-                      print("Enhancement error: \(error.localizedDescription)")
-                    }
-                    appState.isEnhancingPrompt = false
-                    // Reset the flag
-                    contentManager.enhanceButtonClicked = false
-                  }
+                } else {
+                  // Enhance prompt with AI
+                  appState.performEnhancePrompt()
                 }
               }) {
                 ZStack {
@@ -315,7 +334,7 @@ struct ContentView: View {
                 // Always visible: Aggregated tab
                 TabButtonWithIcon(
                   icon: "square.stack.3d.up.badge.automatic.fill",
-                  badgeCount: contentManager.selectedItems.count,
+                  badgeCount: contentManager.selectedFileCount,
                   isSelected: selectedTab == "aggregated"
                 ) {
                   selectedTab = "aggregated"
