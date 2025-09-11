@@ -2,63 +2,49 @@ import SwiftUI
 import Defaults
 @preconcurrency import AppKit
 import LaunchAtLogin
-import UserNotifications
 
 @Observable @MainActor
 final class OnboardingState {
     enum Screen: Int, CaseIterable {
-        case welcome = 0
-        case permissions = 1
-        case shortcuts = 2
-        case resources = 3
-        case finish = 4
+        case welcomeSetup = 0
+        case shortcuts = 1
+        case getStarted = 2
         
         var title: String {
             switch self {
-            case .welcome:
+            case .welcomeSetup:
                 return "Welcome to nozzle"
-            case .permissions:
-                return "Permissions"
             case .shortcuts:
                 return "Keyboard Shortcuts"
-            case .resources:
-                return "Resources"
-            case .finish:
+            case .getStarted:
                 return "You're All Set!"
             }
         }
         
         var description: String {
             switch self {
-            case .welcome:
-                return "Let’s do a quick setup to tailor nozzle to your needs."
-            case .permissions:
-                return "Grant permissions for the best experience"
+            case .welcomeSetup:
+                return "Let's do a quick setup to tailor nozzle to your needs."
             case .shortcuts:
                 return "Customize your keyboard shortcuts"
-            case .resources:
-                return "Learn prompt engineering and get help"
-            case .finish:
+            case .getStarted:
                 return "nozzle is ready to boost your productivity"
             }
         }
     }
     
-    var currentScreen: Screen = .welcome
+    var currentScreen: Screen = .welcomeSetup
     var hasAccessibilityPermission = false
-    var hasNotificationPermission = false
     var launchAtLoginEnabled = false
     
     // Computed properties
     var canContinue: Bool {
         switch currentScreen {
-        case .welcome:
-            return true
-        case .permissions:
+        case .welcomeSetup:
             return hasAccessibilityPermission // Require accessibility at minimum
-        case .shortcuts, .resources:
+        case .shortcuts:
             return true
-        case .finish:
+        case .getStarted:
             return false // No continue from finish
         }
     }
@@ -85,10 +71,6 @@ final class OnboardingState {
     nonisolated func checkPermissions() {
         Task { @MainActor in
             hasAccessibilityPermission = AXIsProcessTrustedWithOptions(nil)
-            
-            // Check notification permission status
-            let settings = await UNUserNotificationCenter.current().notificationSettings()
-            hasNotificationPermission = settings.authorizationStatus == .authorized
         }
     }
     
@@ -97,14 +79,6 @@ final class OnboardingState {
         // For now, just open System Settings manually
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
             NSWorkspace.shared.open(url)
-        }
-    }
-    
-    func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { [weak self] granted, _ in
-            DispatchQueue.main.async {
-                self?.hasNotificationPermission = granted
-            }
         }
     }
     
@@ -125,7 +99,7 @@ final class OnboardingState {
     }
     
     func skipToFinish() {
-        currentScreen = .finish
+        currentScreen = .getStarted
     }
     
     func completeOnboarding() {

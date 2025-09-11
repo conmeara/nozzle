@@ -20,7 +20,8 @@ struct OnboardingView: View {
             // Navigation
             navigationButtons
                 .padding(.horizontal, 24)
-                .padding(.bottom, 16)
+                .padding(.vertical, 16)
+                .background(Color(NSColor.windowBackgroundColor))
         }
         .frame(minWidth: 680, minHeight: 520)
         .environment(onboardingState)
@@ -43,16 +44,12 @@ struct OnboardingView: View {
     @ViewBuilder
     private var currentScreenView: some View {
         switch onboardingState.currentScreen {
-        case .welcome:
-            WelcomeScreen()
-        case .permissions:
-            PermissionsScreen()
+        case .welcomeSetup:
+            WelcomeSetupScreen()
         case .shortcuts:
             ShortcutsScreen()
-        case .resources:
-            ResourcesScreen()
-        case .finish:
-            FinishScreen()
+        case .getStarted:
+            GetStartedScreen()
         }
     }
     
@@ -68,7 +65,7 @@ struct OnboardingView: View {
 
             Spacer()
 
-            if onboardingState.currentScreen == .finish {
+            if onboardingState.currentScreen == .getStarted {
                 Button("Get Started") { onboardingState.completeOnboarding() }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent)

@@ -6,13 +6,14 @@ struct ShortcutsScreen: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     
     var body: some View {
-        VStack(spacing: 12) {
-            essentialShortcutsSection
-            Spacer()
+        ScrollView {
+            VStack(spacing: 12) {
+                essentialShortcutsSection
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 8)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 8)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, alignment: .top)
     }
     
     @ViewBuilder

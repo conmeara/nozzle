@@ -1,25 +1,27 @@
 import SwiftUI
 import AppKit
 
-struct FinishScreen: View {
+struct GetStartedScreen: View {
     @Environment(OnboardingState.self) private var onboardingState
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @State private var showMenuBarTip = false
     
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            
-            // Success section
-            successSection
-            
-            // Menu bar tip
-            menuBarTipSection
-            
-            Spacer()
+        ScrollView {
+            VStack(spacing: 24) {
+                // Success section
+                successSection
+                
+                // Menu bar tip
+                menuBarTipSection
+                
+                // Resources section
+                resourcesSection
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 8)
         }
-        .padding(.horizontal, 24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, alignment: .top)
         .onAppear {
             // Animate the menu bar tip after a short delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -187,33 +189,63 @@ struct FinishScreen: View {
         }
     }
     
-    private var quickTipsSection: some View { EmptyView() }
-    
     @ViewBuilder
-    private func tipRow(icon: String, title: String, description: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 16))
-                .foregroundColor(Color(NSColor.controlAccentColor))
-                .frame(width: 24)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 14, weight: .medium))
+    private var resourcesSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("Resources")
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.primary)
-                
-                Text(description)
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
+                Spacer()
             }
             
-            Spacer()
+            VStack(spacing: 12) {
+                Text("Learn Prompt Engineering")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.primary)
+                
+                VStack(spacing: 8) {
+                    resourceRow(
+                        icon: "brain.head.profile",
+                        title: "OpenAI Prompt Engineering",
+                        subtitle: "Guide to effective prompting",
+                        url: "https://platform.openai.com/docs/guides/prompt-engineering"
+                    )
+                    resourceRow(
+                        icon: "sparkles",
+                        title: "Anthropic Prompt Library",
+                        subtitle: "Proven prompts for many tasks",
+                        url: "https://docs.anthropic.com/claude/prompt-library"
+                    )
+                }
+            }
         }
+    }
+    
+    @ViewBuilder
+    private func resourceRow(icon: String, title: String, subtitle: String, url: String) -> some View {
+        Button {
+            if let link = URL(string: url) { NSWorkspace.shared.open(link) }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(Color(NSColor.controlAccentColor))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.system(size: 14, weight: .medium))
+                    Text(subtitle).font(.system(size: 12)).foregroundColor(.secondary)
+                }
+                Spacer()
+                Image(systemName: "arrow.up.right").foregroundColor(.secondary)
+            }
+            .padding(.vertical, 6)
+        }
+        .buttonStyle(.plain)
     }
 }
 
 #Preview {
-    FinishScreen()
+    GetStartedScreen()
         .environment(OnboardingState())
         .frame(width: 800, height: 600)
 }
