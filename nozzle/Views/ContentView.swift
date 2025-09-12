@@ -81,6 +81,7 @@ struct ContentView: View {
         searchQuery: $appState.history.searchQuery,
         searchFocused: $inputFocused,
         currentTabPage: $currentTabPage,
+        showingShortcuts: $appState.showingShortcuts,
         totalPages: totalPages,
         onPreviousTab: {
           let ids = ["aggregated"] + allTabs.map { $0.id }
@@ -701,6 +702,12 @@ struct ContentView: View {
         popover.animates = false
         // Prevent NSPopover from becoming first responder.
         popover.behavior = .semitransient
+      }
+    }
+    .overlay {
+      if appState.showingShortcuts {
+        ShortcutsPanelView(isShowing: $appState.showingShortcuts)
+          .transition(.opacity)
       }
     }
   }

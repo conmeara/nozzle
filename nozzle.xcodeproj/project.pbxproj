@@ -132,6 +132,9 @@
 		F569FB192E6E1BFA0076D784 /* RenameEventCatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB162E6E1BFA0076D784 /* RenameEventCatcher.swift */; };
 		F569FB1D2E6E87E90076D784 /* PromptEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB1B2E6E87E90076D784 /* PromptEnhancer.swift */; };
 		F569FB1F2E6E87F50076D784 /* PromptEnhancement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB1E2E6E87F50076D784 /* PromptEnhancement.swift */; };
+		F56CE2752E739C7D004E76C1 /* ShortcutsPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2742E739C7D004E76C1 /* ShortcutsPanelView.swift */; };
+		F56CE2782E739CA3004E76C1 /* ShortcutKeyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2762E739CA3004E76C1 /* ShortcutKeyView.swift */; };
+		F56CE27A2E739CC0004E76C1 /* ShortcutCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2792E739CC0004E76C1 /* ShortcutCategory.swift */; };
 		F56E49222E70EB9A003D6538 /* ScreenshotSourceHeuristics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56E49212E70EB9A003D6538 /* ScreenshotSourceHeuristics.swift */; };
 		F57274592E56720D003A9299 /* ContentSourceType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274582E56720D003A9299 /* ContentSourceType.swift */; };
 		F572745A2E56720D003A9299 /* ContentSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274572E56720D003A9299 /* ContentSource.swift */; };
@@ -537,6 +540,9 @@
 		F569FB172E6E1BFA0076D784 /* WindowAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAccessor.swift; sourceTree = "<group>"; };
 		F569FB1B2E6E87E90076D784 /* PromptEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEnhancer.swift; sourceTree = "<group>"; };
 		F569FB1E2E6E87F50076D784 /* PromptEnhancement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEnhancement.swift; sourceTree = "<group>"; };
+		F56CE2742E739C7D004E76C1 /* ShortcutsPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsPanelView.swift; sourceTree = "<group>"; };
+		F56CE2762E739CA3004E76C1 /* ShortcutKeyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutKeyView.swift; sourceTree = "<group>"; };
+		F56CE2792E739CC0004E76C1 /* ShortcutCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutCategory.swift; sourceTree = "<group>"; };
 		F56E49212E70EB9A003D6538 /* ScreenshotSourceHeuristics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotSourceHeuristics.swift; sourceTree = "<group>"; };
 		F57274562E56720D003A9299 /* ContentItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentItem.swift; sourceTree = "<group>"; };
 		F57274572E56720D003A9299 /* ContentSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSource.swift; sourceTree = "<group>"; };
@@ -645,6 +651,7 @@
 		DA05B50F2C234C1C006980FE /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F56CE2792E739CC0004E76C1 /* ShortcutCategory.swift */,
 				F569FB1E2E6E87F50076D784 /* PromptEnhancement.swift */,
 				F50C3E212E64EDF800420829 /* DesignConstants.swift */,
 				F57274562E56720D003A9299 /* ContentItem.swift */,
@@ -691,6 +698,8 @@
 		DA19690C2C3EEF9300258481 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				F56CE2772E739CA3004E76C1 /* Components */,
+				F56CE2742E739C7D004E76C1 /* ShortcutsPanelView.swift */,
 				F5758B022E5D228F00FC0F19 /* FolderTreeItemView.swift */,
 				F57274782E57C02C003A9299 /* Preview */,
 				F57274642E56722D003A9299 /* UniversalItemView.swift */,
@@ -872,6 +881,14 @@
 				F569FB1B2E6E87E90076D784 /* PromptEnhancer.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		F56CE2772E739CA3004E76C1 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				F56CE2762E739CA3004E76C1 /* ShortcutKeyView.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		F572746D2E56B882003A9299 /* Filesystem */ = {
@@ -1170,9 +1187,11 @@
 				DA555F122CF155A8009608BD /* WrappingTextView.swift in Sources */,
 				F5758AFF2E5D176C00FC0F19 /* QuickLookPreview.swift in Sources */,
 				DAC929D7297A0E8B00814F19 /* NSPasteboard.PasteboardType+Types.swift in Sources */,
+				F56CE27A2E739CC0004E76C1 /* ShortcutCategory.swift in Sources */,
 				DA9C3C472C20B91D0056795D /* String+Identifiable.swift in Sources */,
 				DAA365E72C4C57E600A394F8 /* KeyEquivalent+Keys.swift in Sources */,
 				F57274792E57C02C003A9299 /* PreviewPaneView.swift in Sources */,
+				F56CE2752E739C7D004E76C1 /* ShortcutsPanelView.swift in Sources */,
 				F572747B2E57C02C003A9299 /* PlainTextPreview.swift in Sources */,
 				DA9C3C652C211B5F0056795D /* AdvancedSettingsPane.swift in Sources */,
 				DAA5ACB22C1B3F8800B58513 /* GeneralSettingsPane.swift in Sources */,
@@ -1201,6 +1220,7 @@
 				DAA072E32C41D1D5006DDFD2 /* ListItemView.swift in Sources */,
 				DAA072D92C41C5AD006DDFD2 /* Footer.swift in Sources */,
 				F50C3E262E65F9B900420829 /* FolderPreviewView.swift in Sources */,
+				F56CE2782E739CA3004E76C1 /* ShortcutKeyView.swift in Sources */,
 				DA696BCE240177E800DE80CF /* Sorter.swift in Sources */,
 				DAA072E92C42C6AA006DDFD2 /* ListItemTitleView.swift in Sources */,
 				DABDE97F2974706C005B32E9 /* KeyboardLayout.swift in Sources */,

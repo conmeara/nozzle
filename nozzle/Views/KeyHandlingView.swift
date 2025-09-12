@@ -12,6 +12,7 @@ struct KeyHandlingView<Content: View>: View {
   @Binding var searchQuery: String
   @FocusState.Binding var searchFocused: Bool
   @Binding var currentTabPage: Int
+  @Binding var showingShortcuts: Bool
   let totalPages: Int
   let onPreviousTab: () -> Void
   let onNextTab: () -> Void
@@ -258,7 +259,14 @@ struct KeyHandlingView<Content: View>: View {
           appState.select()
           return .handled
         case .close:
-          // First check if dictation is recording - if so, cancel it instead of closing
+          // First check if shortcuts panel is showing - close it instead of the main popup
+          if showingShortcuts {
+            withAnimation(.easeInOut(duration: 0.2)) {
+              showingShortcuts = false
+            }
+            return .handled
+          }
+          // Then check if dictation is recording - if so, cancel it instead of closing
           if DictationManager.shared.isRecording {
             Task {
               await DictationManager.shared.cancelDictation()
@@ -292,6 +300,12 @@ struct KeyHandlingView<Content: View>: View {
           // Enhance prompt if not in search mode
           if !appState.isSearchMode {
             appState.performEnhancePrompt()
+          }
+          return .handled
+        case .showShortcuts:
+          // Toggle keyboard shortcuts panel
+          withAnimation(.easeInOut(duration: 0.2)) {
+            showingShortcuts.toggle()
           }
           return .handled
         case .openPrompts:
