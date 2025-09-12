@@ -335,7 +335,7 @@ struct ContentView: View {
                 // Always visible: Aggregated tab
                 TabButtonWithIcon(
                   icon: "square.stack.3d.up.badge.automatic.fill",
-                  badgeCount: contentManager.selectedItems.count,
+                  badgeCount: contentManager.selectedFileCount,
                   isSelected: selectedTab == "aggregated"
                 ) {
                   selectedTab = "aggregated"

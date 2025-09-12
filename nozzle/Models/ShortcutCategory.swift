@@ -45,7 +45,8 @@ enum ShortcutData {
             ShortcutItem("Open nozzle", keys: .modifier("⌥"), .key("V")),
             ShortcutItem("Close popup", keys: .special("Esc")),
             ShortcutItem("Open preferences", keys: .modifier("⌘"), .key(",")),
-            ShortcutItem("Show keyboard shortcuts", keys: .modifier("⌘"), .key("/"))
+            ShortcutItem("Show keyboard shortcuts", keys: .modifier("⌘"), .key("/")),
+            ShortcutItem("Open prompts", keys: .modifier("⌘"), .key("P"))
         ]),
         
         ShortcutCategory("Navigation", shortcuts: [

@@ -57,6 +57,13 @@ struct ShortcutsSettingsPane: View {
             KeyboardShortcuts.Recorder(for: .toggleDictation)
               .help(Text("Toggle speech-to-text dictation", tableName: "ShortcutsSettings"))
           }
+          
+          HStack {
+            Text("Toggle prompts:", tableName: "ShortcutsSettings")
+              .frame(width: 160, alignment: .trailing)
+            KeyboardShortcuts.Recorder(for: .openPrompts)
+              .help(Text("Toggle prompts tab", tableName: "ShortcutsSettings"))
+          }
         }
       }
 
