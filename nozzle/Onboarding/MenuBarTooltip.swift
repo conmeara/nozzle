@@ -65,12 +65,16 @@ class MenuBarTooltip: NSWindow {
         // Set up auto-dismiss timer (5 seconds)
         dismissTimer?.invalidate()
         dismissTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
-            self?.dismiss()
+            Task { @MainActor in
+                self?.dismiss()
+            }
         }
         
         // Dismiss on any click
         NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
-            self?.dismiss()
+            Task { @MainActor in
+                self?.dismiss()
+            }
             return event
         }
     }
@@ -84,7 +88,9 @@ class MenuBarTooltip: NSWindow {
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             self.animator().alphaValue = 0.0
         }, completionHandler: {
-            self.orderOut(nil)
+            Task { @MainActor in
+                self.orderOut(nil)
+            }
         })
     }
 }

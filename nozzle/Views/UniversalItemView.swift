@@ -1,6 +1,7 @@
 import SwiftUI
 import Defaults
 import AppKit
+import KeyboardShortcuts
 
 @MainActor
 private extension UniversalItemView {
@@ -220,6 +221,10 @@ struct UniversalItemView: View {
                 Button("Delete", role: .destructive) {
                     (contentManager.sources["prompts"] as? PromptsSource)?.deletePrompt(at: url)
                 }
+                .keyboardShortcut(
+                    .backspace,
+                    modifiers: KeyboardShortcuts.Shortcut(name: .delete)?.toEventModifiers() ?? [.option]
+                )
             } else if !item.base.isFolder, let url = item.base.fileURL {
                 // Context menu for regular files
                 Button("Copy") {
@@ -238,13 +243,15 @@ struct UniversalItemView: View {
                 
                 Divider()
                 
-                Button(contentManager.isExample(item.id) ? "Remove as Example" : "Mark as Example") {
-                    contentManager.toggleExample(item.id)
-                }
-                
+                // Put Context above Example
                 Button(contentManager.isSelected(item.id) ? "Remove as Context" : "Mark as Context") {
                     contentManager.toggleSelection(item.id)
                     appState.updateFooterItemVisibility()
+                }
+                .keyboardShortcut(.tab)
+                
+                Button(contentManager.isExample(item.id) ? "Remove as Example" : "Mark as Example") {
+                    contentManager.toggleExample(item.id)
                 }
                 
                 Divider()
