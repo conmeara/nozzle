@@ -106,12 +106,10 @@ struct ShortcutsPanelView: View {
             Text(shortcut.description)
                 .font(.system(.body))
                 .foregroundStyle(.primary)
-                .frame(minWidth: 150, alignment: .leading)
-            
-            Spacer(minLength: 8)
             
             ShortcutKeysView(keys: shortcut.keys)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 2)
     }
 }
