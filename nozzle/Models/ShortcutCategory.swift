@@ -187,6 +187,28 @@ enum ShortcutData {
             ShortcutItem("Open prompts", customizable: .openPrompts)
         ]),
         
+        ShortcutCategory("Paste Operations", shortcuts: [
+            ShortcutItem("Paste combined", fixed: .special("⏎")),
+            ShortcutItem("Paste current item", fixed: .modifier("⌘"), .special("⏎")),
+            ShortcutItem("Paste numbered", fixed: .modifier("⌘"), .modifier("⇧"), .key("1-9")),
+            ShortcutItem("Copy to clipboard", fixed: .modifier("⌘"), .key("C"))
+        ]),
+        
+        ShortcutCategory("Selection & Management", shortcuts: [
+            ShortcutItem("Toggle selection", fixed: .special("Tab")),
+            ShortcutItem("Select numbered", fixed: .modifier("⌘"), .key("1-9")),
+            ShortcutItem("Clear selection", customizable: .clearSelection),
+            ShortcutItem("Pin/Unpin item", customizable: .pin),
+            ShortcutItem("Delete item", customizable: .delete)
+        ]),
+        
+        ShortcutCategory("Modes & Features", shortcuts: [
+            ShortcutItem("Toggle search/prompt", customizable: .togglePromptMode),
+            ShortcutItem("Toggle preview", customizable: .togglePreview),
+            ShortcutItem("Toggle dictation", customizable: .toggleDictation),
+            ShortcutItem("Enhance prompt", customizable: .enhancePrompt)
+        ]),
+        
         ShortcutCategory("Navigation", shortcuts: [
             ShortcutItem("Move up", fixed: .special("↑")),
             ShortcutItem("Move down", fixed: .special("↓")),
@@ -196,28 +218,6 @@ enum ShortcutData {
             ShortcutItem("Next tab", fixed: .modifier("⌘"), .key("]")),
             ShortcutItem("Previous tab page", fixed: .modifier("⌘"), .modifier("⇧"), .key("[")),
             ShortcutItem("Next tab page", fixed: .modifier("⌘"), .modifier("⇧"), .key("]"))
-        ]),
-        
-        ShortcutCategory("Selection & Management", shortcuts: [
-            ShortcutItem("Toggle selection", fixed: .special("Space")),
-            ShortcutItem("Select numbered", fixed: .modifier("⌘"), .key("1-9")),
-            ShortcutItem("Clear selection", customizable: .clearSelection),
-            ShortcutItem("Pin/Unpin item", customizable: .pin),
-            ShortcutItem("Delete item", customizable: .delete)
-        ]),
-        
-        ShortcutCategory("Paste Operations", shortcuts: [
-            ShortcutItem("Paste combined", fixed: .special("⏎")),
-            ShortcutItem("Paste current item", fixed: .modifier("⌘"), .special("⏎")),
-            ShortcutItem("Paste numbered", fixed: .modifier("⌘"), .modifier("⇧"), .key("1-9")),
-            ShortcutItem("Copy to clipboard", fixed: .modifier("⌘"), .key("C"))
-        ]),
-        
-        ShortcutCategory("Modes & Features", shortcuts: [
-            ShortcutItem("Toggle search/prompt", customizable: .togglePromptMode),
-            ShortcutItem("Toggle preview", customizable: .togglePreview),
-            ShortcutItem("Toggle dictation", customizable: .toggleDictation),
-            ShortcutItem("Enhance prompt", customizable: .enhancePrompt)
         ])
     ]
 }
