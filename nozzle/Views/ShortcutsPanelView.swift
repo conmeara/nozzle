@@ -4,6 +4,7 @@ import SwiftUI
 struct ShortcutsPanelView: View {
     @Binding var isShowing: Bool
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @State private var shortcutsProvider = ShortcutsDataProvider.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -13,7 +14,7 @@ struct ShortcutsPanelView: View {
             // Scrollable content
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 24) {
-                    ForEach(ShortcutData.categories) { category in
+                    ForEach(shortcutsProvider.categories) { category in
                         categorySection(category)
                     }
                 }

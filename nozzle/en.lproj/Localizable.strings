@@ -33,3 +33,15 @@
 "system_settings_pane" = "Privacy & Security settings";
 "system_preferences_name" = "System Preferences";
 "system_preferences_pane" = "Security & Privacy preferences";
+
+// Onboarding
+"onboarding_welcome_title" = "Welcome to nozzle";
+"onboarding_welcome_subtitle" = "Your universal content management platform";
+"onboarding_permissions_title" = "Permissions";
+"onboarding_permissions_subtitle" = "Grant permissions for the best experience";
+"onboarding_shortcuts_title" = "Keyboard Shortcuts";
+"onboarding_shortcuts_subtitle" = "Customize your keyboard shortcuts";
+"onboarding_resources_title" = "Resources";
+"onboarding_resources_subtitle" = "Learn prompt engineering and get help";
+"onboarding_finish_title" = "You're All Set!";
+"onboarding_finish_subtitle" = "nozzle is ready to boost your productivity";

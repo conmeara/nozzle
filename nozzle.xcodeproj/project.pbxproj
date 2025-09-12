@@ -132,10 +132,17 @@
 		F569FB192E6E1BFA0076D784 /* RenameEventCatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB162E6E1BFA0076D784 /* RenameEventCatcher.swift */; };
 		F569FB1D2E6E87E90076D784 /* PromptEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB1B2E6E87E90076D784 /* PromptEnhancer.swift */; };
 		F569FB1F2E6E87F50076D784 /* PromptEnhancement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB1E2E6E87F50076D784 /* PromptEnhancement.swift */; };
+		F569FB2B2E6FBCE50076D784 /* ShortcutsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB232E6FBCE50076D784 /* ShortcutsScreen.swift */; };
+		F569FB2C2E6FBCE50076D784 /* OnboardingState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB262E6FBCE50076D784 /* OnboardingState.swift */; };
+		F569FB302E6FBCE50076D784 /* OnboardingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB282E6FBCE50076D784 /* OnboardingWindow.swift */; };
+		F569FB312E6FBCE50076D784 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB272E6FBCE50076D784 /* OnboardingView.swift */; };
+		F56CE2722E733999004E76C1 /* WelcomeSetupScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2712E733999004E76C1 /* WelcomeSetupScreen.swift */; };
+		F56CE2732E733999004E76C1 /* GetStartedScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2702E733999004E76C1 /* GetStartedScreen.swift */; };
 		F56CE2752E739C7D004E76C1 /* ShortcutsPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2742E739C7D004E76C1 /* ShortcutsPanelView.swift */; };
 		F56CE2782E739CA3004E76C1 /* ShortcutKeyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2762E739CA3004E76C1 /* ShortcutKeyView.swift */; };
 		F56CE27A2E739CC0004E76C1 /* ShortcutCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2792E739CC0004E76C1 /* ShortcutCategory.swift */; };
 		F56E49222E70EB9A003D6538 /* ScreenshotSourceHeuristics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56E49212E70EB9A003D6538 /* ScreenshotSourceHeuristics.swift */; };
+		F56E492A2E70F6A1003D6538 /* MenuBarTooltip.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56E49292E70F6A1003D6538 /* MenuBarTooltip.swift */; };
 		F57274592E56720D003A9299 /* ContentSourceType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274582E56720D003A9299 /* ContentSourceType.swift */; };
 		F572745A2E56720D003A9299 /* ContentSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274572E56720D003A9299 /* ContentSource.swift */; };
 		F572745B2E56720D003A9299 /* ContentItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274562E56720D003A9299 /* ContentItem.swift */; };
@@ -143,6 +150,7 @@
 		F57274612E56721F003A9299 /* ClipboardSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572745C2E56721F003A9299 /* ClipboardSource.swift */; };
 		F57274622E56721F003A9299 /* ContentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572745D2E56721F003A9299 /* ContentManager.swift */; };
 		F57274632E56721F003A9299 /* UniversalItemDecorator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572745F2E56721F003A9299 /* UniversalItemDecorator.swift */; };
+		F572746A2E56726F003A9299 /* ShortcutsDataProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572746B2E56726F003A9299 /* ShortcutsDataProvider.swift */; };
 		F57274662E56722D003A9299 /* UniversalItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274642E56722D003A9299 /* UniversalItemView.swift */; };
 		F57274692E567244003A9299 /* SecurityScopedBookmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57274682E567244003A9299 /* SecurityScopedBookmarks.swift */; };
 		F572746E2E56B882003A9299 /* FileIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F572746B2E56B882003A9299 /* FileIdentity.swift */; };
@@ -540,10 +548,17 @@
 		F569FB172E6E1BFA0076D784 /* WindowAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAccessor.swift; sourceTree = "<group>"; };
 		F569FB1B2E6E87E90076D784 /* PromptEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEnhancer.swift; sourceTree = "<group>"; };
 		F569FB1E2E6E87F50076D784 /* PromptEnhancement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEnhancement.swift; sourceTree = "<group>"; };
+		F569FB232E6FBCE50076D784 /* ShortcutsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsScreen.swift; sourceTree = "<group>"; };
+		F569FB262E6FBCE50076D784 /* OnboardingState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingState.swift; sourceTree = "<group>"; };
+		F569FB272E6FBCE50076D784 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		F569FB282E6FBCE50076D784 /* OnboardingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindow.swift; sourceTree = "<group>"; };
+		F56CE2702E733999004E76C1 /* GetStartedScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetStartedScreen.swift; sourceTree = "<group>"; };
+		F56CE2712E733999004E76C1 /* WelcomeSetupScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSetupScreen.swift; sourceTree = "<group>"; };
 		F56CE2742E739C7D004E76C1 /* ShortcutsPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsPanelView.swift; sourceTree = "<group>"; };
 		F56CE2762E739CA3004E76C1 /* ShortcutKeyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutKeyView.swift; sourceTree = "<group>"; };
 		F56CE2792E739CC0004E76C1 /* ShortcutCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutCategory.swift; sourceTree = "<group>"; };
 		F56E49212E70EB9A003D6538 /* ScreenshotSourceHeuristics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotSourceHeuristics.swift; sourceTree = "<group>"; };
+		F56E49292E70F6A1003D6538 /* MenuBarTooltip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarTooltip.swift; sourceTree = "<group>"; };
 		F57274562E56720D003A9299 /* ContentItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentItem.swift; sourceTree = "<group>"; };
 		F57274572E56720D003A9299 /* ContentSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSource.swift; sourceTree = "<group>"; };
 		F57274582E56720D003A9299 /* ContentSourceType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSourceType.swift; sourceTree = "<group>"; };
@@ -551,6 +566,7 @@
 		F572745D2E56721F003A9299 /* ContentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentManager.swift; sourceTree = "<group>"; };
 		F572745E2E56721F003A9299 /* FileSystemSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystemSource.swift; sourceTree = "<group>"; };
 		F572745F2E56721F003A9299 /* UniversalItemDecorator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniversalItemDecorator.swift; sourceTree = "<group>"; };
+		F572746B2E56726F003A9299 /* ShortcutsDataProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsDataProvider.swift; sourceTree = "<group>"; };
 		F57274642E56722D003A9299 /* UniversalItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniversalItemView.swift; sourceTree = "<group>"; };
 		F57274682E567244003A9299 /* SecurityScopedBookmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityScopedBookmarks.swift; sourceTree = "<group>"; };
 		F572746B2E56B882003A9299 /* FileIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileIdentity.swift; sourceTree = "<group>"; };
@@ -763,6 +779,7 @@
 				F572745D2E56721F003A9299 /* ContentManager.swift */,
 				F572745E2E56721F003A9299 /* FileSystemSource.swift */,
 				F572745F2E56721F003A9299 /* UniversalItemDecorator.swift */,
+				F572746B2E56726F003A9299 /* ShortcutsDataProvider.swift */,
 				DAA072D62C41C574006DDFD2 /* AppState.swift */,
 				DAA072D82C41C5AD006DDFD2 /* Footer.swift */,
 				DAA072DA2C41C5DD006DDFD2 /* FooterItem.swift */,
@@ -834,6 +851,7 @@
 		DAEE38451E3DBEB100DD2966 /* nozzle */ = {
 			isa = PBXGroup;
 			children = (
+				F569FB292E6FBCE50076D784 /* Onboarding */,
 				F569FB1C2E6E87E90076D784 /* Services */,
 				F57274722E57C00B003A9299 /* Utilities */,
 				F572746D2E56B882003A9299 /* Filesystem */,
@@ -881,6 +899,28 @@
 				F569FB1B2E6E87E90076D784 /* PromptEnhancer.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		F569FB252E6FBCE50076D784 /* Screens */ = {
+			isa = PBXGroup;
+			children = (
+				F56CE2702E733999004E76C1 /* GetStartedScreen.swift */,
+				F56CE2712E733999004E76C1 /* WelcomeSetupScreen.swift */,
+				F569FB232E6FBCE50076D784 /* ShortcutsScreen.swift */,
+			);
+			path = Screens;
+			sourceTree = "<group>";
+		};
+		F569FB292E6FBCE50076D784 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				F56E49292E70F6A1003D6538 /* MenuBarTooltip.swift */,
+				F569FB252E6FBCE50076D784 /* Screens */,
+				F569FB262E6FBCE50076D784 /* OnboardingState.swift */,
+				F569FB272E6FBCE50076D784 /* OnboardingView.swift */,
+				F569FB282E6FBCE50076D784 /* OnboardingWindow.swift */,
+			);
+			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		F56CE2772E739CA3004E76C1 /* Components */ = {
@@ -1145,6 +1185,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F56CE2722E733999004E76C1 /* WelcomeSetupScreen.swift in Sources */,
+				F56CE2732E733999004E76C1 /* GetStartedScreen.swift in Sources */,
 				F5A0B0012EE1AAAA00AAA001 /* SelectedItemsView.swift in Sources */,
 				DA19691C2C3F3EAC00258481 /* Collection+Surrounding.swift in Sources */,
 				DA1969142C3F11D600258481 /* PreviewItemView.swift in Sources */,
@@ -1178,6 +1220,7 @@
 				F57274612E56721F003A9299 /* ClipboardSource.swift in Sources */,
 				F57274622E56721F003A9299 /* ContentManager.swift in Sources */,
 				F57274632E56721F003A9299 /* UniversalItemDecorator.swift in Sources */,
+				F572746A2E56726F003A9299 /* ShortcutsDataProvider.swift in Sources */,
 				DA13D7DB2C1A223E00FA9E23 /* Delete.swift in Sources */,
 				DA19691F2C3F5F0600258481 /* KeyHandlingView.swift in Sources */,
 				F57274662E56722D003A9299 /* UniversalItemView.swift in Sources */,
@@ -1187,6 +1230,10 @@
 				DA555F122CF155A8009608BD /* WrappingTextView.swift in Sources */,
 				F5758AFF2E5D176C00FC0F19 /* QuickLookPreview.swift in Sources */,
 				DAC929D7297A0E8B00814F19 /* NSPasteboard.PasteboardType+Types.swift in Sources */,
+				F569FB2B2E6FBCE50076D784 /* ShortcutsScreen.swift in Sources */,
+				F569FB2C2E6FBCE50076D784 /* OnboardingState.swift in Sources */,
+				F569FB302E6FBCE50076D784 /* OnboardingWindow.swift in Sources */,
+				F569FB312E6FBCE50076D784 /* OnboardingView.swift in Sources */,
 				F56CE27A2E739CC0004E76C1 /* ShortcutCategory.swift in Sources */,
 				DA9C3C472C20B91D0056795D /* String+Identifiable.swift in Sources */,
 				DAA365E72C4C57E600A394F8 /* KeyEquivalent+Keys.swift in Sources */,
@@ -1232,6 +1279,7 @@
 				DA6491B029ABCF2400837D93 /* NSScreen+ForPopup.swift in Sources */,
 				DA81D674252A056B009977BC /* Throttler.swift in Sources */,
 				DA05B5112C234CB2006980FE /* nozzleApp.swift in Sources */,
+				F56E492A2E70F6A1003D6538 /* MenuBarTooltip.swift in Sources */,
 				DA13D7DE2C1A436E00FA9E23 /* AppIntentError.swift in Sources */,
 				2F8B9DE62C5D6E5D0046EF69 /* NSPoint+DefaultsSerializable.swift in Sources */,
 				DAA072D72C41C574006DDFD2 /* AppState.swift in Sources */,

@@ -22,6 +22,11 @@ struct GeneralSettingsPane: View {
         LaunchAtLogin.Toggle {
           Text("LaunchAtLogin", tableName: "GeneralSettings")
         }
+        
+        Button("Show Welcome Screen") {
+          OnboardingWindow.show()
+        }
+        .help("Re-run the welcome screen and setup process")
       }
 
 
