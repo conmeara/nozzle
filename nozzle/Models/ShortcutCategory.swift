@@ -77,7 +77,6 @@ enum ShortcutData {
         ShortcutCategory("Modes & Features", shortcuts: [
             ShortcutItem("Toggle search/prompt", keys: .modifier("⌘"), .key("F")),
             ShortcutItem("Toggle preview", keys: .modifier("⌥"), .special("Space")),
-            ShortcutItem("Toggle prompt menu", keys: .modifier("⌘"), .modifier("⌥"), .key("P")),
             ShortcutItem("Toggle dictation", keys: .modifier("⌥"), .key("D")),
             ShortcutItem("Enhance prompt", keys: .modifier("⌘"), .key("E"))
         ])
