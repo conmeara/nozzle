@@ -247,7 +247,14 @@ struct KeyHandlingView<Content: View>: View {
           appState.select()
           return .handled
         case .close:
-          // First check if dictation is recording - if so, cancel it instead of closing
+          // First check if shortcuts panel is showing - close it instead of the main popup
+          if showingShortcuts {
+            withAnimation(.easeInOut(duration: 0.2)) {
+              showingShortcuts = false
+            }
+            return .handled
+          }
+          // Then check if dictation is recording - if so, cancel it instead of closing
           if DictationManager.shared.isRecording {
             Task {
               await DictationManager.shared.cancelDictation()

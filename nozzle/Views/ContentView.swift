@@ -77,11 +77,7 @@ struct ContentView: View {
   }
 
   var body: some View {
-    if showingShortcuts {
-      ShortcutsPanelView(isShowing: $showingShortcuts)
-        .transition(.opacity)
-    } else {
-      VStack(alignment: .leading, spacing: 0) {
+    VStack(alignment: .leading, spacing: 0) {
       KeyHandlingView(
         searchQuery: $appState.history.searchQuery,
         searchFocused: $inputFocused,
@@ -709,6 +705,11 @@ struct ContentView: View {
         popover.behavior = .semitransient
       }
     }
+    .overlay {
+      if showingShortcuts {
+        ShortcutsPanelView(isShowing: $showingShortcuts)
+          .transition(.opacity)
+      }
     }
   }
   

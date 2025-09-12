@@ -23,23 +23,6 @@ struct ShortcutsPanelView: View {
             .scrollIndicators(.hidden)
         }
         .modifier(LiquidGlassModifier(reduceTransparency: reduceTransparency))
-        .onKeyPress(keys: ["/"]) { keyPress in
-            // Handle Cmd+/ to close panel
-            if keyPress.modifiers == .command {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isShowing = false
-                }
-                return .handled
-            }
-            return .ignored
-        }
-        .onKeyPress(keys: [KeyEquivalent.escape]) { _ in
-            // Handle Escape to close panel
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isShowing = false
-            }
-            return .handled
-        }
     }
     
     /// Header with title and close hint

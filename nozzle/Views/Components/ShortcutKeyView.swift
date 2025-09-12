@@ -1,17 +1,21 @@
 import SwiftUI
 
-/// A view that renders a single keyboard key with liquid glass styling
+/// A view that renders a single keyboard key with flat design styling
 struct ShortcutKeyView: View {
     let keyComponent: KeyComponent
     
     var body: some View {
         Text(keyComponent.displayText)
-            .font(.system(.body, design: .monospaced))
-            .foregroundStyle(.primary)
+            .font(.system(.body, design: .monospaced, weight: .medium))
+            .foregroundStyle(.secondary)
             .padding(.horizontal, horizontalPadding)
             .padding(.vertical, verticalPadding)
-            .background()
-            .glassEffect(Glass.clear.tint(.white.opacity(0.05)).interactive(), in: .rect(cornerRadius: 6))
+            .background(Color(NSColor.controlBackgroundColor))
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 6))
     }
     
     /// Dynamic padding based on key type
@@ -36,16 +40,16 @@ struct ShortcutKeysView: View {
     let keys: [KeyComponent]
     
     var body: some View {
-        HStack(spacing: 4) {
-            ForEach(Array(keys.enumerated()), id: \.offset) { index, key in
-                ShortcutKeyView(keyComponent: key)
+        HStack(spacing: 6) {
+            ForEach(keys.indices, id: \.self) { index in
+                ShortcutKeyView(keyComponent: keys[index])
                 
                 // Add + separator between keys (except after the last key)
                 if index < keys.count - 1 {
                     Text("+")
-                        .font(.system(.caption, design: .default))
-                        .foregroundStyle(.secondary)
-                        .opacity(0.7)
+                        .font(.system(.body, design: .default, weight: .medium))
+                        .foregroundStyle(.tertiary)
+                        .padding(.horizontal, 2)
                 }
             }
         }
