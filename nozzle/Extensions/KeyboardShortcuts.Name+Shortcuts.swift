@@ -9,4 +9,5 @@ extension KeyboardShortcuts.Name {
   static let togglePromptMode = Self("togglePromptMode", default: Shortcut(.f, modifiers: [.command]))
   static let toggleDictation = Self("toggleDictation", default: Shortcut(.d, modifiers: [.option]))
   static let enhancePrompt = Self("enhancePrompt", default: Shortcut(.e, modifiers: [.command]))
+  static let showShortcuts = Self("showShortcuts", default: Shortcut(.slash, modifiers: [.command]))
 }

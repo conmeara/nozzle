@@ -12,6 +12,7 @@ struct KeyHandlingView<Content: View>: View {
   @Binding var searchQuery: String
   @FocusState.Binding var searchFocused: Bool
   @Binding var currentTabPage: Int
+  @Binding var showingShortcuts: Bool
   let totalPages: Int
   let onPreviousTab: () -> Void
   let onNextTab: () -> Void
@@ -280,6 +281,12 @@ struct KeyHandlingView<Content: View>: View {
           // Enhance prompt if not in search mode
           if !appState.isSearchMode {
             appState.performEnhancePrompt()
+          }
+          return .handled
+        case .showShortcuts:
+          // Toggle keyboard shortcuts panel
+          withAnimation(.easeInOut(duration: 0.2)) {
+            showingShortcuts.toggle()
           }
           return .handled
         case .toggleSelection:

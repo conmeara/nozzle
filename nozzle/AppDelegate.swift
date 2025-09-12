@@ -232,6 +232,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     preferencesItem.target = self
     menu.addItem(preferencesItem)
     
+    let shortcutsItem = NSMenuItem(
+      title: NSLocalizedString("Show Keyboard Shortcuts", comment: ""),
+      action: #selector(showShortcutsFromMenu),
+      keyEquivalent: "/"
+    )
+    shortcutsItem.keyEquivalentModifierMask = [.command]
+    shortcutsItem.target = self
+    menu.addItem(shortcutsItem)
     
     menu.addItem(NSMenuItem.separator())
     
@@ -251,6 +259,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   @objc
   private func openPreferencesFromMenu() {
     AppState.shared.openPreferences()
+  }
+
+  @objc
+  private func showShortcutsFromMenu() {
+    panel.open(height: AppState.shared.popup.height, at: .statusItem)
+    // Set the showingShortcuts state to true
+    // We need to access the ContentView's state somehow - this is a bit tricky
+    // For now, we'll simulate a keyboard shortcut to trigger the panel
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+      // Simulate Cmd+/ key press
+      let event = NSEvent.keyEvent(
+        with: .keyDown,
+        location: NSPoint.zero,
+        modifierFlags: [.command],
+        timestamp: 0,
+        windowNumber: 0,
+        context: nil,
+        characters: "/",
+        charactersIgnoringModifiers: "/",
+        isARepeat: false,
+        keyCode: 44 // Key code for forward slash
+      )
+      if let event = event {
+        NSApp.sendEvent(event)
+      }
+    }
   }
 
   @objc

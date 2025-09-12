@@ -10,6 +10,7 @@ struct ContentView: View {
   @State private var dictationManager = DictationManager.shared
   @State private var renameCatcher = RenameEventCatcher()
   @State private var hostWindow: NSWindow?
+  @State private var showingShortcuts = false
   
   // Tab pagination state
   @State private var currentTabPage = 0
@@ -76,11 +77,16 @@ struct ContentView: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 0) {
+    if showingShortcuts {
+      ShortcutsPanelView(isShowing: $showingShortcuts)
+        .transition(.opacity)
+    } else {
+      VStack(alignment: .leading, spacing: 0) {
       KeyHandlingView(
         searchQuery: $appState.history.searchQuery,
         searchFocused: $inputFocused,
         currentTabPage: $currentTabPage,
+        showingShortcuts: $showingShortcuts,
         totalPages: totalPages,
         onPreviousTab: {
           let ids = ["aggregated"] + allTabs.map { $0.id }
@@ -702,6 +708,7 @@ struct ContentView: View {
         // Prevent NSPopover from becoming first responder.
         popover.behavior = .semitransient
       }
+    }
     }
   }
   
