@@ -102,14 +102,13 @@ struct ShortcutsPanelView: View {
     
     /// Individual shortcut row
     private func shortcutRow(_ shortcut: ShortcutItem) -> some View {
-        HStack {
+        HStack(spacing: 16) {
             Text(shortcut.description)
                 .font(.system(.body))
                 .foregroundStyle(.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(minWidth: 150, alignment: .leading)
             
-            Spacer()
-                .frame(minWidth: 20)
+            Spacer(minLength: 8)
             
             ShortcutKeysView(keys: shortcut.keys)
         }
