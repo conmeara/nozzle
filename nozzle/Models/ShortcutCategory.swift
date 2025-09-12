@@ -53,8 +53,8 @@ enum ShortcutData {
             ShortcutItem("Move down", keys: .special("↓")),
             ShortcutItem("Move to first", keys: .modifier("⌘"), .special("↑")),
             ShortcutItem("Move to last", keys: .modifier("⌘"), .special("↓")),
-            ShortcutItem("Previous tab", keys: .modifier("⌃"), .modifier("⇧"), .special("Tab")),
-            ShortcutItem("Next tab", keys: .modifier("⌃"), .special("Tab")),
+            ShortcutItem("Previous tab", keys: .modifier("⌘"), .key("[")),
+            ShortcutItem("Next tab", keys: .modifier("⌘"), .key("]")),
             ShortcutItem("Switch to tab", keys: .modifier("⌘"), .key("1-9"))
         ]),
         
