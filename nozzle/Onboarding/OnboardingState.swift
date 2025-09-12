@@ -8,7 +8,8 @@ final class OnboardingState {
     enum Screen: Int, CaseIterable {
         case welcomeSetup = 0
         case shortcuts = 1
-        case getStarted = 2
+        case demo = 2
+        case getStarted = 3
         
         var title: String {
             switch self {
@@ -16,6 +17,8 @@ final class OnboardingState {
                 return "Welcome to nozzle"
             case .shortcuts:
                 return "Keyboard Shortcuts"
+            case .demo:
+                return "See nozzle in Action"
             case .getStarted:
                 return "You're All Set!"
             }
@@ -27,6 +30,8 @@ final class OnboardingState {
                 return "Let's do a quick setup to tailor nozzle to your needs."
             case .shortcuts:
                 return "Customize your keyboard shortcuts"
+            case .demo:
+                return "Watch how nozzle works in this quick demonstration"
             case .getStarted:
                 return "nozzle is ready to boost your productivity"
             }
@@ -43,6 +48,8 @@ final class OnboardingState {
         case .welcomeSetup:
             return hasAccessibilityPermission // Require accessibility at minimum
         case .shortcuts:
+            return true
+        case .demo:
             return true
         case .getStarted:
             return false // No continue from finish

@@ -48,6 +48,8 @@ struct OnboardingView: View {
             WelcomeSetupScreen()
         case .shortcuts:
             ShortcutsScreen()
+        case .demo:
+            DemoScreen()
         case .getStarted:
             GetStartedScreen()
         }
@@ -65,11 +67,17 @@ struct OnboardingView: View {
 
             Spacer()
 
-            if onboardingState.currentScreen == .getStarted {
+            switch onboardingState.currentScreen {
+            case .getStarted:
                 Button("Get Started") { onboardingState.completeOnboarding() }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent)
-            } else {
+            case .demo:
+                Button("Continue") { onboardingState.nextScreen() }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!onboardingState.canContinue)
+            default:
                 Button("Continue") { onboardingState.nextScreen() }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent)
