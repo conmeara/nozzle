@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import KeyboardShortcuts
 
 struct ContentView: View {
   @State private var appState = AppState.shared
@@ -259,6 +260,10 @@ struct ContentView: View {
                       contentManager.activeSourceId = "prompts"
                     }
                   }
+                  .keyboardShortcut(
+                    KeyEquivalent("p"),
+                    modifiers: KeyboardShortcuts.Shortcut(name: .openPrompts)?.toEventModifiers() ?? [.command]
+                  )
                 }
               }
               
@@ -489,25 +494,31 @@ struct ContentView: View {
                     Button("Copy All") {
                       appState.performCombinedPaste()
                     }
+                    .keyboardShortcut(KeyEquivalent("v"), modifiers: [.command])
                     
                     Button("Clear Selection") {
                       contentManager.clearSelection()
                       appState.updateFooterItemVisibility()
                     }
+                    .keyboardShortcut(
+                      .backspace,
+                      modifiers: KeyboardShortcuts.Shortcut(name: .clearSelection)?.toEventModifiers() ?? [.command]
+                    )
                     
                     Divider()
                     
-                    if !contextItems.isEmpty {
-                      Button("Convert All to Examples") {
-                        for item in contextItems {
+                    // Put Context above Example
+                    if !exampleItems.isEmpty {
+                      Button("Convert All to Context") {
+                        for item in exampleItems {
                           contentManager.toggleExample(item.id)
                         }
                       }
                     }
                     
-                    if !exampleItems.isEmpty {
-                      Button("Convert All to Context") {
-                        for item in exampleItems {
+                    if !contextItems.isEmpty {
+                      Button("Convert All to Examples") {
+                        for item in contextItems {
                           contentManager.toggleExample(item.id)
                         }
                       }

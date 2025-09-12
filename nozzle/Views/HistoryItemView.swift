@@ -1,5 +1,6 @@
 import Defaults
 import SwiftUI
+import KeyboardShortcuts
 
 struct HistoryItemView: View {
   @Bindable var item: HistoryItemDecorator
@@ -100,22 +101,32 @@ struct HistoryItemView: View {
       Button(item.isPinned ? "Unpin" : "Pin") {
         appState.history.togglePin(item)
       }
+      .keyboardShortcut(
+        KeyEquivalent("p"),
+        modifiers: KeyboardShortcuts.Shortcut(name: .pin)?.toEventModifiers() ?? [.option]
+      )
       
       Button("Delete") {
         appState.highlightNext()
         appState.history.delete(item)
       }
+      .keyboardShortcut(
+        .backspace,
+        modifiers: KeyboardShortcuts.Shortcut(name: .delete)?.toEventModifiers() ?? [.option]
+      )
       
       Divider()
       
-      Button(contentManager.isExample(item.id) ? "Remove as Example" : "Mark as Example") {
-        contentManager.toggleExample(item.id)
-      }
-      
+      // Put Context above Example
       Button(contentManager.isSelected(item.id) ? "Remove as Context" : "Mark as Context") {
         contentManager.toggleSelection(item.id)
         item.isSelected = contentManager.isSelected(item.id)
         appState.updateFooterItemVisibility()
+      }
+      .keyboardShortcut(.tab)
+
+      Button(contentManager.isExample(item.id) ? "Remove as Example" : "Mark as Example") {
+        contentManager.toggleExample(item.id)
       }
     }
   }

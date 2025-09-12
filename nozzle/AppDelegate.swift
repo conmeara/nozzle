@@ -285,6 +285,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     AppState.shared.quit()
   }
   
+  @MainActor
+  private func dismissMenuBarTooltipIfPresent() {
+    menuBarTooltip?.dismiss()
+  }
+
 
   private func synchronizeMenuIconText() {
     _ = withObservationTracking {
@@ -338,7 +343,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       object: panel,
       queue: .main
     ) { [weak self] _ in
-      self?.menuBarTooltip?.dismiss()
+      Task { @MainActor in
+        self?.dismissMenuBarTooltipIfPresent()
+      }
     }
   }
 }

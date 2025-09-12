@@ -401,9 +401,6 @@ class Clipboard {
         }
       }
     }
-    // Swallow any errors silently; fallback behavior will still capture the URL
-    catch {
-    }
 
     guard !contents.isEmpty else {
       return
