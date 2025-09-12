@@ -55,12 +55,13 @@ enum ShortcutData {
             ShortcutItem("Move to last", keys: .modifier("⌘"), .special("↓")),
             ShortcutItem("Previous tab", keys: .modifier("⌘"), .key("[")),
             ShortcutItem("Next tab", keys: .modifier("⌘"), .key("]")),
-            ShortcutItem("Switch to tab", keys: .modifier("⌘"), .key("1-9"))
+            ShortcutItem("Previous tab page", keys: .modifier("⌘"), .modifier("⇧"), .key("[")),
+            ShortcutItem("Next tab page", keys: .modifier("⌘"), .modifier("⇧"), .key("]"))
         ]),
         
         ShortcutCategory("Selection & Management", shortcuts: [
             ShortcutItem("Toggle selection", keys: .special("Space")),
-            ShortcutItem("Select numbered", keys: .key("1-9")),
+            ShortcutItem("Select numbered", keys: .modifier("⌘"), .key("1-9")),
             ShortcutItem("Clear selection", keys: .modifier("⌘"), .special("⌫")),
             ShortcutItem("Pin/Unpin item", keys: .modifier("⌥"), .key("P")),
             ShortcutItem("Delete item", keys: .modifier("⌥"), .special("⌫"))
@@ -69,14 +70,14 @@ enum ShortcutData {
         ShortcutCategory("Paste Operations", shortcuts: [
             ShortcutItem("Paste combined", keys: .special("⏎")),
             ShortcutItem("Paste current item", keys: .modifier("⌘"), .special("⏎")),
-            ShortcutItem("Paste single item", keys: .modifier("⌘"), .modifier("⇧"), .special("⏎")),
             ShortcutItem("Paste numbered", keys: .modifier("⌘"), .modifier("⇧"), .key("1-9")),
             ShortcutItem("Copy to clipboard", keys: .modifier("⌘"), .key("C"))
         ]),
         
         ShortcutCategory("Modes & Features", shortcuts: [
             ShortcutItem("Toggle search/prompt", keys: .modifier("⌘"), .key("F")),
-            ShortcutItem("Toggle preview", keys: .modifier("⌃"), .special("Space")),
+            ShortcutItem("Toggle preview", keys: .modifier("⌥"), .special("Space")),
+            ShortcutItem("Toggle prompt menu", keys: .modifier("⌘"), .modifier("⌥"), .key("P")),
             ShortcutItem("Toggle dictation", keys: .modifier("⌥"), .key("D")),
             ShortcutItem("Enhance prompt", keys: .modifier("⌘"), .key("E"))
         ])
