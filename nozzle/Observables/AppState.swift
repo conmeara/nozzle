@@ -26,6 +26,7 @@ class AppState {
     }
   }
   var isSearchMode: Bool = false  // Track search mode separately
+  var showingShortcuts: Bool = false  // Track keyboard shortcuts panel visibility
   private var preservedSelections: Set<UUID> = []
   
   // Prompt enhancement state

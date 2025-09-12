@@ -32,6 +32,9 @@ enum KeyChord: CaseIterable {
   static var enhancePromptKey: Key? { Sauce.shared.key(shortcut: .enhancePrompt) }
   static var enhancePromptModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .enhancePrompt)?.modifiers }
 
+  static var showShortcutsKey: Key? { Sauce.shared.key(shortcut: .showShortcuts) }
+  static var showShortcutsModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .showShortcuts)?.modifiers }
+
   static var openPromptsKey: Key? { Sauce.shared.key(shortcut: .openPrompts) }
   static var openPromptsModifiers: NSEvent.ModifierFlags? { KeyboardShortcuts.Shortcut(name: .openPrompts)?.modifiers }
 
@@ -54,6 +57,7 @@ enum KeyChord: CaseIterable {
   case togglePromptMode
   case toggleDictation
   case enhancePrompt
+  case showShortcuts
   case openPrompts
   case toggleSelection
   case previousTab
@@ -138,6 +142,8 @@ enum KeyChord: CaseIterable {
       self = .toggleDictation
     case (KeyChord.enhancePromptKey, KeyChord.enhancePromptModifiers):
       self = .enhancePrompt
+    case (KeyChord.showShortcutsKey, KeyChord.showShortcutsModifiers):
+      self = .showShortcuts
     case (KeyChord.openPromptsKey, KeyChord.openPromptsModifiers):
       self = .openPrompts
     case (.tab, []):

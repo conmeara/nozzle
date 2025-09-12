@@ -245,6 +245,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     preferencesItem.target = self
     menu.addItem(preferencesItem)
     
+    let shortcutsItem = NSMenuItem(
+      title: NSLocalizedString("Show Keyboard Shortcuts", comment: ""),
+      action: #selector(showShortcutsFromMenu),
+      keyEquivalent: "/"
+    )
+    shortcutsItem.keyEquivalentModifierMask = [.command]
+    shortcutsItem.target = self
+    menu.addItem(shortcutsItem)
     
     menu.addItem(NSMenuItem.separator())
     
@@ -264,6 +272,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   @objc
   private func openPreferencesFromMenu() {
     AppState.shared.openPreferences()
+  }
+
+  @objc
+  private func showShortcutsFromMenu() {
+    panel.open(height: AppState.shared.popup.height, at: .statusItem)
+    AppState.shared.showingShortcuts = true
   }
 
   @objc
