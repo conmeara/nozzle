@@ -246,7 +246,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     menu.addItem(preferencesItem)
     
     let shortcutsItem = NSMenuItem(
-      title: NSLocalizedString("Show Keyboard Shortcuts", comment: ""),
+      title: NSLocalizedString("Keyboard Shortcuts", comment: ""),
       action: #selector(showShortcutsFromMenu),
       keyEquivalent: "/"
     )

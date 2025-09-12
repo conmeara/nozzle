@@ -4,194 +4,68 @@ import KeyboardShortcuts
 import Settings
 
 struct ShortcutsSettingsPane: View {
-  
-  var body: some View {
-    Settings.Container(contentWidth: 550) {
-      Settings.Section(title: "", bottomDivider: true) {
-        VStack(spacing: 12) {
-          HStack {
-            Text("Open nozzle:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            KeyboardShortcuts.Recorder(for: .popup)
-              .help(Text("OpenTooltip", tableName: "ShortcutsSettings"))
-          }
-          
-          HStack {
-            Text("Pin item:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            KeyboardShortcuts.Recorder(for: .pin)
-              .help(Text("PinTooltip", tableName: "ShortcutsSettings"))
-          }
-          
-          HStack {
-            Text("Delete item:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            KeyboardShortcuts.Recorder(for: .delete)
-              .help(Text("DeleteTooltip", tableName: "ShortcutsSettings"))
-          }
-          
-          HStack {
-            Text("Toggle preview:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            KeyboardShortcuts.Recorder(for: .togglePreview)
-              .help(Text("TogglePreviewTooltip", tableName: "ShortcutsSettings"))
-          }
-          
-          HStack {
-            Text("Clear selection:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            KeyboardShortcuts.Recorder(for: .clearSelection)
-              .help(Text("ClearSelectionTooltip", tableName: "ShortcutsSettings"))
-          }
-          
-          HStack {
-            Text("Toggle prompt mode:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            KeyboardShortcuts.Recorder(for: .togglePromptMode)
-              .help(Text("TogglePromptModeTooltip", tableName: "ShortcutsSettings"))
-          }
-          
-          HStack {
-            Text("Toggle dictation:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            KeyboardShortcuts.Recorder(for: .toggleDictation)
-              .help(Text("Toggle speech-to-text dictation", tableName: "ShortcutsSettings"))
-          }
-          
-          HStack {
-            Text("Toggle prompts:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            KeyboardShortcuts.Recorder(for: .openPrompts)
-              .help(Text("Toggle prompts tab", tableName: "ShortcutsSettings"))
-          }
+    @State private var shortcutsProvider = ShortcutsDataProvider.shared
+    
+    var body: some View {
+        Settings.Container(contentWidth: 550) {
+            Settings.Section(title: "") {
+                VStack(spacing: 12) {
+                    ForEach(customizableShortcuts, id: \.id) { shortcut in
+                        shortcutRecorderRow(shortcut)
+                    }
+                }
+            }
         }
-      }
-
-      Settings.Section(title: "") {
-        VStack(spacing: 12) {
-          HStack {
-            Text("Paste combined:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            Text("⏎")
-              .font(.system(.body, design: .monospaced))
-              .foregroundStyle(.primary)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(Color.secondary.opacity(0.1))
-              .cornerRadius(4)
-          }
-          
-          HStack {
-            Text("Paste current item:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            Text("⌘⏎")
-              .font(.system(.body, design: .monospaced))
-              .foregroundStyle(.primary)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(Color.secondary.opacity(0.1))
-              .cornerRadius(4)
-          }
-          
-          HStack {
-            Text("Paste single item:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            Text("⌘⇧⏎")
-              .font(.system(.body, design: .monospaced))
-              .foregroundStyle(.primary)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(Color.secondary.opacity(0.1))
-              .cornerRadius(4)
-          }
-          
-          HStack {
-            Text("Clear selection:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            Text("⌘⌫")
-              .font(.system(.body, design: .monospaced))
-              .foregroundStyle(.primary)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(Color.secondary.opacity(0.1))
-              .cornerRadius(4)
-          }
-          
-          HStack {
-            Text("Toggle mode:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            Text("⌘F")
-              .font(.system(.body, design: .monospaced))
-              .foregroundStyle(.primary)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(Color.secondary.opacity(0.1))
-              .cornerRadius(4)
-          }
-          
-          HStack {
-            Text("Toggle numbered:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            Text("⌘1-9")
-              .font(.system(.body, design: .monospaced))
-              .foregroundStyle(.primary)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(Color.secondary.opacity(0.1))
-              .cornerRadius(4)
-          }
-          
-          HStack {
-            Text("Paste numbered:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            Text("⌘⇧1-9")
-              .font(.system(.body, design: .monospaced))
-              .foregroundStyle(.primary)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(Color.secondary.opacity(0.1))
-              .cornerRadius(4)
-          }
-          
-          HStack {
-            Text("Toggle preview:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            Text("⌥Space")
-              .font(.system(.body, design: .monospaced))
-              .foregroundStyle(.primary)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(Color.secondary.opacity(0.1))
-              .cornerRadius(4)
-          }
-          
-          HStack {
-            Text("Navigate:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            Text("↑↓")
-              .font(.system(.body, design: .monospaced))
-              .foregroundStyle(.primary)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(Color.secondary.opacity(0.1))
-              .cornerRadius(4)
-          }
-          
-          HStack {
-            Text("Close popup:", tableName: "ShortcutsSettings")
-              .frame(width: 160, alignment: .trailing)
-            Text("Esc")
-              .font(.system(.body, design: .monospaced))
-              .foregroundStyle(.primary)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(Color.secondary.opacity(0.1))
-              .cornerRadius(4)
-          }
-        }
-      }
     }
-  }
+    
+    /// Gets all customizable shortcuts across all categories
+    private var customizableShortcuts: [ShortcutItem] {
+        shortcutsProvider.categories.flatMap { category in
+            category.shortcuts.filter { $0.isCustomizable }
+        }
+    }
+    
+    /// Row with KeyboardShortcuts.Recorder for customizable shortcuts
+    @ViewBuilder
+    private func shortcutRecorderRow(_ shortcut: ShortcutItem) -> some View {
+        if let shortcutName = shortcut.shortcutName {
+            HStack {
+                Text(shortcut.description)
+                    .frame(width: 180, alignment: .trailing)
+                
+                KeyboardShortcuts.Recorder(for: shortcutName)
+                    .help(getTooltip(for: shortcut.description))
+                    .onChange(of: KeyboardShortcuts.getShortcut(for: shortcutName)) { _, _ in
+                        // Post notification to update other views
+                        NotificationCenter.default.post(name: .shortcutDidChange, object: nil)
+                    }
+            }
+        }
+    }
+    
+    /// Gets tooltip text for a shortcut description
+    private func getTooltip(for description: String) -> String {
+        switch description {
+        case "Open nozzle":
+            return NSLocalizedString("OpenTooltip", tableName: "ShortcutsSettings", value: "Global shortcut to show the nozzle window", comment: "")
+        case "Pin/Unpin item":
+            return NSLocalizedString("PinTooltip", tableName: "ShortcutsSettings", value: "Pin or unpin the selected item", comment: "")
+        case "Delete item":
+            return NSLocalizedString("DeleteTooltip", tableName: "ShortcutsSettings", value: "Delete the selected item", comment: "")
+        case "Toggle preview":
+            return NSLocalizedString("TogglePreviewTooltip", tableName: "ShortcutsSettings", value: "Show or hide item preview", comment: "")
+        case "Clear selection":
+            return NSLocalizedString("ClearSelectionTooltip", tableName: "ShortcutsSettings", value: "Clear selected items and prompt text", comment: "")
+        case "Toggle search/prompt":
+            return NSLocalizedString("TogglePromptModeTooltip", tableName: "ShortcutsSettings", value: "Switch between search and prompt modes", comment: "")
+        case "Toggle dictation":
+            return NSLocalizedString("Toggle speech-to-text dictation", tableName: "ShortcutsSettings", value: "Toggle speech-to-text dictation", comment: "")
+        case "Open prompts":
+            return NSLocalizedString("Toggle prompts tab", tableName: "ShortcutsSettings", value: "Toggle prompts tab", comment: "")
+        default:
+            return description
+        }
+    }
 }
 
 #Preview {
