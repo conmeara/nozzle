@@ -91,14 +91,8 @@ struct ShortcutsPanelView: View {
                 .foregroundStyle(.primary)
                 .padding(.bottom, 4)
             
-            // Grid layout for shortcuts
-            LazyVGrid(
-                columns: [
-                    GridItem(.adaptive(minimum: 180, maximum: 250), spacing: 16)
-                ],
-                alignment: .leading,
-                spacing: 8
-            ) {
+            // Shortcuts in category
+            VStack(alignment: .leading, spacing: 8) {
                 ForEach(category.shortcuts) { shortcut in
                     shortcutRow(shortcut)
                 }
@@ -108,17 +102,13 @@ struct ShortcutsPanelView: View {
     
     /// Individual shortcut row
     private func shortcutRow(_ shortcut: ShortcutItem) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 16) {
             Text(shortcut.description)
                 .font(.system(.body))
                 .foregroundStyle(.primary)
-                .lineLimit(1)
-                .layoutPriority(1)
-            
-            Spacer(minLength: 4)
+                .frame(width: 200, alignment: .leading)
             
             ShortcutKeysView(keys: shortcut.keys)
-                .fixedSize()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 2)
