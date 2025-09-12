@@ -10,7 +10,6 @@ struct ContentView: View {
   @State private var dictationManager = DictationManager.shared
   @State private var renameCatcher = RenameEventCatcher()
   @State private var hostWindow: NSWindow?
-  @State private var showingShortcuts = false
   
   // Tab pagination state
   @State private var currentTabPage = 0
@@ -82,7 +81,7 @@ struct ContentView: View {
         searchQuery: $appState.history.searchQuery,
         searchFocused: $inputFocused,
         currentTabPage: $currentTabPage,
-        showingShortcuts: $showingShortcuts,
+        showingShortcuts: $appState.showingShortcuts,
         totalPages: totalPages,
         onPreviousTab: {
           let ids = ["aggregated"] + allTabs.map { $0.id }
@@ -706,8 +705,8 @@ struct ContentView: View {
       }
     }
     .overlay {
-      if showingShortcuts {
-        ShortcutsPanelView(isShowing: $showingShortcuts)
+      if appState.showingShortcuts {
+        ShortcutsPanelView(isShowing: $appState.showingShortcuts)
           .transition(.opacity)
       }
     }
