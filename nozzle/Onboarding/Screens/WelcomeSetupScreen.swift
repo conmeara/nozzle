@@ -8,49 +8,37 @@ struct WelcomeSetupScreen: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                // Welcome section
-                welcomeSection
-                
+            VStack(spacing: 14) {
+                // App header
+                welcomeHeader
                 // Permissions section
                 permissionsSection
                 
                 // Launch at login section
                 launchAtLoginSection
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 26)
+            .padding(.vertical, 14)
         }
         .frame(maxWidth: .infinity, alignment: .top)
     }
     
     @ViewBuilder
-    private var welcomeSection: some View {
-        VStack(spacing: 16) {
+    private var welcomeHeader: some View {
+        VStack(spacing: 12) {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
                 .frame(width: 96, height: 96)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .clipShape(RoundedRectangle(cornerRadius: 15))
 
-            Text("Let's do a quick setup to tailor nozzle to your needs.")
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-
-            HStack(spacing: 6) {
-                Image(systemName: "lightbulb")
-                    .foregroundColor(.secondary)
-                Text("Tip: Press ⌥V to open nozzle anywhere")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-            }
-            .padding(.top, 6)
+            Text("Welcome to Nozzle!")
+                .font(.system(size: 22, weight: .bold))
         }
     }
-    
+
     @ViewBuilder
     private var permissionsSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             HStack {
                 Text("Permissions")
                     .font(.system(size: 18, weight: .semibold))
@@ -58,14 +46,13 @@ struct WelcomeSetupScreen: View {
                 Spacer()
             }
             
-            VStack(spacing: 12) {
-                // Accessibility Permission
-                permissionCard(
+            VStack(spacing: 8) {
+                // Accessibility Permission (simple row style to match Launch at Login)
+                permissionRow(
                     icon: "accessibility",
                     title: "Accessibility Access",
                     description: "Required for clipboard monitoring and keyboard shortcuts",
-                    isGranted: onboardingState.hasAccessibilityPermission,
-                    isRequired: true
+                    isGranted: onboardingState.hasAccessibilityPermission
                 ) {
                     onboardingState.requestAccessibilityPermission()
                 }
@@ -74,70 +61,42 @@ struct WelcomeSetupScreen: View {
     }
     
     @ViewBuilder
-    private func permissionCard(
+    private func permissionRow(
         icon: String,
         title: String,
         description: String,
         isGranted: Bool,
-        isRequired: Bool,
         action: @escaping () -> Void
     ) -> some View {
-        HStack(spacing: 12) {
-            // Icon
-            ZStack {
-                Circle()
-                    .fill(isGranted ? Color.green.opacity(0.1) : Color.orange.opacity(0.1))
-                    .frame(width: 36, height: 36)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 14))
-                    .foregroundColor(isGranted ? .green : .orange)
-            }
-            
-            // Content
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(title)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.primary)
-                    
-                    if isRequired {
-                        Text("Required")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(Color.orange)
-                            .cornerRadius(4)
-                    }
-                    
-                    Spacer()
-                }
-                
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundColor(.secondary)
+                .frame(width: 30)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.primary)
                 Text(description)
-                    .font(.system(size: 12))
+                    .font(.system(size: 13))
                     .foregroundColor(.secondary)
             }
-            
-            // Status and Action
-            VStack(spacing: 8) {
-                // Status indicator
+
+            Spacer()
+
+            if isGranted {
                 HStack(spacing: 6) {
-                    Image(systemName: isGranted ? "checkmark.circle.fill" : "clock.circle")
-                        .font(.system(size: 13))
-                        .foregroundColor(isGranted ? .green : .orange)
-                    
-                    Text(isGranted ? "Granted" : "Pending")
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Text("Granted")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(isGranted ? .green : .orange)
+                        .foregroundColor(.green)
                 }
-                
-                // Grant button
-                if !isGranted {
-                    Button("Grant") { action() }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                }
+            } else {
+                Button("Grant") { action() }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
             }
         }
         .padding(.vertical, 6)
@@ -145,7 +104,7 @@ struct WelcomeSetupScreen: View {
     
     @ViewBuilder
     private var launchAtLoginSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             HStack {
                 Text("Launch Settings")
                     .font(.system(size: 18, weight: .semibold))
@@ -165,7 +124,7 @@ struct WelcomeSetupScreen: View {
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.primary)
                     
-                    Text("Start nozzle automatically when you log in")
+                    Text("Start Nozzle automatically when you log in")
                         .font(.system(size: 14))
                         .foregroundColor(.secondary)
                 }

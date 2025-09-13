@@ -7,7 +7,7 @@ struct ShortcutsScreen: View {
     
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 20) {
+            LazyVStack(alignment: .leading, spacing: 14) {
                 // Wireframe placeholder for app screenshot
                 appScreenshotWireframe
                     .padding(.bottom, 8)
@@ -16,8 +16,8 @@ struct ShortcutsScreen: View {
                     categorySection(category)
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
+            .padding(.horizontal, 26)
+            .padding(.vertical, 14)
         }
         .scrollIndicators(.hidden)
         .frame(maxWidth: .infinity, alignment: .top)
@@ -59,7 +59,7 @@ struct ShortcutsScreen: View {
     /// Wireframe placeholder for app screenshot
     @ViewBuilder
     private var appScreenshotWireframe: some View {
-        RoundedRectangle(cornerRadius: 12)
+        RoundedRectangle(cornerRadius: 15)
             .stroke(Color.secondary.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [8, 4]))
             .fill(Color(NSColor.controlBackgroundColor).opacity(0.3))
             .frame(height: 200)

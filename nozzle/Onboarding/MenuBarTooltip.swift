@@ -114,7 +114,7 @@ struct TooltipContentView: View {
                     .foregroundColor(accentColor)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("nozzle is ready!")
+                    Text("Nozzle is ready!")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.primary)
                     

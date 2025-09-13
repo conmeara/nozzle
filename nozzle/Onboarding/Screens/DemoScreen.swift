@@ -6,27 +6,12 @@ struct DemoScreen: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                // Video wireframe
+            VStack(spacing: 14) {
+                // Video wireframe only (keep placeholder, remove extra copy)
                 videoWireframe
-                
-                // Demo description
-                VStack(spacing: 12) {
-                    Text("Quick Demo")
-                        .font(.system(.title2, weight: .semibold))
-                        .foregroundStyle(.primary)
-                    
-                    Text("Watch this short demonstration to see nozzle's key features in action. Learn how to manage your clipboard history, use keyboard shortcuts, and boost your productivity.")
-                        .font(.system(.body))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(4)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.horizontal, 40)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 26)
+            .padding(.vertical, 14)
         }
         .frame(maxWidth: .infinity, alignment: .top)
     }
@@ -34,7 +19,7 @@ struct DemoScreen: View {
     /// Wireframe placeholder for demo video
     @ViewBuilder
     private var videoWireframe: some View {
-        RoundedRectangle(cornerRadius: 16)
+        RoundedRectangle(cornerRadius: 15)
             .stroke(Color.secondary.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [8, 4]))
             .fill(Color(NSColor.controlBackgroundColor).opacity(0.3))
             .frame(width: 480, height: 300)

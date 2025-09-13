@@ -1,28 +1,25 @@
 import SwiftUI
 import Defaults
+import AppKit
 
 struct OnboardingView: View {
     @State private var onboardingState = OnboardingState()
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Headings (per-screen)
-            progressIndicator
-                .padding(.top, 16)
-                .padding(.horizontal, 24)
+        ZStack(alignment: .bottomTrailing) {
+            VStack(spacing: 0) {
+                // Content area (header hidden on all pages)
+                currentScreenView
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .animation(.easeInOut(duration: 0.2), value: onboardingState.currentScreen)
+            }
 
-            // Content area
-            currentScreenView
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .animation(.easeInOut(duration: 0.2), value: onboardingState.currentScreen)
-
-            // Navigation
-            navigationButtons
-                .padding(.horizontal, 24)
-                .padding(.vertical, 16)
-                .background(Color(NSColor.windowBackgroundColor))
+            // Floating next/finish button with Liquid Glass (accent blue)
+            floatingNextButton
+                .padding(20)
         }
+        .ignoresSafeArea(edges: [.horizontal])
         .frame(minWidth: 680, minHeight: 520)
         .environment(onboardingState)
     }
@@ -30,13 +27,17 @@ struct OnboardingView: View {
     @ViewBuilder
     private var progressIndicator: some View {
         VStack(spacing: 6) {
-            Text(onboardingState.currentScreen.title)
-                .font(.system(size: 22, weight: .bold))
-            Text(onboardingState.currentScreen.description)
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 460)
+            if !onboardingState.currentScreen.title.isEmpty {
+                Text(onboardingState.currentScreen.title)
+                    .font(.system(size: 22, weight: .bold))
+            }
+            if !onboardingState.currentScreen.description.isEmpty {
+                Text(onboardingState.currentScreen.description)
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 460)
+            }
         }
         .padding(.bottom, 12)
     }
@@ -56,34 +57,31 @@ struct OnboardingView: View {
     }
     
     @ViewBuilder
-    private var navigationButtons: some View {
-        HStack {
-            if onboardingState.canGoBack {
-                Button("Back") { onboardingState.previousScreen() }
-                    .keyboardShortcut(.cancelAction)
+    private var bottomUtilityRow: some View { EmptyView() }
+
+    // Floating next/finish button styled with Liquid Glass
+    @ViewBuilder
+    private var floatingNextButton: some View {
+        let isLast = onboardingState.currentScreen == .getStarted
+        Button {
+            if isLast {
+                onboardingState.completeOnboarding()
             } else {
-                Button("Skip Setup") { onboardingState.skipToFinish() }
+                onboardingState.nextScreen()
             }
-
-            Spacer()
-
-            switch onboardingState.currentScreen {
-            case .getStarted:
-                Button("Get Started") { onboardingState.completeOnboarding() }
-                    .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent)
-            case .demo:
-                Button("Continue") { onboardingState.nextScreen() }
-                    .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!onboardingState.canContinue)
-            default:
-                Button("Continue") { onboardingState.nextScreen() }
-                    .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!onboardingState.canContinue)
-            }
+        } label: {
+            Image(systemName: isLast ? "checkmark" : "arrow.right")
+                .font(.system(size: 16, weight: .semibold))
+                .frame(width: 44, height: 44)
         }
+        .keyboardShortcut(.defaultAction)
+        .buttonStyle(.plain)
+        .contentShape(Circle())
+        .glassEffect(Glass.regular.tint(Color(NSColor.systemBlue)).interactive(), in: .circle)
+        .foregroundStyle(Color.white)
+        .opacity(onboardingState.canContinue || isLast ? 1.0 : 0.4)
+        .disabled(!(onboardingState.canContinue || isLast))
+        .help(isLast ? "Finish" : "Continue")
     }
 }
 
