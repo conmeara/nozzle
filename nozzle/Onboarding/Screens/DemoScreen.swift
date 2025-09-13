@@ -7,6 +7,13 @@ struct DemoScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 14) {
+                // Demo Video header
+                Text("Demo Video")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.bottom, 16)
+                
                 // Video wireframe only (keep placeholder, remove extra copy)
                 videoWireframe
             }

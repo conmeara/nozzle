@@ -12,6 +12,10 @@ struct GetStartedScreen: View {
                 // Success header
                 successSection
 
+                // Screenshot wireframe
+                screenshotWireframe
+                    .padding(.vertical, 8)
+
                 // Resources section
                 resourcesTiles
             }
@@ -44,6 +48,32 @@ struct GetStartedScreen: View {
         }
     }
 
+    /// Wireframe placeholder for screenshot
+    @ViewBuilder
+    private var screenshotWireframe: some View {
+        RoundedRectangle(cornerRadius: 15)
+            .stroke(Color.secondary.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [8, 4]))
+            .fill(Color(NSColor.controlBackgroundColor).opacity(0.3))
+            .frame(height: 200)
+            .overlay {
+                VStack(spacing: 12) {
+                    Image(systemName: "photo")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.secondary)
+                    
+                    Text("App Screenshot")
+                        .font(.system(.body, weight: .medium))
+                        .foregroundStyle(.secondary)
+                    
+                    Text("Screenshot placeholder - will be replaced with actual app image")
+                        .font(.system(.caption))
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
+                }
+            }
+    }
+
     // Resources as tiles styled like Shortcuts
     @ViewBuilder
     private var resourcesTiles: some View {
@@ -68,12 +98,6 @@ struct GetStartedScreen: View {
                     title: "Anthropic Prompt Library",
                     subtitle: "Proven prompts",
                     url: "https://docs.anthropic.com/claude/prompt-library"
-                )
-                resourceTile(
-                    icon: "book.closed",
-                    title: "Nozzle Docs",
-                    subtitle: "Guides & tips",
-                    url: "https://github.com/openai" // Placeholder; replace with real docs URL
                 )
             }
         }

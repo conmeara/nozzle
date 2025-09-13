@@ -11,7 +11,7 @@ class MenuBarTooltip: NSWindow {
         self.tooltipView = TooltipContentView()
         
         // Calculate initial size
-        let initialSize = CGSize(width: 280, height: 80)
+        let initialSize = CGSize(width: 180, height: 60)
         
         // Initialize window
         super.init(
@@ -48,7 +48,7 @@ class MenuBarTooltip: NSWindow {
         
         // Position below the menu bar button with some offset
         let xPosition = buttonFrame.midX - (tooltipWidth / 2)
-        let yPosition = buttonFrame.minY - tooltipHeight - 12 // 12px gap from menu bar
+        let yPosition = buttonFrame.minY - tooltipHeight - 1 // 1px gap from menu bar (very close)
         
         self.setFrameOrigin(NSPoint(x: xPosition, y: yPosition))
         
@@ -108,29 +108,9 @@ struct TooltipContentView: View {
                 .offset(y: 1) // Slight overlap to connect with body
             
             // Main content
-            HStack(spacing: 12) {
-                Image(systemName: "v.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(accentColor)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Nozzle is ready!")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.primary)
-                    
-                    HStack(spacing: 4) {
-                        Label("⌥V", systemImage: "option")
-                            .font(.system(size: 13, weight: .medium, design: .monospaced))
-                            .foregroundColor(.secondary)
-                        
-                        Text("or click here to open")
-                            .font(.system(size: 13))
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                Spacer()
-            }
+            Text("Click here or by ⌥ + V")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.primary)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .background(

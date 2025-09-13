@@ -40,7 +40,7 @@ final class OnboardingState {
     
     var currentScreen: Screen = .welcomeSetup
     var hasAccessibilityPermission = false
-    var launchAtLoginEnabled = false
+    var launchAtLoginEnabled = true  // Default to ON
     
     // Computed properties
     var canContinue: Bool {
