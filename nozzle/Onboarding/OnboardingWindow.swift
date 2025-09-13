@@ -14,15 +14,17 @@ class OnboardingWindow: NSWindowController {
             defer: false
         )
 
-        // Configure window appearance (standard macOS look)
-        window.title = "Welcome to nozzle"
-        window.titlebarAppearsTransparent = false
-        window.titleVisibility = .visible
+        // Configure window appearance (Tahoe 26 style)
+        // Hide title text next to traffic lights; keep a clean surface
+        window.title = "Nozzle"
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
         window.isMovableByWindowBackground = false
         window.center()
 
         window.isOpaque = true
-        window.backgroundColor = .windowBackgroundColor
+        // Solid, system-controlled background
+        window.backgroundColor = .controlBackgroundColor
         window.hasShadow = true
 
         // Set content view

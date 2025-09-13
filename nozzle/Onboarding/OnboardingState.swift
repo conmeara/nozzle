@@ -14,26 +14,26 @@ final class OnboardingState {
         var title: String {
             switch self {
             case .welcomeSetup:
-                return "Welcome to nozzle"
+                return "Welcome to Nozzle!"
             case .shortcuts:
-                return "Keyboard Shortcuts"
+                return "Guide"
             case .demo:
-                return "See nozzle in Action"
+                return "Nozzle in Action"
             case .getStarted:
-                return "You're All Set!"
+                return "Ready to go!"
             }
         }
         
         var description: String {
             switch self {
             case .welcomeSetup:
-                return "Let's do a quick setup to tailor nozzle to your needs."
+                return ""
             case .shortcuts:
-                return "Customize your keyboard shortcuts"
+                return ""
             case .demo:
-                return "Watch how nozzle works in this quick demonstration"
+                return ""
             case .getStarted:
-                return "nozzle is ready to boost your productivity"
+                return ""
             }
         }
     }
