@@ -62,7 +62,7 @@ struct ShortcutsScreen: View {
         RoundedRectangle(cornerRadius: 15)
             .stroke(Color.secondary.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [8, 4]))
             .fill(Color(NSColor.controlBackgroundColor).opacity(0.3))
-            .frame(height: 200)
+            .frame(height: 300)  // Set to 300px height
             .overlay {
                 VStack(spacing: 12) {
                     Image(systemName: "photo")

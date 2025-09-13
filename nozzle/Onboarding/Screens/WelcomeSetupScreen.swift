@@ -11,6 +11,7 @@ struct WelcomeSetupScreen: View {
             VStack(spacing: 14) {
                 // App header
                 welcomeHeader
+                    .padding(.bottom, 12)  // Add extra padding after welcome
                 // Permissions section
                 permissionsSection
                 
