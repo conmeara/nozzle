@@ -11,4 +11,5 @@ extension KeyboardShortcuts.Name {
   static let enhancePrompt = Self("enhancePrompt", default: Shortcut(.e, modifiers: [.command]))
   static let showShortcuts = Self("showShortcuts", default: Shortcut(.slash, modifiers: [.command]))
   static let openPrompts = Self("openPrompts", default: Shortcut(.p, modifiers: [.command]))
+  static let sendFeedback = Self("sendFeedback", default: Shortcut(.f, modifiers: [.option]))
 }

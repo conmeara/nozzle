@@ -100,6 +100,7 @@ struct ShortcutItem: Identifiable, Hashable {
         case .enhancePrompt: return [.modifier("⌘"), .key("E")]
         case .showShortcuts: return [.modifier("⌘"), .key("/")]
         case .openPrompts: return [.modifier("⌘"), .key("P")]
+        case .sendFeedback: return [.modifier("⌥"), .key("F")]
         default: return [.key("?")]
         }
     }
@@ -184,6 +185,7 @@ enum ShortcutData {
             ShortcutItem("Close popup", fixed: .special("Esc")),
             ShortcutItem("Open preferences", fixed: .modifier("⌘"), .key(",")),
             ShortcutItem("Show keyboard shortcuts", customizable: .showShortcuts),
+            ShortcutItem("Send feedback", customizable: .sendFeedback),
             ShortcutItem("Open prompts", customizable: .openPrompts)
         ]),
         

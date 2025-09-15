@@ -13,6 +13,7 @@
 "copy_combined" = "Copy to Clipboard";
 "quit" = "Quit";
 "preferences" = "Preferences…";
+"Feedback" = "Feedback";
 "preferences_advanced" = "Advanced";
 "preferences_pins" = "Pins";
 "copy_modifiers_config" = "• Select with %@ pressed to copy item.";
