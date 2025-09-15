@@ -38,6 +38,12 @@ final class ContentManager {
     var isPromptEditorEditing: Bool = false
     var enhanceButtonClicked: Bool = false // Flag to prevent editor exit on enhance
     
+    // Cache for flattened content items to avoid repeated traversals
+    @ObservationIgnored private var _allItemsCache: [ContentItem] = []
+    @ObservationIgnored private var _allItemsCacheDirty: Bool = true
+    @ObservationIgnored private var _itemsById: [UUID: ContentItem] = [:]
+    @ObservationIgnored private var _itemsBySource: [String: [ContentItem]] = [:]
+
     // Cache for selected items to avoid repeated full scans and sorts
     @ObservationIgnored private var _selectedCache: [ContentItem] = []
     @ObservationIgnored private var _selectedCacheDirty: Bool = true
@@ -72,11 +78,12 @@ final class ContentManager {
     }
     
     var focusedContentItem: ContentItem? {
-        allItems.first { $0.id == focusedItemId }
+        item(for: focusedItemId)
     }
     
     var allItems: [ContentItem] {
-        orderedSourceIds.flatMap { sources[$0]?.items ?? [] }
+        rebuildItemCachesIfNeeded()
+        return _allItemsCache
     }
     
     // Computed views
@@ -84,11 +91,43 @@ final class ContentManager {
         guard let src = sources[activeSourceId] else { return [] }
         return src.items
     }
+
+    private func rebuildItemCachesIfNeeded() {
+        if !_allItemsCacheDirty { return }
+
+        var flattened: [ContentItem] = []
+        var byId: [UUID: ContentItem] = [:]
+        var bySource: [String: [ContentItem]] = [:]
+
+        for sourceId in orderedSourceIds {
+            guard let items = sources[sourceId]?.items else { continue }
+            flattened.append(contentsOf: items)
+            bySource[sourceId] = items
+            for item in items where byId[item.id] == nil {
+                byId[item.id] = item
+            }
+        }
+
+        _allItemsCache = flattened
+        _itemsById = byId
+        _itemsBySource = bySource
+        _allItemsCacheDirty = false
+    }
+
+    func markItemsDirty() {
+        _allItemsCacheDirty = true
+    }
+
+    func item(for id: UUID?) -> ContentItem? {
+        guard let id else { return nil }
+        rebuildItemCachesIfNeeded()
+        return _itemsById[id]
+    }
     
     // Selection management
     func toggleSelection(_ id: UUID) {
         // Check if this is a folder and handle specially
-        if let folderItem = allItems.first(where: { $0.id == id }), folderItem.isFolder {
+        if let folderItem = item(for: id), folderItem.isFolder {
             toggleFolderSelection(id)
         } else {
             // Regular item selection
@@ -107,11 +146,11 @@ final class ContentManager {
     }
     
     private func toggleFolderSelection(_ folderId: UUID) {
-        guard let folderItem = allItems.first(where: { $0.id == folderId }),
-              folderItem.isFolder,
-              let folderPath = folderItem.fileURL?.path,
-              let folderURL = folderItem.fileURL else { return }
-        
+        guard let folderItem = item(for: folderId),
+             folderItem.isFolder,
+             let folderPath = folderItem.fileURL?.path,
+             let folderURL = folderItem.fileURL else { return }
+
         let children = allItems.filter { $0.parentPath == folderPath }
         let currentState = getFolderSelectionState(folderId)
         
@@ -140,12 +179,14 @@ final class ContentManager {
     }
     
     func selectFolderChildren(_ folderId: UUID) {
-        guard let folderItem = allItems.first(where: { $0.id == folderId }),
-              folderItem.isFolder,
-              let folderPath = folderItem.fileURL?.path else { return }
+        guard let folderItem = item(for: folderId),
+             folderItem.isFolder,
+             let folderPath = folderItem.fileURL?.path else { return }
         
+        guard let sourceItems = _itemsBySource[folderItem.sourceId] else { return }
+
         // Select all visible children of this folder (but not the folder itself)
-        for item in allItems {
+        for item in sourceItems {
             if item.parentPath == folderPath {
                 if item.isFolder {
                     // Recursively select nested folder children
@@ -162,12 +203,14 @@ final class ContentManager {
     }
     
     func deselectFolderChildren(_ folderId: UUID) {
-        guard let folderItem = allItems.first(where: { $0.id == folderId }),
-              folderItem.isFolder,
-              let folderPath = folderItem.fileURL?.path else { return }
+        guard let folderItem = item(for: folderId),
+             folderItem.isFolder,
+             let folderPath = folderItem.fileURL?.path else { return }
         
+        guard let sourceItems = _itemsBySource[folderItem.sourceId] else { return }
+
         // Deselect all children of this folder (but not the folder itself)
-        for item in allItems {
+        for item in sourceItems {
             if item.parentPath == folderPath {
                 if item.isFolder {
                     // Recursively deselect nested folder children
@@ -185,22 +228,36 @@ final class ContentManager {
     
     // Helper functions for collapsed folder selection
     private func selectAllDescendantFiles(in folderURL: URL) {
-        let descendantURLs = enumerateDescendantFiles(at: folderURL)
-        for url in descendantURLs {
-            let fileId = stableUUID(for: url)
-            selectedItemIds.insert(fileId)
-            // Files are selected as context by default (not examples)
-            exampleItemIds.remove(fileId)
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            let descendantURLs = self.enumerateDescendantFiles(at: folderURL)
+            await self.applyDescendantSelection(urls: descendantURLs, selecting: true)
         }
     }
     
     private func deselectAllDescendantFiles(in folderURL: URL) {
-        let descendantURLs = enumerateDescendantFiles(at: folderURL)
-        for url in descendantURLs {
-            let fileId = stableUUID(for: url)
-            selectedItemIds.remove(fileId)
-            exampleItemIds.remove(fileId)
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            let descendantURLs = self.enumerateDescendantFiles(at: folderURL)
+            await self.applyDescendantSelection(urls: descendantURLs, selecting: false)
         }
+    }
+
+    @MainActor
+    private func applyDescendantSelection(urls: [URL], selecting: Bool) {
+        guard !urls.isEmpty else { return }
+
+        for url in urls {
+            let fileId = stableUUID(for: url)
+            if selecting {
+                selectedItemIds.insert(fileId)
+                exampleItemIds.remove(fileId)
+            } else {
+                selectedItemIds.remove(fileId)
+                exampleItemIds.remove(fileId)
+            }
+        }
+        markSelectedDirty()
     }
     
     func clearSelection() {
@@ -223,7 +280,8 @@ final class ContentManager {
         guard item.sourceType == .folder, let itemPath = item.fileURL?.path else { return false }
         // Any selected folder that is an ancestor of this item implies effective selection
         for fid in selectedItemIds {
-            if let folder = allItems.first(where: { $0.id == fid && $0.isFolder }),
+            if let folder = self.item(for: fid),
+               folder.isFolder,
                let folderPath = folder.fileURL?.path,
                itemPath.hasPrefix(folderPath.hasSuffix("/") ? folderPath : folderPath + "/") {
                 // Ensure not the folder itself
@@ -234,12 +292,14 @@ final class ContentManager {
     }
     
     func getFolderSelectionState(_ folderId: UUID) -> FolderSelectionState {
-        guard let folderItem = allItems.first(where: { $0.id == folderId }),
+        guard let folderItem = item(for: folderId),
               folderItem.isFolder,
               let folderPath = folderItem.fileURL?.path else { return .none }
 
+        guard let sourceItems = _itemsBySource[folderItem.sourceId] else { return .none }
+
         // Get all visible children of this folder
-        let children = allItems.filter { $0.parentPath == folderPath }
+        let children = sourceItems.filter { $0.parentPath == folderPath }
 
         // If folder is collapsed (no visible children), compute state from real descendants on disk
         if children.isEmpty {
@@ -318,7 +378,7 @@ final class ContentManager {
     
     private func syncClipboardSelection(_ id: UUID) {
         // If this is a clipboard item, sync with History
-        if let item = allItems.first(where: { $0.id == id }),
+        if let item = item(for: id),
            item.sourceType == .clipboard {
             if let historyItem = History.shared.items.first(where: { $0.id == id }) {
                 historyItem.isSelected = selectedItemIds.contains(id)
@@ -332,7 +392,9 @@ final class ContentManager {
         if !orderedSourceIds.contains(source.id) {
             orderedSourceIds.append(source.id)
         }
-        
+
+        markItemsDirty()
+
         // Sync initial selection state for clipboard items
         if source is ClipboardSource {
             for item in History.shared.items where item.isSelected {
@@ -356,6 +418,7 @@ final class ContentManager {
         // Remove from storage
         sources.removeValue(forKey: sourceId)
         orderedSourceIds.removeAll { $0 == sourceId }
+        markItemsDirty()
         
         // Clear any selections from this source
         let sourceItems = source.items
@@ -574,7 +637,7 @@ final class ContentManager {
     }
     
     // File enumeration helpers
-    private func enumerateDescendantFiles(at baseURL: URL) -> [URL] {
+    nonisolated private func enumerateDescendantFiles(at baseURL: URL) -> [URL] {
         var results: [URL] = []
         let fm = FileManager.default
         if let enumerator = fm.enumerator(at: baseURL, includingPropertiesForKeys: [.isDirectoryKey, .contentTypeKey], options: [.skipsHiddenFiles]) {
@@ -602,20 +665,20 @@ final class ContentManager {
         return false
     }
     
-    func stableUUID(for url: URL) -> UUID {
+    nonisolated func stableUUID(for url: URL) -> UUID {
         let snap = FileIdentity.snapshot(for: url)
         return FileSystemSource.makeStableUUID(identity: snap.identity, fallbackPath: url.absoluteString)
     }
     
     func canToggleExample(_ id: UUID) -> Bool {
         guard selectedItemIds.contains(id),
-              let _ = allItems.first(where: { $0.id == id }) else { return false }
+              item(for: id) != nil else { return false }
         
         return isTextualItem(id)
     }
     
     func isTextualItem(_ id: UUID) -> Bool {
-        guard let item = allItems.first(where: { $0.id == id }) else { return false }
+        guard let item = item(for: id) else { return false }
         
         if item.isFolder {
             // Allow folder examples only if all descendant files are textual and there is at least one file
@@ -681,14 +744,14 @@ extension ContentManager {
         // For folder sources, we need to handle collapsed folders with selected children
         var hiddenSelectedItems: [ContentItem] = []
 
-        // Check each source for selected items that might be hidden (files in collapsed folders)
-        for sourceId in orderedSourceIds {
-            guard let source = sources[sourceId] as? FileSystemSource else { continue }
-            // Get all selected IDs that aren't visible in current items
-            let visibleIds = Set(items.map { $0.id })
-            let hiddenSelectedIds = selectedItemIds.subtracting(visibleIds)
+        let visibleIds = Set(items.map { $0.id })
+        let hiddenSelectedIds = selectedItemIds.subtracting(visibleIds)
 
-            if !hiddenSelectedIds.isEmpty {
+        if !hiddenSelectedIds.isEmpty {
+            // Check each source for selected items that might be hidden (files in collapsed folders)
+            for sourceId in orderedSourceIds {
+                guard let source = sources[sourceId] as? FileSystemSource else { continue }
+
                 // Scan the filesystem to find these hidden selected files
                 let foundItems = source.findItemsById(hiddenSelectedIds)
                 hiddenSelectedItems.append(contentsOf: foundItems.filter { !$0.isFolder })

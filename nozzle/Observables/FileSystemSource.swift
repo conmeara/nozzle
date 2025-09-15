@@ -68,6 +68,12 @@ final class FileSystemSource: ContentSource {
     
     // Resort suspension for stable editing
     private var suspendResortItemId: UUID?
+
+    private struct DirectoryEntry {
+        let url: URL
+        let snapshot: FileIdentity.Snapshot
+        let typeIdentifier: String?
+    }
     
     init(folderURL: URL) {
         self.folderURL = folderURL
@@ -160,6 +166,7 @@ final class FileSystemSource: ContentSource {
         self.cachedItems = hierarchicalItems
         self.lastRefreshTime = Date()
         self.rebuildIndexes()
+        ContentManager.shared.markItemsDirty()
         // Visible slice changed; invalidate selectedItems cache
         ContentManager.shared.markSelectedDirty()
     }
@@ -242,6 +249,7 @@ final class FileSystemSource: ContentSource {
             cachedItems.replaceSubrange(start..<safeEnd, with: replacement)
         }
         rebuildIndexes()
+        ContentManager.shared.markItemsDirty()
         // Visible slice changed; invalidate selectedItems cache and decorators cache
         ContentManager.shared.markDecoratorsNeedRefresh(for: self.id)
         ContentManager.shared.markSelectedDirty()
@@ -262,106 +270,90 @@ final class FileSystemSource: ContentSource {
     private func buildHierarchicalItems(at url: URL, depth: Int, parentPath: String?) async -> [ContentItem] {
         // Check if directory has changed before expensive scanning
         let hasChanged = await MainActor.run { self.hasDirectoryChanged(at: url) }
-        
+
         // If directory hasn't changed and we have cached items for this path, return cached subset
         if !hasChanged && depth == 0 {
             // For root level, return existing cached items since directory is unchanged
             return await MainActor.run { self.cachedItems }
         }
-        
+
+        let (sortOrder, sortDirection) = await MainActor.run { (self.sortOrder, self.sortDirection) }
+        let sourceId = "folder:\(self.folderURL.path)"
+
         let task = Task.detached { () -> [ContentItem] in
             let fm = FileManager.default
-            // Only fetch isDirectory initially to separate folders/files
             guard let urls = try? fm.contentsOfDirectory(
                 at: url,
-                includingPropertiesForKeys: [.isDirectoryKey],
+                includingPropertiesForKeys: [.isDirectoryKey, .contentModificationDateKey, .fileSizeKey, .fileResourceIdentifierKey],
                 options: [.skipsHiddenFiles]
             ) else { return [] }
-            
-            var items: [ContentItem] = []
-            let sourceId = "folder:\(self.folderURL.path)"
-            
-            // Separate folders and files with minimal metadata
-            var folders: [(url: URL, isDir: Bool)] = []
-            var files: [(url: URL, isDir: Bool)] = []
-            
+
+            var folders: [DirectoryEntry] = []
+            var files: [DirectoryEntry] = []
+            folders.reserveCapacity(urls.count)
+            files.reserveCapacity(urls.count)
+
             for itemURL in urls {
-                // Skip excluded files/folders based on user patterns
                 if self.shouldExclude(filename: itemURL.lastPathComponent) {
                     continue
                 }
-                
-                let isDir = (try? itemURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
-                if isDir {
-                    folders.append((itemURL, isDir))
+
+                let snapshot = FileIdentity.snapshot(for: itemURL)
+                if snapshot.isDirectory {
+                    folders.append(DirectoryEntry(url: itemURL, snapshot: snapshot, typeIdentifier: nil))
                 } else {
-                    files.append((itemURL, isDir))
+                    let typeIdentifier = Self.resolvedType(for: itemURL)?.identifier
+                    files.append(DirectoryEntry(url: itemURL, snapshot: snapshot, typeIdentifier: typeIdentifier))
                 }
             }
-            
-            // Sort folders first, then files
-            let sortOrder = await MainActor.run { self.sortOrder }
-            let sortDirection = await MainActor.run { self.sortDirection }
-            
-            folders.sort { self.sortFiles($0.url, $1.url, order: sortOrder, direction: sortDirection) }
-            files.sort { self.sortFiles($0.url, $1.url, order: sortOrder, direction: sortDirection) }
-            
-            // Add folders
-            for (folderURL, _) in folders {
-                // Fetch metadata once per folder
-                let snap = FileIdentity.snapshot(for: folderURL)
-                // Derive a stable UUID from the file identity when available;
-                // fall back to absolute path for determinism (not mod date).
-                let uuid = Self.makeStableUUID(identity: snap.identity, fallbackPath: folderURL.absoluteString)
-                
+
+            folders.sort { Self.sortEntries($0, $1, order: sortOrder, direction: sortDirection) }
+            files.sort { Self.sortEntries($0, $1, order: sortOrder, direction: sortDirection) }
+
+            var items: [ContentItem] = []
+            items.reserveCapacity(folders.count + files.count)
+
+            for folder in folders {
+                let uuid = Self.makeStableUUID(identity: folder.snapshot.identity, fallbackPath: folder.url.absoluteString)
                 let folderItem = ContentItem(
                     id: uuid,
-                    title: folderURL.lastPathComponent,
-                    timestamp: snap.modDate,
+                    title: folder.url.lastPathComponent,
+                    timestamp: folder.snapshot.modDate,
                     sourceType: .folder,
                     sourceId: sourceId,
-                    fileURL: folderURL,
-                    plainText: folderURL.path,
-                    fileIdentity: snap.identity,
+                    fileURL: folder.url,
+                    plainText: folder.url.path,
+                    fileIdentity: folder.snapshot.identity,
                     isFolder: true,
                     depth: depth,
                     parentPath: parentPath
                 )
                 items.append(folderItem)
             }
-            
-            // Add files
-            for (fileURL, _) in files {
-                // Fetch metadata once per file
-                let snap = FileIdentity.snapshot(for: fileURL)
-                let type = Self.resolvedType(for: fileURL)
-                // File size is already fetched in snap
-                let fileSize = snap.size
-                
-                // Use stable identity-based UUID to prevent ID churn on save.
-                let uuid = Self.makeStableUUID(identity: snap.identity, fallbackPath: fileURL.absoluteString)
-                
+
+            for file in files {
+                let uuid = Self.makeStableUUID(identity: file.snapshot.identity, fallbackPath: file.url.absoluteString)
                 let fileItem = ContentItem(
                     id: uuid,
-                    title: fileURL.lastPathComponent,
-                    timestamp: snap.modDate,
+                    title: file.url.lastPathComponent,
+                    timestamp: file.snapshot.modDate,
                     sourceType: .folder,
                     sourceId: sourceId,
-                    fileURL: fileURL,
-                    plainText: fileURL.path,
-                    fileIdentity: snap.identity,
-                    uniformTypeIdentifier: type?.identifier,
-                    fileSize: fileSize,
+                    fileURL: file.url,
+                    plainText: file.url.path,
+                    fileIdentity: file.snapshot.identity,
+                    uniformTypeIdentifier: file.typeIdentifier,
+                    fileSize: file.snapshot.size,
                     isFolder: false,
                     depth: depth,
                     parentPath: parentPath
                 )
                 items.append(fileItem)
             }
-            
+
             return items
         }
-        
+
         let rootItems = await task.value
         var allItems: [ContentItem] = []
         
@@ -494,30 +486,28 @@ final class FileSystemSource: ContentSource {
         }
     }
     
-    private nonisolated func sortFiles(_ file1: URL, _ file2: URL, order: FileSortOrder, direction: FileSortDirection) -> Bool {
-        let result: Bool
-        
+    private nonisolated static func sortEntries(_ lhs: DirectoryEntry, _ rhs: DirectoryEntry, order: FileSortOrder, direction: FileSortDirection) -> Bool {
+        let ascending: Bool
+
         switch order {
         case .name:
-            result = file1.lastPathComponent.localizedCompare(file2.lastPathComponent) == .orderedAscending
-            
+            ascending = lhs.url.lastPathComponent.localizedCompare(rhs.url.lastPathComponent) == .orderedAscending
+
         case .dateModified:
-            let date1 = (try? file1.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
-            let date2 = (try? file2.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
-            result = date1 < date2
-            
+            ascending = lhs.snapshot.modDate < rhs.snapshot.modDate
+
         case .size:
-            let size1 = (try? file1.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
-            let size2 = (try? file2.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
-            result = size1 < size2
-            
+            let lhsSize = lhs.snapshot.size ?? 0
+            let rhsSize = rhs.snapshot.size ?? 0
+            ascending = lhsSize < rhsSize
+
         case .type:
-            let ext1 = file1.pathExtension.lowercased()
-            let ext2 = file2.pathExtension.lowercased()
-            result = ext1.localizedCompare(ext2) == .orderedAscending
+            let lhsType = lhs.typeIdentifier ?? lhs.url.pathExtension.lowercased()
+            let rhsType = rhs.typeIdentifier ?? rhs.url.pathExtension.lowercased()
+            ascending = lhsType.localizedCompare(rhsType) == .orderedAscending
         }
-        
-        return direction == .ascending ? result : !result
+
+        return direction == .ascending ? ascending : !ascending
     }
 }
 
