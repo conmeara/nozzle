@@ -26,7 +26,7 @@ nozzle works on macOS Sonoma 14 or higher.
   * [Speed up Clipboard Check Interval](#speed-up-clipboard-check-interval)
 * [FAQ](#faq)
   * [Why doesn't it paste when I select an item in history?](#why-doesnt-it-paste-when-i-select-an-item-in-history)
-  * [When assigning a hotkey to open nozzle, it says that this hotkey is already used in some system setting.](#when-assigning-a-hotkey-to-open-maccy-it-says-that-this-hotkey-is-already-used-in-some-system-setting)
+  * [When assigning a hotkey to open nozzle, it says that this hotkey is already used in some system setting.](#when-assigning-a-hotkey-to-open-nozzle-it-says-that-this-hotkey-is-already-used-in-some-system-setting)
   * [How to restore hidden footer?](#how-to-restore-hidden-footer)
   * [How to ignore copies from Universal Clipboard?](#how-to-ignore-copies-from-universal-clipboard)
 * [Translations](#translations)
@@ -42,7 +42,6 @@ nozzle works on macOS Sonoma 14 or higher.
 * Keyboard-first navigation
 * Secure and private
 * Native macOS UI
-* Open source and free
 
 ### v3 Multi-Source Architecture
 
@@ -150,7 +149,7 @@ Context:
 
 Customize the template:
 ```bash
-defaults write org.p0deje.nozzle pasteTemplate "{prompt}\n\nSelected content:\n{items}"
+defaults write com.conmeara.nozzleai pasteTemplate "{prompt}\n\nSelected content:\n{items}"
 ```
 
 ## Advanced
@@ -186,7 +185,7 @@ ContentManager.shared.registerSource(CustomSource())
 You can tell nozzle to ignore all copied items:
 
 ```sh
-defaults write org.p0deje.nozzle ignoreEvents true # default is false
+defaults write com.conmeara.nozzleai ignoreEvents true # default is false
 ```
 
 This is useful if you have some workflow for copying sensitive data. You can set `ignoreEvents` to true, copy the data and set `ignoreEvents` back to false.
@@ -224,7 +223,7 @@ By default, nozzle checks clipboard every 500 ms, which should be enough for mos
 to speed it up, you can change it with `defaults`:
 
 ```sh
-defaults write org.p0deje.nozzle clipboardCheckInterval 0.1 # 100 ms
+defaults write com.conmeara.nozzleai clipboardCheckInterval 0.1 # 100 ms
 ```
 
 ## FAQ
@@ -251,7 +250,7 @@ defaults write org.p0deje.nozzle clipboardCheckInterval 0.1 # 100 ms
 If for some reason it doesn't work, run the following command in Terminal.app:
 
 ```sh
-defaults write org.p0deje.nozzle showFooter 1
+defaults write com.conmeara.nozzleai showFooter 1
 ```
 
 ### How to ignore copies from [Universal Clipboard](https://support.apple.com/en-us/102430)?
@@ -270,7 +269,7 @@ You can use it to suggest changes in translations and localize the application t
 
 ### The Evolution to v3
 
-nozzle began as an enhanced fork of Maccy, adding multi-select and prompt capabilities to clipboard management. However, as users' content workflows became more complex, it became clear that clipboard-only management was limiting.
+nozzle began as an advanced clipboard manager, adding multi-select and prompt capabilities to clipboard management. As users' content workflows grew more complex, it became clear that clipboard-only tooling was limiting.
 
 **Why Multi-Source Architecture?**
 
@@ -301,4 +300,4 @@ The v3 architecture showcases modern macOS development:
 
 ## License
 
-[MIT](./LICENSE)
+Proprietary software. All rights reserved. © Conor O'Meara.

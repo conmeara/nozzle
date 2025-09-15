@@ -1,7 +1,7 @@
 "Title" = "Прасунутыя";
 "TurnOff" = "Выключыць";
-"TurnOffShellScript" = "defaults write org.p0deje.nozzle ignoreEvents true\n# капіяваць дадзеныя\ndefaults write org.p0deje.nozzle ignoreEvents false";
-"TurnOffNextShellScript" = "defaults write org.p0deje.nozzle ignoreOnlyNextEvent true\n# капіяваць дадзеныя";
+"TurnOffShellScript" = "defaults write com.conmeara.nozzleai ignoreEvents true\n# капіяваць дадзеныя\ndefaults write com.conmeara.nozzleai ignoreEvents false";
+"TurnOffNextShellScript" = "defaults write com.conmeara.nozzleai ignoreOnlyNextEvent true\n# капіяваць дадзеныя";
 "ClearHistoryOnQuit" = "Ачысціць гісторыю пры зачыненні";
 "ClearSystemClipboard" = "Таксама ачысціць сістэмны буфер абмену";
 "ClearSystemClipboardTooltip" = "Калі гэты параметр улучаны, ачыстка гісторыі таксама ачысціць бягучы сістэмны буфер абмену.";
