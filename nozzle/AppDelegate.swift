@@ -33,6 +33,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Bridge FloatingPanel via AppDelegate.
     AppState.shared.appDelegate = self
+    
+    // Register global feedback shortcut
+    KeyboardShortcuts.onKeyUp(for: .sendFeedback) { [weak self] in
+      Task { @MainActor in
+        self?.sendFeedbackFromMenu()
+      }
+    }
 
     Clipboard.shared.onNewCopy { History.shared.add($0) }
     Clipboard.shared.start()
@@ -254,6 +261,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     shortcutsItem.target = self
     menu.addItem(shortcutsItem)
     
+    let feedbackItem = NSMenuItem(
+      title: NSLocalizedString("Feedback", comment: ""),
+      action: #selector(sendFeedbackFromMenu),
+      keyEquivalent: "f"
+    )
+    feedbackItem.keyEquivalentModifierMask = [.option]
+    feedbackItem.target = self
+    menu.addItem(feedbackItem)
+    
     menu.addItem(NSMenuItem.separator())
     
     let quitItem = NSMenuItem(
@@ -280,6 +296,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     AppState.shared.showingShortcuts = true
   }
 
+  @objc
+  private func sendFeedbackFromMenu() {
+    let email = "conor.omeara@icloud.com"
+    let subject = "Nozzle Feedback"
+    let body = """
+    Hi Conor,
+
+    I'd like to share some feedback about Nozzle:
+
+    
+
+    ---
+    App Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")
+    Build: \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown")
+    macOS: \(ProcessInfo.processInfo.operatingSystemVersionString)
+    """
+    
+    let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? subject
+    let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? body
+    let mailtoString = "mailto:\(email)?subject=\(encodedSubject)&body=\(encodedBody)"
+    
+    if let mailtoURL = URL(string: mailtoString) {
+      NSWorkspace.shared.open(mailtoURL)
+    }
+  }
+  
   @objc
   private func quitFromMenu() {
     AppState.shared.quit()
