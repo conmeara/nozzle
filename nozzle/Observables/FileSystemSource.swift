@@ -2,6 +2,7 @@ import AppKit
 import UniformTypeIdentifiers
 import Observation
 import CoreServices
+import OSLog
 import Defaults
 
 // MARK: - Sorting Enums
@@ -20,6 +21,15 @@ enum FileSortDirection: String, CaseIterable {
 
 @Observable @MainActor
 final class FileSystemSource: ContentSource {
+    private static let refreshLogger = Logger(subsystem: "org.conmeara.nozzle.content", category: "FileSystemSource")
+    private static let directoryResourceKeys: Set<URLResourceKey> = [
+        .isDirectoryKey,
+        .contentModificationDateKey,
+        .fileSizeKey,
+        .fileResourceIdentifierKey,
+        .contentTypeKey
+    ]
+
     nonisolated let id: String  // Need nonisolated access for event persistence
     let name: String
     let icon: NSImage
@@ -160,7 +170,11 @@ final class FileSystemSource: ContentSource {
     private func forceRefresh() async {
         // Mark decorators as needing refresh before updating items
         ContentManager.shared.markDecoratorsNeedRefresh(for: self.id)
-        
+
+#if DEBUG
+        let refreshStart = Date()
+#endif
+
         // Build hierarchical structure starting from root
         let hierarchicalItems = await buildHierarchicalItems(at: folderURL, depth: 0, parentPath: nil)
         self.cachedItems = hierarchicalItems
@@ -169,6 +183,11 @@ final class FileSystemSource: ContentSource {
         ContentManager.shared.markItemsDirty()
         // Visible slice changed; invalidate selectedItems cache
         ContentManager.shared.markSelectedDirty()
+
+#if DEBUG
+        let elapsed = Date().timeIntervalSince(refreshStart)
+        Self.refreshLogger.debug("forceRefresh(\(self.folderURL.lastPathComponent, privacy: .public)) duration=\(elapsed, privacy: .public)s items=\(hierarchicalItems.count, privacy: .public)")
+#endif
     }
     
     // Check if directory has been modified since last cache
@@ -280,11 +299,12 @@ final class FileSystemSource: ContentSource {
         let (sortOrder, sortDirection) = await MainActor.run { (self.sortOrder, self.sortDirection) }
         let sourceId = "folder:\(self.folderURL.path)"
 
+        let resourceKeys = Self.directoryResourceKeys
         let task = Task.detached { () -> [ContentItem] in
             let fm = FileManager.default
             guard let urls = try? fm.contentsOfDirectory(
                 at: url,
-                includingPropertiesForKeys: [.isDirectoryKey, .contentModificationDateKey, .fileSizeKey, .fileResourceIdentifierKey],
+                includingPropertiesForKeys: Array(resourceKeys),
                 options: [.skipsHiddenFiles]
             ) else { return [] }
 
@@ -298,11 +318,23 @@ final class FileSystemSource: ContentSource {
                     continue
                 }
 
-                let snapshot = FileIdentity.snapshot(for: itemURL)
+                guard let resourceValues = try? itemURL.resourceValues(forKeys: resourceKeys) else { continue }
+                let snapshot = FileIdentity.Snapshot(
+                    identity: resourceValues.fileResourceIdentifier as? Data,
+                    modDate: resourceValues.contentModificationDate ?? .distantPast,
+                    isDirectory: resourceValues.isDirectory ?? false,
+                    size: resourceValues.fileSize.map { Int64($0) }
+                )
+
                 if snapshot.isDirectory {
                     folders.append(DirectoryEntry(url: itemURL, snapshot: snapshot, typeIdentifier: nil))
                 } else {
-                    let typeIdentifier = Self.resolvedType(for: itemURL)?.identifier
+                    let typeIdentifier: String?
+                    if let type = resourceValues.contentType {
+                        typeIdentifier = type.identifier
+                    } else {
+                        typeIdentifier = Self.resolvedType(for: itemURL)?.identifier
+                    }
                     files.append(DirectoryEntry(url: itemURL, snapshot: snapshot, typeIdentifier: typeIdentifier))
                 }
             }
@@ -397,64 +429,59 @@ final class FileSystemSource: ContentSource {
     }
     
     // Find items by their IDs, even if they're not currently visible (collapsed folders)
-    func findItemsById(_ ids: Set<UUID>) -> [ContentItem] {
+    func fetchItems(for ids: Set<UUID>) async -> [ContentItem] {
         guard !ids.isEmpty else { return [] }
-        
-        var foundItems: [ContentItem] = []
-        let fm = FileManager.default
-        
-        // Recursively scan the folder to find matching items
-        if let enumerator = fm.enumerator(
-            at: folderURL,
-            includingPropertiesForKeys: [.isDirectoryKey, .contentTypeKey, .contentModificationDateKey, .fileSizeKey],
-            options: [.skipsHiddenFiles]
-        ) {
-            for case let url as URL in enumerator {
-                // Generate stable UUID for this URL
-                let itemId = Self.makeStableUUID(
-                    identity: FileIdentity.snapshot(for: url).identity,
-                    fallbackPath: url.absoluteString
+
+        let baseURL = folderURL
+        let sourceId = self.id
+        let resourceKeys = Self.directoryResourceKeys
+
+        return await Task.detached(priority: .utility) { () -> [ContentItem] in
+            var foundItems: [ContentItem] = []
+            let fm = FileManager.default
+
+            guard let enumerator = fm.enumerator(
+                at: baseURL,
+                includingPropertiesForKeys: Array(resourceKeys),
+                options: [.skipsHiddenFiles]
+            ) else { return [] }
+
+            while let url = enumerator.nextObject() as? URL {
+                guard let values = try? url.resourceValues(forKeys: resourceKeys) else { continue }
+                let identity = values.fileResourceIdentifier as? Data
+                let itemId = Self.makeStableUUID(identity: identity, fallbackPath: url.absoluteString)
+                guard ids.contains(itemId) else { continue }
+
+                let isDirectory = values.isDirectory == true
+                let timestamp = values.contentModificationDate ?? Date()
+                let uniformType = values.contentType?.identifier ?? (isDirectory ? nil : Self.resolvedType(for: url)?.identifier)
+                let relativePath = url.path.replacingOccurrences(of: baseURL.path + "/", with: "")
+                let depth = relativePath.components(separatedBy: "/").count
+                let parentPath = url.deletingLastPathComponent().path
+
+                let item = ContentItem(
+                    id: itemId,
+                    title: url.lastPathComponent,
+                    timestamp: timestamp,
+                    sourceType: .folder,
+                    sourceId: sourceId,
+                    fileURL: url,
+                    uniformTypeIdentifier: uniformType,
+                    fileSize: values.fileSize.map { Int64($0) },
+                    isFolder: isDirectory,
+                    depth: depth,
+                    parentPath: parentPath == baseURL.path ? nil : parentPath,
+                    isSelected: true
                 )
-                
-                // Check if this ID is one we're looking for
-                if ids.contains(itemId) {
-                    do {
-                        let vals = try url.resourceValues(forKeys: [.isDirectoryKey, .contentTypeKey, .contentModificationDateKey, .fileSizeKey])
-                        
-                        // Calculate depth and parent path
-                        let relativePath = url.path.replacingOccurrences(of: folderURL.path + "/", with: "")
-                        let depth = relativePath.components(separatedBy: "/").count
-                        let parentPath = url.deletingLastPathComponent().path
-                        
-                        let contentItem = ContentItem(
-                            id: itemId,
-                            title: url.lastPathComponent,
-                            timestamp: vals.contentModificationDate ?? Date(),
-                            sourceType: .folder,
-                            sourceId: self.id,
-                            fileURL: url,
-                            uniformTypeIdentifier: vals.contentType?.identifier,
-                            fileSize: Int64(vals.fileSize ?? 0),
-                            isFolder: vals.isDirectory == true,
-                            depth: depth,
-                            parentPath: parentPath == folderURL.path ? nil : parentPath,
-                            isSelected: true // These are selected items
-                        )
-                        
-                        foundItems.append(contentItem)
-                        
-                        // Stop early if we've found all items
-                        if foundItems.count == ids.count {
-                            break
-                        }
-                    } catch {
-                        continue
-                    }
+                foundItems.append(item)
+
+                if foundItems.count == ids.count {
+                    break
                 }
             }
-        }
-        
-        return foundItems
+
+            return foundItems
+        }.value
     }
     
     // MARK: - Folder expansion methods

@@ -14,6 +14,7 @@ final class UniversalItemDecorator: ListItemDecorator {
     
     // App icon for clipboard items
     private var _appIcon: ApplicationImage?
+    @ObservationIgnored private var isLoadingAppIcon: Bool = false
     
     // Static thumbnail size to match HistoryItemDecorator
     static var thumbnailImageSize: NSSize { 
@@ -52,26 +53,7 @@ final class UniversalItemDecorator: ListItemDecorator {
     // App icon for clipboard items
     var clipboardAppIcon: ApplicationImage? {
         if _appIcon == nil, base.sourceType == .clipboard {
-            // Derive effective bundle identifier, with heuristics for common sources like CleanShot
-            var effectiveBundleId = base.applicationBundleId
-            if let nozzleId = Bundle.main.bundleIdentifier, effectiveBundleId == nozzleId,
-               let url = base.fileURL, let guess = ScreenshotSourceHeuristics.guessBundleId(for: url) {
-                effectiveBundleId = guess
-            }
-            if effectiveBundleId == nil, let url = base.fileURL,
-               let guess = ScreenshotSourceHeuristics.guessBundleId(for: url) {
-                effectiveBundleId = guess
-            }
-
-            if let bundleId = effectiveBundleId {
-                Task {
-                    let appIcon = await ApplicationImageCache.shared.getImage(
-                        universalClipboard: false,
-                        application: bundleId
-                    )
-                    await MainActor.run { self._appIcon = appIcon }
-                }
-            }
+            prefetchAppIconIfNeeded()
         }
         return _appIcon
     }
@@ -117,18 +99,10 @@ final class UniversalItemDecorator: ListItemDecorator {
         self.base = item
         self.sourceId = item.sourceId
         self.isVisible = item.isVisible
-        
+
         // Initialize app icon for clipboard items
-        if item.sourceType == .clipboard, let bundleId = item.applicationBundleId {
-            Task {
-                let appIcon = await ApplicationImageCache.shared.getImage(
-                    universalClipboard: false, 
-                    application: bundleId
-                )
-                await MainActor.run {
-                    self._appIcon = appIcon
-                }
-            }
+        if item.sourceType == .clipboard {
+            prefetchAppIconIfNeeded()
         }
     }
     
@@ -145,23 +119,16 @@ final class UniversalItemDecorator: ListItemDecorator {
         // Clear cached app icon if the application changed
         if base.applicationBundleId != newItem.applicationBundleId {
             _appIcon = nil
+            isLoadingAppIcon = false
         }
-        
+
         // Update the base item
         base = newItem
         isVisible = newItem.isVisible
-        
+
         // Re-initialize app icon for clipboard items if needed
-        if newItem.sourceType == .clipboard, let bundleId = newItem.applicationBundleId, _appIcon == nil {
-            Task {
-                let appIcon = await ApplicationImageCache.shared.getImage(
-                    universalClipboard: false, 
-                    application: bundleId
-                )
-                await MainActor.run {
-                    self._appIcon = appIcon
-                }
-            }
+        if newItem.sourceType == .clipboard, _appIcon == nil {
+            prefetchAppIconIfNeeded()
         }
     }
     
@@ -198,5 +165,40 @@ final class UniversalItemDecorator: ListItemDecorator {
                 pasteboard.writeObjects([image])
             }
         }
+    }
+}
+
+private extension UniversalItemDecorator {
+    func prefetchAppIconIfNeeded() {
+        guard let bundleId = effectiveBundleIdentifier(for: base) else { return }
+        guard !isLoadingAppIcon else { return }
+        isLoadingAppIcon = true
+
+        Task(priority: .utility) { [weak self] in
+            let image = await ApplicationImageCache.shared.getImage(
+                universalClipboard: false,
+                application: bundleId
+            )
+            await MainActor.run {
+                guard let self else { return }
+                self._appIcon = image
+                self.isLoadingAppIcon = false
+            }
+        }
+    }
+
+    func effectiveBundleIdentifier(for item: ContentItem) -> String? {
+        var effectiveBundleId = item.applicationBundleId
+        if let nozzleId = Bundle.main.bundleIdentifier,
+           effectiveBundleId == nozzleId,
+           let url = item.fileURL,
+           let guess = ScreenshotSourceHeuristics.guessBundleId(for: url) {
+            effectiveBundleId = guess
+        }
+        if effectiveBundleId == nil, let url = item.fileURL,
+           let guess = ScreenshotSourceHeuristics.guessBundleId(for: url) {
+            effectiveBundleId = guess
+        }
+        return effectiveBundleId
     }
 }

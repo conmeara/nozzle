@@ -51,6 +51,10 @@ final class ContentManager {
     // Cache for UniversalItemDecorator instances to maintain consistency
     @ObservationIgnored private var _decoratorCache: [String: [UUID: UniversalItemDecorator]] = [:] // sourceId -> [itemId -> decorator]
     @ObservationIgnored private var _decoratorCacheDirty: Set<String> = [] // sourceIds that need cache refresh
+
+    // Cache for hidden selections fetched off the main thread
+    @ObservationIgnored private var _hiddenSelectedItems: [UUID: ContentItem] = [:]
+    @ObservationIgnored private var _pendingHiddenFetch: Set<UUID> = []
     
     // (Removed) Aggregated display version tracking; Aggregated now shows only pasteable items
     
@@ -116,6 +120,9 @@ final class ContentManager {
 
     func markItemsDirty() {
         _allItemsCacheDirty = true
+        // Drop hidden cache entries that are no longer relevant
+        _hiddenSelectedItems = _hiddenSelectedItems.filter { selectedItemIds.contains($0.key) }
+        _pendingHiddenFetch.formIntersection(selectedItemIds)
     }
 
     func item(for id: UUID?) -> ContentItem? {
@@ -267,6 +274,8 @@ final class ContentManager {
         if sources["clipboard"] is ClipboardSource {
             History.shared.items.forEach { $0.isSelected = false }
         }
+        _hiddenSelectedItems.removeAll()
+        _pendingHiddenFetch.removeAll()
         markSelectedDirty()
     }
     
@@ -437,7 +446,16 @@ final class ContentManager {
            sourceItems.contains(where: { $0.id == focusedId }) {
             focusedItemId = nil
         }
-        
+
+        // Clear hidden caches tied to this source
+        let hiddenIdsToRemove = _hiddenSelectedItems
+            .filter { $0.value.sourceId == sourceId }
+            .map { $0.key }
+        for hiddenId in hiddenIdsToRemove {
+            _hiddenSelectedItems.removeValue(forKey: hiddenId)
+            _pendingHiddenFetch.remove(hiddenId)
+        }
+
         // For folder sources, also remove the bookmark
         if source.type == .folder {
             // Prefer obtaining the exact URL from FileSystemSource
@@ -748,13 +766,15 @@ extension ContentManager {
         let hiddenSelectedIds = selectedItemIds.subtracting(visibleIds)
 
         if !hiddenSelectedIds.isEmpty {
-            // Check each source for selected items that might be hidden (files in collapsed folders)
-            for sourceId in orderedSourceIds {
-                guard let source = sources[sourceId] as? FileSystemSource else { continue }
+            let cachedHidden = hiddenSelectedIds.compactMap { _hiddenSelectedItems[$0] }
+            if !cachedHidden.isEmpty {
+                hiddenSelectedItems.append(contentsOf: cachedHidden.filter { !$0.isFolder })
+            }
 
-                // Scan the filesystem to find these hidden selected files
-                let foundItems = source.findItemsById(hiddenSelectedIds)
-                hiddenSelectedItems.append(contentsOf: foundItems.filter { !$0.isFolder })
+            let cachedIds = Set(cachedHidden.map { $0.id })
+            let missingHidden = hiddenSelectedIds.subtracting(cachedIds)
+            if !missingHidden.isEmpty {
+                scheduleHiddenSelectionPrefetch(for: missingHidden)
             }
         }
 
@@ -813,5 +833,52 @@ extension ContentManager {
         }
         
         return result
+    }
+}
+
+extension ContentManager {
+    private func scheduleHiddenSelectionPrefetch(for ids: Set<UUID>) {
+        let newRequests = ids.subtracting(_pendingHiddenFetch)
+        guard !newRequests.isEmpty else { return }
+
+        _pendingHiddenFetch.formUnion(newRequests)
+
+        Task.detached(priority: .utility) { [weak self] in
+            guard let self else { return }
+
+            var remaining = newRequests
+            let sources: [FileSystemSource] = await MainActor.run {
+                self.sources.values.compactMap { $0 as? FileSystemSource }
+            }
+
+            for source in sources {
+                guard !remaining.isEmpty else { break }
+                let found = await source.fetchItems(for: remaining)
+                guard !found.isEmpty else { continue }
+
+                let foundIds = Set(found.map { $0.id })
+                remaining.subtract(foundIds)
+
+                await MainActor.run { [weak self] in
+                    guard let self else { return }
+                    for item in found {
+                        self._hiddenSelectedItems[item.id] = item
+                    }
+                    self._pendingHiddenFetch.subtract(foundIds)
+
+                    // Only trigger a refresh if any of the resolved IDs are still selected
+                    if !foundIds.isDisjoint(with: self.selectedItemIds) {
+                        self.markSelectedDirty()
+                    }
+                }
+            }
+
+            if !remaining.isEmpty {
+                await MainActor.run { [weak self] in
+                    guard let self else { return }
+                    self._pendingHiddenFetch.subtract(remaining)
+                }
+            }
+        }
     }
 }
