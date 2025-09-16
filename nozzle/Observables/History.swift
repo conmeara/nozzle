@@ -18,6 +18,7 @@ class History { // swiftlint:disable:this type_body_length
       // Visible list for clipboard changed; refresh selectedItems cache order
       ContentManager.shared.markSelectedDirty()
       ContentManager.shared.markItemsDirty()
+      ContentManager.shared.markDecoratorsNeedRefresh(for: "clipboard")
       contentVersion &+= 1
     }
   }

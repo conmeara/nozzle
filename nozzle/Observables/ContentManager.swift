@@ -597,7 +597,7 @@ final class ContentManager {
     func toggleExample(_ id: UUID) {
         // Allow toggling example state for any textual items (no need to be selected as context)
         guard isTextualItem(id) else { return }
-        guard let item = allItems.first(where: { $0.id == id }) else { return }
+        guard let item = item(for: id) else { return }
         if exampleItemIds.contains(id) {
             // Turning OFF example: clear on folder and its descendants
             exampleItemIds.remove(id)
