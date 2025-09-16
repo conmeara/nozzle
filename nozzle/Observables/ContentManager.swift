@@ -57,6 +57,9 @@ final class ContentManager {
     @ObservationIgnored private var _hiddenSelectedItems: [UUID: ContentItem] = [:]
     @ObservationIgnored private var _pendingHiddenFetch: Set<UUID> = []
 
+    // Track in-flight descendant selection tasks for collapsed folders
+    @ObservationIgnored private var _descendantSelectionTokens: [String: UUID] = [:]
+
     // Cached descendant metadata so collapsed folders avoid repeated disk scans
     private struct DescendantFileInfo: Sendable {
         let id: UUID
@@ -217,7 +220,7 @@ final class ContentManager {
             exampleItemIds.remove(folderId)
             if children.isEmpty {
                 // Collapsed folder - enumerate and select all descendant files
-                selectAllDescendantFiles(in: folderURL)
+                selectAllDescendantFiles(in: folderURL, folderId: folderId)
             } else {
                 // Expanded folder - select all visible children
                 selectFolderChildren(folderId)
@@ -229,7 +232,7 @@ final class ContentManager {
             exampleItemIds.remove(folderId)
             if children.isEmpty {
                 // Collapsed folder - enumerate and deselect all descendant files
-                deselectAllDescendantFiles(in: folderURL)
+                deselectAllDescendantFiles(in: folderURL, folderId: folderId)
             } else {
                 // Expanded folder - deselect all visible children
                 deselectFolderChildren(folderId)
@@ -249,7 +252,7 @@ final class ContentManager {
 
         if children.isEmpty {
             if let url = folderItem.fileURL {
-                selectAllDescendantFiles(in: url)
+                selectAllDescendantFiles(in: url, folderId: folderId)
             }
             return
         }
@@ -276,7 +279,7 @@ final class ContentManager {
 
         if children.isEmpty {
             if let url = folderItem.fileURL {
-                deselectAllDescendantFiles(in: url)
+                deselectAllDescendantFiles(in: url, folderId: folderId)
             }
             return
         }
@@ -294,25 +297,65 @@ final class ContentManager {
     }
     
     // Helper functions for collapsed folder selection
-    private func selectAllDescendantFiles(in folderURL: URL) {
+    private func selectAllDescendantFiles(in folderURL: URL, folderId: UUID) {
+        let token = registerDescendantSelectionTask(for: folderURL)
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
             let descendants = self.descendantFiles(at: folderURL)
-            await self.applyDescendantSelection(files: descendants, selecting: true)
-        }
-    }
-    
-    private func deselectAllDescendantFiles(in folderURL: URL) {
-        Task.detached(priority: .userInitiated) { [weak self] in
-            guard let self else { return }
-            let descendants = self.descendantFiles(at: folderURL)
-            await self.applyDescendantSelection(files: descendants, selecting: false)
+            await self.applyDescendantSelection(
+                files: descendants,
+                selecting: true,
+                folderId: folderId,
+                folderURL: folderURL,
+                token: token
+            )
         }
     }
 
+    private func deselectAllDescendantFiles(in folderURL: URL, folderId: UUID) {
+        let token = registerDescendantSelectionTask(for: folderURL)
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+            let descendants = self.descendantFiles(at: folderURL)
+            await self.applyDescendantSelection(
+                files: descendants,
+                selecting: false,
+                folderId: folderId,
+                folderURL: folderURL,
+                token: token
+            )
+        }
+    }
+
+    private func registerDescendantSelectionTask(for folderURL: URL) -> UUID {
+        let token = UUID()
+        _descendantSelectionTokens[descendantSelectionTokenKey(for: folderURL)] = token
+        return token
+    }
+
+    private func descendantSelectionTokenKey(for folderURL: URL) -> String {
+        folderURL.standardizedFileURL.path
+    }
+
     @MainActor
-    private func applyDescendantSelection(files: [DescendantFileInfo], selecting: Bool) {
+    private func applyDescendantSelection(
+        files: [DescendantFileInfo],
+        selecting: Bool,
+        folderId: UUID,
+        folderURL: URL,
+        token: UUID
+    ) {
+        let tokenKey = descendantSelectionTokenKey(for: folderURL)
+        guard _descendantSelectionTokens[tokenKey] == token else { return }
+        _descendantSelectionTokens.removeValue(forKey: tokenKey)
+
         guard !files.isEmpty else { return }
+
+        if selecting {
+            guard selectedItemIds.contains(folderId) else { return }
+        } else {
+            guard !selectedItemIds.contains(folderId) else { return }
+        }
 
         if selecting {
             let ids = Set(files.map(\.id))
