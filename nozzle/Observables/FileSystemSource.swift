@@ -286,7 +286,12 @@ final class FileSystemSource: ContentSource {
         return nil
     }
     
-    private func buildHierarchicalItems(at url: URL, depth: Int, parentPath: String?) async -> [ContentItem] {
+    private func buildHierarchicalItems(
+        at url: URL,
+        depth: Int,
+        parentPath: String?,
+        expandedPaths: Set<String>? = nil
+    ) async -> [ContentItem] {
         // Check if directory has changed before expensive scanning
         let hasChanged = await MainActor.run { self.hasDirectoryChanged(at: url) }
 
@@ -294,6 +299,13 @@ final class FileSystemSource: ContentSource {
         if !hasChanged && depth == 0 {
             // For root level, return existing cached items since directory is unchanged
             return await MainActor.run { self.cachedItems }
+        }
+
+        let expandedSet: Set<String>
+        if let expandedPaths {
+            expandedSet = expandedPaths
+        } else {
+            expandedSet = await MainActor.run { self.expansionState.getAllExpandedPaths() }
         }
 
         let (sortOrder, sortDirection) = await MainActor.run { (self.sortOrder, self.sortDirection) }
@@ -395,24 +407,18 @@ final class FileSystemSource: ContentSource {
             // If it's a folder and should be expanded, add its children
             if item.isFolder,
                let folderURL = item.fileURL,
-               depth < 3 { // Max depth limit
-                
-                // Check if this folder is expanded
-                let shouldExpand = await MainActor.run {
-                    return self.expansionState.isExpanded(folderURL.path)
-                }
-                
-                if shouldExpand {
-                    let childItems = await buildHierarchicalItems(
-                        at: folderURL,
-                        depth: depth + 1,
-                        parentPath: folderURL.path
-                    )
-                    allItems.append(contentsOf: childItems)
-                }
+               depth < 3,
+               expandedSet.contains(folderURL.path) {
+                let childItems = await buildHierarchicalItems(
+                    at: folderURL,
+                    depth: depth + 1,
+                    parentPath: folderURL.path,
+                    expandedPaths: expandedSet
+                )
+                allItems.append(contentsOf: childItems)
             }
         }
-        
+
         // Update directory modification date cache after successful scan
         await MainActor.run {
             self.updateDirectoryModDateCache(at: url)

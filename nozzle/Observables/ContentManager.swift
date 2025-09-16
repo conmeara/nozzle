@@ -781,57 +781,57 @@ extension ContentManager {
         // Combine visible and hidden selected items
         let allItemsIncludingHidden = items + hiddenSelectedItems
 
-        // Index folders by path for fast parent lookup
+        // Index folders and children once to avoid repeated scans when building the result
         var folderByPath: [String: ContentItem] = [:]
+        var childrenByParent: [String: [ContentItem]] = [:]
         folderByPath.reserveCapacity(allItemsIncludingHidden.count)
-        for item in allItemsIncludingHidden where item.isFolder {
-            if let path = item.fileURL?.path { folderByPath[path] = item }
+
+        for item in allItemsIncludingHidden {
+            if item.isFolder, let path = item.fileURL?.path {
+                folderByPath[path] = item
+            }
+            if let parentPath = item.parentPath {
+                childrenByParent[parentPath, default: []].append(item)
+            }
         }
-        
+
         // Determine which parent folders need to be included for display due to selected children
         var neededParentIds: Set<UUID> = []
-        for item in allItemsIncludingHidden {
-            guard selectedItemIds.contains(item.id) else { continue }
-            if let parentPath = item.parentPath, let parent = folderByPath[parentPath] {
+        for item in allItemsIncludingHidden where selectedItemIds.contains(item.id) {
+            if let parentPath = item.parentPath,
+               let parent = folderByPath[parentPath] {
                 neededParentIds.insert(parent.id)
             }
         }
-        
+
         // Build result with hierarchical grouping: parent folders followed by their selected children
         var result: [ContentItem] = []
         result.reserveCapacity(selectedItemIds.count + neededParentIds.count)
         var seen: Set<UUID> = []
 
-        // Process items in hierarchical order: folders followed by their children
         for item in allItemsIncludingHidden {
-            // Add parent folders that need to be shown for context
-            if item.isFolder && neededParentIds.contains(item.id) {
-                if !seen.contains(item.id) {
-                    result.append(item)
-                    seen.insert(item.id)
+            if item.isFolder,
+               neededParentIds.contains(item.id),
+               !seen.contains(item.id) {
+                result.append(item)
+                seen.insert(item.id)
 
-                    // Immediately add children of this folder that are selected
-                    let folderPath = item.fileURL?.path
-                    for childItem in allItemsIncludingHidden {
-                        if selectedItemIds.contains(childItem.id) && 
-                           !seen.contains(childItem.id) && 
-                           childItem.parentPath == folderPath {
-                            result.append(childItem)
-                            seen.insert(childItem.id)
-                        }
+                if let folderPath = item.fileURL?.path,
+                   let children = childrenByParent[folderPath] {
+                    for child in children where selectedItemIds.contains(child.id) && !seen.contains(child.id) {
+                        result.append(child)
+                        seen.insert(child.id)
                     }
                 }
+                continue
             }
-        }
-        
-        // Add any remaining selected items that don't have a parent (e.g., clipboard items)
-        for item in allItemsIncludingHidden {
+
             if selectedItemIds.contains(item.id) && !seen.contains(item.id) {
                 result.append(item)
                 seen.insert(item.id)
             }
         }
-        
+
         return result
     }
 }
@@ -882,3 +882,36 @@ extension ContentManager {
         }
     }
 }
+
+#if DEBUG
+extension ContentManager {
+    func resetForTesting() {
+        sources.values.forEach { $0.stopMonitoring() }
+        sources.removeAll()
+        orderedSourceIds.removeAll()
+        activeSourceId = "clipboard"
+        lastNonPromptsSourceId = "clipboard"
+
+        selectedItemIds.removeAll()
+        exampleItemIds.removeAll()
+        selectionVersion = 0
+        focusedItemId = nil
+        renameActiveItemId = nil
+        pendingRenameItemId = nil
+        promptEditorText = ""
+        isPromptEditorEditing = false
+        enhanceButtonClicked = false
+
+        _allItemsCache.removeAll()
+        _allItemsCacheDirty = true
+        _itemsById.removeAll()
+        _itemsBySource.removeAll()
+        _selectedCache.removeAll()
+        _selectedCacheDirty = true
+        _decoratorCache.removeAll()
+        _decoratorCacheDirty.removeAll()
+        _hiddenSelectedItems.removeAll()
+        _pendingHiddenFetch.removeAll()
+    }
+}
+#endif
