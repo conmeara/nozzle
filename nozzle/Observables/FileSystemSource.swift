@@ -2,6 +2,7 @@ import AppKit
 import UniformTypeIdentifiers
 import Observation
 import CoreServices
+import OSLog
 import Defaults
 
 // MARK: - Sorting Enums
@@ -19,7 +20,16 @@ enum FileSortDirection: String, CaseIterable {
 }
 
 @Observable @MainActor
-final class FileSystemSource: ContentSource {
+final class FileSystemSource: ContentSource, HierarchicalContentSource {
+    private static let refreshLogger = Logger(subsystem: "org.conmeara.nozzle.content", category: "FileSystemSource")
+    private static let directoryResourceKeys: Set<URLResourceKey> = [
+        .isDirectoryKey,
+        .contentModificationDateKey,
+        .fileSizeKey,
+        .fileResourceIdentifierKey,
+        .contentTypeKey
+    ]
+
     nonisolated let id: String  // Need nonisolated access for event persistence
     let name: String
     let icon: NSImage
@@ -65,6 +75,7 @@ final class FileSystemSource: ContentSource {
     // Fast lookup for rename/move resolution
     private var indexByIdentity: [Data: Int] = [:]
     private var indexByPath: [String: Int] = [:]
+    private var indexById: [UUID: Int] = [:]
     
     // Resort suspension for stable editing
     private var suspendResortItemId: UUID?
@@ -74,6 +85,42 @@ final class FileSystemSource: ContentSource {
         let snapshot: FileIdentity.Snapshot
         let typeIdentifier: String?
     }
+
+    private struct DescendantSnapshotCacheEntry {
+        let items: [HierarchyDescendantItem]
+        let modificationDate: Date
+    }
+
+    private final class DescendantCacheStore: @unchecked Sendable {
+        private let lock = NSLock()
+        private var storage: [String: DescendantSnapshotCacheEntry] = [:]
+
+        func entry(for path: String) -> DescendantSnapshotCacheEntry? {
+            lock.lock()
+            defer { lock.unlock() }
+            return storage[path]
+        }
+
+        func store(_ entry: DescendantSnapshotCacheEntry, for path: String) {
+            lock.lock()
+            storage[path] = entry
+            lock.unlock()
+        }
+
+        func removeAll() {
+            lock.lock()
+            storage.removeAll()
+            lock.unlock()
+        }
+
+        func remove(prefix: String) {
+            lock.lock()
+            storage = storage.filter { !$0.key.hasPrefix(prefix) }
+            lock.unlock()
+        }
+    }
+
+    private let descendantCache = DescendantCacheStore()
     
     init(folderURL: URL) {
         self.folderURL = folderURL
@@ -88,7 +135,46 @@ final class FileSystemSource: ContentSource {
         if searchQuery.isEmpty { return cachedItems }
         return search(query: searchQuery)
     }
-    
+
+    func item(with id: UUID) -> ContentItem? {
+        if let index = indexById[id], cachedItems.indices.contains(index) {
+            return cachedItems[index]
+        }
+        return nil
+    }
+
+    func visibleChildren(of folderId: UUID) -> [ContentItem] {
+        guard let folderIndex = indexById[folderId],
+              cachedItems.indices.contains(folderIndex) else { return [] }
+
+        let parent = cachedItems[folderIndex]
+        guard parent.isFolder else { return [] }
+
+        let childDepth = parent.depth + 1
+        var result: [ContentItem] = []
+        var i = folderIndex + 1
+
+        while i < cachedItems.count {
+            let candidate = cachedItems[i]
+            if candidate.depth <= parent.depth { break }
+            if candidate.depth == childDepth {
+                result.append(candidate)
+            }
+            i += 1
+        }
+
+        return result
+    }
+
+    func descendantSnapshot(for folderId: UUID) -> HierarchyDescendantSnapshot {
+        guard let folderItem = item(with: folderId),
+              let folderURL = folderItem.fileURL else {
+            return HierarchyDescendantSnapshot(items: [])
+        }
+
+        return descendantSnapshot(for: folderURL)
+    }
+
     func startMonitoring() {
         guard !isMonitoring else { return }
         
@@ -160,15 +246,26 @@ final class FileSystemSource: ContentSource {
     private func forceRefresh() async {
         // Mark decorators as needing refresh before updating items
         ContentManager.shared.markDecoratorsNeedRefresh(for: self.id)
-        
+
+#if DEBUG
+        let refreshStart = Date()
+#endif
+
         // Build hierarchical structure starting from root
         let hierarchicalItems = await buildHierarchicalItems(at: folderURL, depth: 0, parentPath: nil)
         self.cachedItems = hierarchicalItems
         self.lastRefreshTime = Date()
         self.rebuildIndexes()
         ContentManager.shared.markItemsDirty()
+        ContentManager.shared.clearHiddenSelections(for: self.id, underPath: folderURL.path)
         // Visible slice changed; invalidate selectedItems cache
         ContentManager.shared.markSelectedDirty()
+        invalidateDescendantCache(under: folderURL.path)
+
+#if DEBUG
+        let elapsed = Date().timeIntervalSince(refreshStart)
+        Self.refreshLogger.debug("forceRefresh(\(self.folderURL.lastPathComponent, privacy: .public)) duration=\(elapsed, privacy: .public)s items=\(hierarchicalItems.count, privacy: .public)")
+#endif
     }
     
     // Check if directory has been modified since last cache
@@ -204,9 +301,13 @@ final class FileSystemSource: ContentSource {
             directoryModDateCache = directoryModDateCache.filter { cachedPath, _ in
                 !cachedPath.hasPrefix(specificPath)
             }
+            invalidateDescendantCache(under: specificPath)
+            ContentManager.shared.clearHiddenSelections(for: id, underPath: specificPath)
         } else {
             // Clear entire cache
             directoryModDateCache.removeAll()
+            invalidateDescendantCache(under: folderURL.path)
+            ContentManager.shared.clearHiddenSelections(for: id, underPath: folderURL.path)
         }
     }
 
@@ -253,6 +354,8 @@ final class FileSystemSource: ContentSource {
         // Visible slice changed; invalidate selectedItems cache and decorators cache
         ContentManager.shared.markDecoratorsNeedRefresh(for: self.id)
         ContentManager.shared.markSelectedDirty()
+        invalidateDescendantCache(under: folderPath)
+        ContentManager.shared.clearHiddenSelections(for: self.id, underPath: folderPath)
     }
 
     @MainActor
@@ -267,7 +370,12 @@ final class FileSystemSource: ContentSource {
         return nil
     }
     
-    private func buildHierarchicalItems(at url: URL, depth: Int, parentPath: String?) async -> [ContentItem] {
+    private func buildHierarchicalItems(
+        at url: URL,
+        depth: Int,
+        parentPath: String?,
+        expandedPaths: Set<String>? = nil
+    ) async -> [ContentItem] {
         // Check if directory has changed before expensive scanning
         let hasChanged = await MainActor.run { self.hasDirectoryChanged(at: url) }
 
@@ -277,14 +385,22 @@ final class FileSystemSource: ContentSource {
             return await MainActor.run { self.cachedItems }
         }
 
+        let expandedSet: Set<String>
+        if let expandedPaths {
+            expandedSet = expandedPaths
+        } else {
+            expandedSet = await MainActor.run { self.expansionState.getAllExpandedPaths() }
+        }
+
         let (sortOrder, sortDirection) = await MainActor.run { (self.sortOrder, self.sortDirection) }
         let sourceId = "folder:\(self.folderURL.path)"
 
+        let resourceKeys = Self.directoryResourceKeys
         let task = Task.detached { () -> [ContentItem] in
             let fm = FileManager.default
             guard let urls = try? fm.contentsOfDirectory(
                 at: url,
-                includingPropertiesForKeys: [.isDirectoryKey, .contentModificationDateKey, .fileSizeKey, .fileResourceIdentifierKey],
+                includingPropertiesForKeys: Array(resourceKeys),
                 options: [.skipsHiddenFiles]
             ) else { return [] }
 
@@ -298,11 +414,23 @@ final class FileSystemSource: ContentSource {
                     continue
                 }
 
-                let snapshot = FileIdentity.snapshot(for: itemURL)
+                guard let resourceValues = try? itemURL.resourceValues(forKeys: resourceKeys) else { continue }
+                let snapshot = FileIdentity.Snapshot(
+                    identity: resourceValues.fileResourceIdentifier as? Data,
+                    modDate: resourceValues.contentModificationDate ?? .distantPast,
+                    isDirectory: resourceValues.isDirectory ?? false,
+                    size: resourceValues.fileSize.map { Int64($0) }
+                )
+
                 if snapshot.isDirectory {
                     folders.append(DirectoryEntry(url: itemURL, snapshot: snapshot, typeIdentifier: nil))
                 } else {
-                    let typeIdentifier = Self.resolvedType(for: itemURL)?.identifier
+                    let typeIdentifier: String?
+                    if let type = resourceValues.contentType {
+                        typeIdentifier = type.identifier
+                    } else {
+                        typeIdentifier = Self.resolvedType(for: itemURL)?.identifier
+                    }
                     files.append(DirectoryEntry(url: itemURL, snapshot: snapshot, typeIdentifier: typeIdentifier))
                 }
             }
@@ -363,24 +491,18 @@ final class FileSystemSource: ContentSource {
             // If it's a folder and should be expanded, add its children
             if item.isFolder,
                let folderURL = item.fileURL,
-               depth < 3 { // Max depth limit
-                
-                // Check if this folder is expanded
-                let shouldExpand = await MainActor.run {
-                    return self.expansionState.isExpanded(folderURL.path)
-                }
-                
-                if shouldExpand {
-                    let childItems = await buildHierarchicalItems(
-                        at: folderURL,
-                        depth: depth + 1,
-                        parentPath: folderURL.path
-                    )
-                    allItems.append(contentsOf: childItems)
-                }
+               depth < 3,
+               expandedSet.contains(folderURL.path) {
+                let childItems = await buildHierarchicalItems(
+                    at: folderURL,
+                    depth: depth + 1,
+                    parentPath: folderURL.path,
+                    expandedPaths: expandedSet
+                )
+                allItems.append(contentsOf: childItems)
             }
         }
-        
+
         // Update directory modification date cache after successful scan
         await MainActor.run {
             self.updateDirectoryModDateCache(at: url)
@@ -397,64 +519,59 @@ final class FileSystemSource: ContentSource {
     }
     
     // Find items by their IDs, even if they're not currently visible (collapsed folders)
-    func findItemsById(_ ids: Set<UUID>) -> [ContentItem] {
+    func resolveItems(for ids: Set<UUID>) async -> [ContentItem] {
         guard !ids.isEmpty else { return [] }
-        
-        var foundItems: [ContentItem] = []
-        let fm = FileManager.default
-        
-        // Recursively scan the folder to find matching items
-        if let enumerator = fm.enumerator(
-            at: folderURL,
-            includingPropertiesForKeys: [.isDirectoryKey, .contentTypeKey, .contentModificationDateKey, .fileSizeKey],
-            options: [.skipsHiddenFiles]
-        ) {
-            for case let url as URL in enumerator {
-                // Generate stable UUID for this URL
-                let itemId = Self.makeStableUUID(
-                    identity: FileIdentity.snapshot(for: url).identity,
-                    fallbackPath: url.absoluteString
+
+        let baseURL = folderURL
+        let sourceId = self.id
+        let resourceKeys = Self.directoryResourceKeys
+
+        return await Task.detached(priority: .utility) { () -> [ContentItem] in
+            var foundItems: [ContentItem] = []
+            let fm = FileManager.default
+
+            guard let enumerator = fm.enumerator(
+                at: baseURL,
+                includingPropertiesForKeys: Array(resourceKeys),
+                options: [.skipsHiddenFiles]
+            ) else { return [] }
+
+            while let url = enumerator.nextObject() as? URL {
+                guard let values = try? url.resourceValues(forKeys: resourceKeys) else { continue }
+                let identity = values.fileResourceIdentifier as? Data
+                let itemId = Self.makeStableUUID(identity: identity, fallbackPath: url.absoluteString)
+                guard ids.contains(itemId) else { continue }
+
+                let isDirectory = values.isDirectory == true
+                let timestamp = values.contentModificationDate ?? Date()
+                let uniformType = values.contentType?.identifier ?? (isDirectory ? nil : Self.resolvedType(for: url)?.identifier)
+                let relativePath = url.path.replacingOccurrences(of: baseURL.path + "/", with: "")
+                let depth = relativePath.components(separatedBy: "/").count
+                let parentPath = url.deletingLastPathComponent().path
+
+                let item = ContentItem(
+                    id: itemId,
+                    title: url.lastPathComponent,
+                    timestamp: timestamp,
+                    sourceType: .folder,
+                    sourceId: sourceId,
+                    fileURL: url,
+                    uniformTypeIdentifier: uniformType,
+                    fileSize: values.fileSize.map { Int64($0) },
+                    isFolder: isDirectory,
+                    depth: depth,
+                    parentPath: parentPath == baseURL.path ? nil : parentPath,
+                    isSelected: true
                 )
-                
-                // Check if this ID is one we're looking for
-                if ids.contains(itemId) {
-                    do {
-                        let vals = try url.resourceValues(forKeys: [.isDirectoryKey, .contentTypeKey, .contentModificationDateKey, .fileSizeKey])
-                        
-                        // Calculate depth and parent path
-                        let relativePath = url.path.replacingOccurrences(of: folderURL.path + "/", with: "")
-                        let depth = relativePath.components(separatedBy: "/").count
-                        let parentPath = url.deletingLastPathComponent().path
-                        
-                        let contentItem = ContentItem(
-                            id: itemId,
-                            title: url.lastPathComponent,
-                            timestamp: vals.contentModificationDate ?? Date(),
-                            sourceType: .folder,
-                            sourceId: self.id,
-                            fileURL: url,
-                            uniformTypeIdentifier: vals.contentType?.identifier,
-                            fileSize: Int64(vals.fileSize ?? 0),
-                            isFolder: vals.isDirectory == true,
-                            depth: depth,
-                            parentPath: parentPath == folderURL.path ? nil : parentPath,
-                            isSelected: true // These are selected items
-                        )
-                        
-                        foundItems.append(contentItem)
-                        
-                        // Stop early if we've found all items
-                        if foundItems.count == ids.count {
-                            break
-                        }
-                    } catch {
-                        continue
-                    }
+                foundItems.append(item)
+
+                if foundItems.count == ids.count {
+                    break
                 }
             }
-        }
-        
-        return foundItems
+
+            return foundItems
+        }.value
     }
     
     // MARK: - Folder expansion methods
@@ -484,6 +601,65 @@ final class FileSystemSource: ContentSource {
         Task {
             await forceRefresh()  // Force refresh when user explicitly changes sort
         }
+    }
+
+    private func invalidateDescendantCache(under path: String? = nil) {
+        guard let path = path, !path.isEmpty else {
+            descendantCache.removeAll()
+            return
+        }
+
+        descendantCache.remove(prefix: normalizedFolderPath(path))
+    }
+
+    private nonisolated func isTextType(_ type: UTType?) -> Bool {
+        guard let type else { return false }
+        if type.conforms(to: .text) { return true }
+        if type == .rtf || type == .rtfd || type == .html { return true }
+        if type.identifier == "net.daringfireball.markdown" ||
+            type.identifier == "public.markdown" ||
+            type.preferredFilenameExtension == "md" {
+            return true
+        }
+        return false
+    }
+
+    private nonisolated func descendantSnapshot(for folderURL: URL) -> HierarchyDescendantSnapshot {
+        let folderPath = normalizedFolderPath(folderURL.path)
+        let modDate = (try? folderURL.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
+
+        if let cached = descendantCache.entry(for: folderPath), cached.modificationDate == modDate {
+            return HierarchyDescendantSnapshot(items: cached.items)
+        }
+
+        var descendants: [HierarchyDescendantItem] = []
+        let fm = FileManager.default
+        if let enumerator = fm.enumerator(at: folderURL, includingPropertiesForKeys: [.isDirectoryKey, .contentTypeKey, .fileResourceIdentifierKey], options: [.skipsHiddenFiles]) {
+            for case let url as URL in enumerator {
+                do {
+                    let values = try url.resourceValues(forKeys: [.isDirectoryKey, .contentTypeKey, .fileResourceIdentifierKey])
+                    if values.isDirectory == true { continue }
+                    let type = values.contentType ?? Self.resolvedType(for: url)
+                    let snapshot = FileIdentity.snapshot(for: url)
+                    let id = Self.makeStableUUID(identity: snapshot.identity, fallbackPath: url.absoluteString)
+                    let isText = isTextType(type)
+                    descendants.append(HierarchyDescendantItem(id: id, path: url.path, isText: isText))
+                } catch {
+                    continue
+                }
+            }
+        }
+
+        descendantCache.store(
+            DescendantSnapshotCacheEntry(items: descendants, modificationDate: modDate),
+            for: folderPath
+        )
+
+        return HierarchyDescendantSnapshot(items: descendants)
+    }
+
+    private nonisolated func normalizedFolderPath(_ path: String) -> String {
+        path.hasSuffix("/") ? path : path + "/"
     }
     
     private nonisolated static func sortEntries(_ lhs: DirectoryEntry, _ rhs: DirectoryEntry, order: FileSortOrder, direction: FileSortDirection) -> Bool {
@@ -651,7 +827,8 @@ extension FileSystemSource {
     private func rebuildIndexes() {
         indexByIdentity.removeAll()
         indexByPath.removeAll()
-        
+        indexById.removeAll()
+
         for (i, item) in cachedItems.enumerated() {
             if let identity = item.fileIdentity {
                 indexByIdentity[identity] = i
@@ -659,6 +836,7 @@ extension FileSystemSource {
             if let path = item.fileURL?.path {
                 indexByPath[path] = i
             }
+            indexById[item.id] = i
         }
     }
     
