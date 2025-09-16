@@ -10,10 +10,16 @@ import SwiftData
 class History { // swiftlint:disable:this type_body_length
   static let shared = History()
 
+  @ObservationIgnored
+  private(set) var contentVersion: Int = 0
+
   var items: [HistoryItemDecorator] = [] {
     didSet {
       // Visible list for clipboard changed; refresh selectedItems cache order
       ContentManager.shared.markSelectedDirty()
+      ContentManager.shared.markItemsDirty()
+      ContentManager.shared.markDecoratorsNeedRefresh(for: "clipboard")
+      contentVersion &+= 1
     }
   }
   var selectedItem: HistoryItemDecorator? {
@@ -33,6 +39,8 @@ class History { // swiftlint:disable:this type_body_length
 
   var pinnedItems: [HistoryItemDecorator] { items.filter(\.isPinned) }
   var unpinnedItems: [HistoryItemDecorator] { items.filter(\.isUnpinned) }
+
+  var itemsRevision: Int { contentVersion }
 
   var searchQuery: String = "" {
     didSet {
