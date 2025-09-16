@@ -552,30 +552,37 @@ final class ContentManager {
             return .partial
         }
         
-        // For expanded folders, calculate based on children selection (only count files, not subfolders)
+        // For expanded folders, calculate based on per-child state so mixed selections stay accurate
         let fileChildren = children.filter { !$0.isFolder }
-        let selectedFileChildren = fileChildren.filter { selectedItemIds.contains($0.id) }
-        
-        // Also need to check if any subfolders have selected descendants
         let subfolders = children.filter { $0.isFolder }
-        var hasSelectedInSubfolders = false
-        for subfolder in subfolders {
-            if getFolderSelectionState(subfolder.id) != .none {
-                hasSelectedInSubfolders = true
-                break
+
+        var anySelection = false
+        var allFullySelected = true
+
+        // Files are fully selected only when their UUID is tracked in the selection set
+        for file in fileChildren {
+            if selectedItemIds.contains(file.id) {
+                anySelection = true
+            } else {
+                allFullySelected = false
             }
         }
-        
-        let totalSelected = selectedFileChildren.count + (hasSelectedInSubfolders ? 1 : 0)
-        let totalItems = fileChildren.count + (subfolders.isEmpty ? 0 : 1)
-        
-        if totalSelected == 0 {
-            return .none
-        } else if totalSelected == totalItems && selectedFileChildren.count == fileChildren.count {
-            return .all
-        } else {
-            return .partial
+
+        // Subfolders inherit their own state; aggregate precisely instead of collapsing to a single flag
+        for subfolder in subfolders {
+            switch getFolderSelectionState(subfolder.id) {
+            case .all:
+                anySelection = true
+            case .partial:
+                anySelection = true
+                allFullySelected = false
+            case .none:
+                allFullySelected = false
+            }
         }
+
+        guard anySelection else { return .none }
+        return allFullySelected ? .all : .partial
     }
     
     func focus(_ id: UUID?) {
