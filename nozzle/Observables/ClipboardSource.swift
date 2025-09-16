@@ -129,6 +129,7 @@ private extension ClipboardSource {
         utiCache[id] = identifier
         metadataVersion &+= 1
         ContentManager.shared.markItemsDirty()
+        ContentManager.shared.markSelectedDirty()
         ContentManager.shared.markDecoratorsNeedRefresh(for: self.id)
     }
 }
