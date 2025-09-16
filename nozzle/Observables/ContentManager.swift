@@ -53,6 +53,9 @@ final class ContentManager {
     @ObservationIgnored private var _decoratorCache: [String: [UUID: UniversalItemDecorator]] = [:] // sourceId -> [itemId -> decorator]
     @ObservationIgnored private var _decoratorCacheDirty: Set<String> = [] // sourceIds that need cache refresh
 
+    // Manual deselection tracking for folder descendants
+    @ObservationIgnored private var _folderSelectionExclusions: [UUID: DeselectionOverride] = [:]
+
     // Cache for hidden selections fetched off the main thread
     @ObservationIgnored private var _hiddenSelectedItems: [UUID: ContentItem] = [:]
     @ObservationIgnored private var _pendingHiddenFetch: Set<UUID> = []
@@ -63,12 +66,18 @@ final class ContentManager {
     // Cached descendant metadata so collapsed folders avoid repeated disk scans
     private struct DescendantFileInfo: Sendable {
         let id: UUID
+        let path: String
         let isText: Bool
     }
 
     private struct DescendantCacheEntry: Sendable {
         let files: [DescendantFileInfo]
         let directoryModificationDate: Date
+    }
+
+    private struct DeselectionOverride: Sendable {
+        let path: String
+        let appliesToDescendants: Bool
     }
 
     // (Removed) Aggregated display version tracking; Aggregated now shows only pasteable items
@@ -198,6 +207,9 @@ final class ContentManager {
             } else {
                 selectedItemIds.insert(id)
             }
+            if let toggledItem = item(for: id) {
+                updateFolderDeselectionOverride(for: toggledItem, deselected: wasSelected)
+            }
             // Bridge to clipboard selection if needed
             syncClipboardSelection(id)
         }
@@ -206,9 +218,8 @@ final class ContentManager {
     
     private func toggleFolderSelection(_ folderId: UUID) {
         guard let folderItem = item(for: folderId),
-             folderItem.isFolder,
-             let folderPath = folderItem.fileURL?.path,
-             let folderURL = folderItem.fileURL else { return }
+              folderItem.isFolder,
+              let folderURL = folderItem.fileURL else { return }
 
         let children = visibleChildItems(of: folderItem)
         let currentState = getFolderSelectionState(folderId)
@@ -216,8 +227,10 @@ final class ContentManager {
         switch currentState {
         case .none:
             // No children selected - select everything
+            removeDeselectionOverrides(inSubtreeOf: folderItem)
             selectedItemIds.insert(folderId)
             exampleItemIds.remove(folderId)
+            updateFolderDeselectionOverride(for: folderItem, deselected: false)
             if children.isEmpty {
                 // Collapsed folder - enumerate and select all descendant files
                 selectAllDescendantFiles(in: folderURL, folderId: folderId)
@@ -230,6 +243,7 @@ final class ContentManager {
             // Some or all children selected - deselect everything
             selectedItemIds.remove(folderId)
             exampleItemIds.remove(folderId)
+            updateFolderDeselectionOverride(for: folderItem, deselected: true)
             if children.isEmpty {
                 // Collapsed folder - enumerate and deselect all descendant files
                 deselectAllDescendantFiles(in: folderURL, folderId: folderId)
@@ -243,12 +257,13 @@ final class ContentManager {
     
     func selectFolderChildren(_ folderId: UUID) {
         guard let folderItem = item(for: folderId),
-             folderItem.isFolder else { return }
+              folderItem.isFolder else { return }
         
         let children = visibleChildItems(of: folderItem)
 
         selectedItemIds.insert(folderId)
         exampleItemIds.remove(folderId)
+        updateFolderDeselectionOverride(for: folderItem, deselected: false)
 
         if children.isEmpty {
             if let url = folderItem.fileURL {
@@ -258,11 +273,13 @@ final class ContentManager {
         }
 
         for item in children {
+            guard !isUnderDeselectionOverride(item) else { continue }
             if item.isFolder {
                 selectFolderChildren(item.id)
             } else {
                 selectedItemIds.insert(item.id)
                 exampleItemIds.remove(item.id)
+                updateFolderDeselectionOverride(for: item, deselected: false)
             }
         }
         markSelectedDirty()
@@ -270,12 +287,13 @@ final class ContentManager {
     
     func deselectFolderChildren(_ folderId: UUID) {
         guard let folderItem = item(for: folderId),
-             folderItem.isFolder else { return }
+              folderItem.isFolder else { return }
 
         let children = visibleChildItems(of: folderItem)
 
         selectedItemIds.remove(folderId)
         exampleItemIds.remove(folderId)
+        updateFolderDeselectionOverride(for: folderItem, deselected: true)
 
         if children.isEmpty {
             if let url = folderItem.fileURL {
@@ -291,9 +309,93 @@ final class ContentManager {
             } else {
                 selectedItemIds.remove(item.id)
                 exampleItemIds.remove(item.id)
+                updateFolderDeselectionOverride(for: item, deselected: true)
             }
         }
         markSelectedDirty()
+    }
+
+    private func updateFolderDeselectionOverride(for item: ContentItem, deselected: Bool) {
+        guard item.sourceType == .folder else {
+            _folderSelectionExclusions.removeValue(forKey: item.id)
+            return
+        }
+        guard let normalized = normalizedPath(for: item) else {
+            _folderSelectionExclusions.removeValue(forKey: item.id)
+            return
+        }
+
+        if deselected {
+            if hasSelectedFolderAncestor(for: item) {
+                _folderSelectionExclusions[item.id] = DeselectionOverride(
+                    path: normalized,
+                    appliesToDescendants: item.isFolder
+                )
+            } else {
+                _folderSelectionExclusions.removeValue(forKey: item.id)
+            }
+        } else {
+            _folderSelectionExclusions.removeValue(forKey: item.id)
+        }
+    }
+
+    private func removeDeselectionOverrides(inSubtreeOf folder: ContentItem) {
+        guard folder.sourceType == .folder,
+              let basePath = normalizedPath(for: folder),
+              !_folderSelectionExclusions.isEmpty else { return }
+
+        var toRemove: [UUID] = []
+        for (id, override) in _folderSelectionExclusions where override.path.hasPrefix(basePath) {
+            toRemove.append(id)
+        }
+
+        for id in toRemove {
+            _folderSelectionExclusions.removeValue(forKey: id)
+        }
+    }
+
+    private func isUnderDeselectionOverride(_ item: ContentItem) -> Bool {
+        guard item.sourceType == .folder,
+              let path = normalizedPath(for: item) else { return false }
+        if _folderSelectionExclusions[item.id] != nil { return true }
+        return hasDeselectionOverride(forPath: path, excluding: item.id)
+    }
+
+    private func hasDeselectionOverride(forPath path: String, excluding id: UUID? = nil) -> Bool {
+        guard !_folderSelectionExclusions.isEmpty else { return false }
+        for (key, override) in _folderSelectionExclusions {
+            if let id, key == id { continue }
+            if override.appliesToDescendants {
+                if path.hasPrefix(override.path) { return true }
+            } else if path == override.path {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func hasSelectedFolderAncestor(for item: ContentItem) -> Bool {
+        guard item.sourceType == .folder,
+              let itemPath = normalizedPath(for: item) else { return false }
+        for fid in selectedItemIds where fid != item.id {
+            guard let ancestor = self.item(for: fid),
+                  ancestor.isFolder,
+                  ancestor.sourceType == .folder,
+                  let ancestorPath = normalizedPath(for: ancestor) else { continue }
+            if itemPath.hasPrefix(ancestorPath) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func normalizedPath(for item: ContentItem) -> String? {
+        guard let path = item.fileURL?.path else { return nil }
+        return item.isFolder ? normalizedFolderPath(path) : path
+    }
+
+    private func normalizedFolderPath(_ path: String) -> String {
+        path.hasSuffix("/") ? path : path + "/"
     }
     
     // Helper functions for collapsed folder selection
@@ -357,8 +459,15 @@ final class ContentManager {
             guard !selectedItemIds.contains(folderId) else { return }
         }
 
+        let processedFiles: [DescendantFileInfo]
         if selecting {
-            let ids = Set(files.map(\.id))
+            processedFiles = files.filter { !hasDeselectionOverride(forPath: $0.path) }
+        } else {
+            processedFiles = files
+        }
+
+        if selecting {
+            let ids = Set(processedFiles.map(\.id))
             if !ids.isEmpty {
                 scheduleHiddenSelectionPrefetch(for: ids)
             }
@@ -369,10 +478,11 @@ final class ContentManager {
             }
         }
 
-        for file in files {
+        for file in processedFiles {
             if selecting {
                 selectedItemIds.insert(file.id)
                 exampleItemIds.remove(file.id)
+                _folderSelectionExclusions.removeValue(forKey: file.id)
             } else {
                 selectedItemIds.remove(file.id)
                 exampleItemIds.remove(file.id)
@@ -380,7 +490,7 @@ final class ContentManager {
         }
         markSelectedDirty()
     }
-    
+
     func clearSelection() {
         selectedItemIds.removeAll()
         exampleItemIds.removeAll()
@@ -390,6 +500,7 @@ final class ContentManager {
         }
         _hiddenSelectedItems.removeAll()
         _pendingHiddenFetch.removeAll()
+        _folderSelectionExclusions.removeAll()
         markSelectedDirty()
     }
     
@@ -400,15 +511,20 @@ final class ContentManager {
     // - It is a file inside any selected folder (use path prefix check)
     func isSelected(effectively item: ContentItem) -> Bool {
         if selectedItemIds.contains(item.id) { return true }
-        guard item.sourceType == .folder, let itemPath = item.fileURL?.path else { return false }
+        if _folderSelectionExclusions[item.id] != nil { return false }
+        guard item.sourceType == .folder,
+              let rawPath = item.fileURL?.path else { return false }
+        let normalizedPath = item.isFolder ? normalizedFolderPath(rawPath) : rawPath
+        if hasDeselectionOverride(forPath: normalizedPath, excluding: item.id) { return false }
         // Any selected folder that is an ancestor of this item implies effective selection
         for fid in selectedItemIds {
             if let folder = self.item(for: fid),
                folder.isFolder,
-               let folderPath = folder.fileURL?.path,
-               itemPath.hasPrefix(folderPath.hasSuffix("/") ? folderPath : folderPath + "/") {
-                // Ensure not the folder itself
-                if folder.id != item.id { return true }
+               let folderRawPath = folder.fileURL?.path {
+                let folderPath = normalizedFolderPath(folderRawPath)
+                if folder.id != item.id, normalizedPath.hasPrefix(folderPath) {
+                    return true
+                }
             }
         }
         return false
@@ -804,6 +920,7 @@ final class ContentManager {
                     let type = values.contentType ?? FileSystemSource.resolvedType(for: url)
                     let info = DescendantFileInfo(
                         id: stableUUID(for: url),
+                        path: url.path,
                         isText: isTextType(type)
                     )
                     results.append(info)
@@ -1110,6 +1227,7 @@ extension ContentManager {
         _decoratorCacheDirty.removeAll()
         _hiddenSelectedItems.removeAll()
         _pendingHiddenFetch.removeAll()
+        _folderSelectionExclusions.removeAll()
         removeDescendantEntries(withPrefix: nil)
     }
 }
