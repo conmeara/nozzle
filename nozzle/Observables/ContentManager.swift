@@ -1,4 +1,5 @@
 import AppKit
+import Foundation
 import UniformTypeIdentifiers
 import Observation
 
@@ -55,7 +56,18 @@ final class ContentManager {
     // Cache for hidden selections fetched off the main thread
     @ObservationIgnored private var _hiddenSelectedItems: [UUID: ContentItem] = [:]
     @ObservationIgnored private var _pendingHiddenFetch: Set<UUID> = []
-    
+
+    // Cached descendant metadata so collapsed folders avoid repeated disk scans
+    private struct DescendantFileInfo: Sendable {
+        let id: UUID
+        let isText: Bool
+    }
+
+    private struct DescendantCacheEntry: Sendable {
+        let files: [DescendantFileInfo]
+        let directoryModificationDate: Date
+    }
+
     // (Removed) Aggregated display version tracking; Aggregated now shows only pasteable items
     
     var selectedItems: [ContentItem] {
@@ -128,7 +140,10 @@ final class ContentManager {
     func item(for id: UUID?) -> ContentItem? {
         guard let id else { return nil }
         rebuildItemCachesIfNeeded()
-        return _itemsById[id]
+        if let visible = _itemsById[id] {
+            return visible
+        }
+        return _hiddenSelectedItems[id]
     }
     
     // Selection management
@@ -158,12 +173,14 @@ final class ContentManager {
              let folderPath = folderItem.fileURL?.path,
              let folderURL = folderItem.fileURL else { return }
 
-        let children = allItems.filter { $0.parentPath == folderPath }
+        let children = visibleChildItems(of: folderItem)
         let currentState = getFolderSelectionState(folderId)
         
         switch currentState {
         case .none:
             // No children selected - select everything
+            selectedItemIds.insert(folderId)
+            exampleItemIds.remove(folderId)
             if children.isEmpty {
                 // Collapsed folder - enumerate and select all descendant files
                 selectAllDescendantFiles(in: folderURL)
@@ -174,6 +191,8 @@ final class ContentManager {
             
         case .partial, .all:
             // Some or all children selected - deselect everything
+            selectedItemIds.remove(folderId)
+            exampleItemIds.remove(folderId)
             if children.isEmpty {
                 // Collapsed folder - enumerate and deselect all descendant files
                 deselectAllDescendantFiles(in: folderURL)
@@ -187,23 +206,26 @@ final class ContentManager {
     
     func selectFolderChildren(_ folderId: UUID) {
         guard let folderItem = item(for: folderId),
-             folderItem.isFolder,
-             let folderPath = folderItem.fileURL?.path else { return }
+             folderItem.isFolder else { return }
         
-        guard let sourceItems = _itemsBySource[folderItem.sourceId] else { return }
+        let children = visibleChildItems(of: folderItem)
 
-        // Select all visible children of this folder (but not the folder itself)
-        for item in sourceItems {
-            if item.parentPath == folderPath {
-                if item.isFolder {
-                    // Recursively select nested folder children
-                    selectFolderChildren(item.id)
-                } else {
-                    // Only add file IDs to selectedItemIds, not folder IDs
-                    selectedItemIds.insert(item.id)
-                    // Children are selected as context by default (not examples)
-                    exampleItemIds.remove(item.id)
-                }
+        selectedItemIds.insert(folderId)
+        exampleItemIds.remove(folderId)
+
+        if children.isEmpty {
+            if let url = folderItem.fileURL {
+                selectAllDescendantFiles(in: url)
+            }
+            return
+        }
+
+        for item in children {
+            if item.isFolder {
+                selectFolderChildren(item.id)
+            } else {
+                selectedItemIds.insert(item.id)
+                exampleItemIds.remove(item.id)
             }
         }
         markSelectedDirty()
@@ -211,23 +233,27 @@ final class ContentManager {
     
     func deselectFolderChildren(_ folderId: UUID) {
         guard let folderItem = item(for: folderId),
-             folderItem.isFolder,
-             let folderPath = folderItem.fileURL?.path else { return }
-        
-        guard let sourceItems = _itemsBySource[folderItem.sourceId] else { return }
+             folderItem.isFolder else { return }
+
+        let children = visibleChildItems(of: folderItem)
+
+        selectedItemIds.remove(folderId)
+        exampleItemIds.remove(folderId)
+
+        if children.isEmpty {
+            if let url = folderItem.fileURL {
+                deselectAllDescendantFiles(in: url)
+            }
+            return
+        }
 
         // Deselect all children of this folder (but not the folder itself)
-        for item in sourceItems {
-            if item.parentPath == folderPath {
-                if item.isFolder {
-                    // Recursively deselect nested folder children
-                    deselectFolderChildren(item.id)
-                } else {
-                    // Only remove file IDs from selectedItemIds, not folder IDs
-                    selectedItemIds.remove(item.id)
-                    // Remove example flag when deselecting children
-                    exampleItemIds.remove(item.id)
-                }
+        for item in children {
+            if item.isFolder {
+                deselectFolderChildren(item.id)
+            } else {
+                selectedItemIds.remove(item.id)
+                exampleItemIds.remove(item.id)
             }
         }
         markSelectedDirty()
@@ -237,31 +263,42 @@ final class ContentManager {
     private func selectAllDescendantFiles(in folderURL: URL) {
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
-            let descendantURLs = self.enumerateDescendantFiles(at: folderURL)
-            await self.applyDescendantSelection(urls: descendantURLs, selecting: true)
+            let descendants = self.descendantFiles(at: folderURL)
+            await self.applyDescendantSelection(files: descendants, selecting: true)
         }
     }
     
     private func deselectAllDescendantFiles(in folderURL: URL) {
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
-            let descendantURLs = self.enumerateDescendantFiles(at: folderURL)
-            await self.applyDescendantSelection(urls: descendantURLs, selecting: false)
+            let descendants = self.descendantFiles(at: folderURL)
+            await self.applyDescendantSelection(files: descendants, selecting: false)
         }
     }
 
     @MainActor
-    private func applyDescendantSelection(urls: [URL], selecting: Bool) {
-        guard !urls.isEmpty else { return }
+    private func applyDescendantSelection(files: [DescendantFileInfo], selecting: Bool) {
+        guard !files.isEmpty else { return }
 
-        for url in urls {
-            let fileId = stableUUID(for: url)
+        if selecting {
+            let ids = Set(files.map(\.id))
+            if !ids.isEmpty {
+                scheduleHiddenSelectionPrefetch(for: ids)
+            }
+        } else {
+            for file in files {
+                _hiddenSelectedItems.removeValue(forKey: file.id)
+                _pendingHiddenFetch.remove(file.id)
+            }
+        }
+
+        for file in files {
             if selecting {
-                selectedItemIds.insert(fileId)
-                exampleItemIds.remove(fileId)
+                selectedItemIds.insert(file.id)
+                exampleItemIds.remove(file.id)
             } else {
-                selectedItemIds.remove(fileId)
-                exampleItemIds.remove(fileId)
+                selectedItemIds.remove(file.id)
+                exampleItemIds.remove(file.id)
             }
         }
         markSelectedDirty()
@@ -312,14 +349,13 @@ final class ContentManager {
 
         // If folder is collapsed (no visible children), compute state from real descendants on disk
         if children.isEmpty {
-            let urls = enumerateDescendantFiles(at: URL(fileURLWithPath: folderPath))
-            guard !urls.isEmpty else { return .none }
-            let selectedCount = urls.reduce(0) { acc, url in
-                let id = stableUUID(for: url)
-                return acc + (selectedItemIds.contains(id) ? 1 : 0)
+            let descendants = descendantFiles(at: URL(fileURLWithPath: folderPath))
+            guard !descendants.isEmpty else { return .none }
+            let selectedCount = descendants.reduce(0) { acc, file in
+                acc + (selectedItemIds.contains(file.id) ? 1 : 0)
             }
             if selectedCount == 0 { return .none }
-            if selectedCount == urls.count { return .all }
+            if selectedCount == descendants.count { return .all }
             return .partial
         }
         
@@ -460,11 +496,13 @@ final class ContentManager {
         if source.type == .folder {
             // Prefer obtaining the exact URL from FileSystemSource
             if let fs = source as? FileSystemSource {
+                invalidateDescendantCache(under: fs.folderURL.path)
                 Bookmarks.remove(url: fs.folderURL)
             } else if sourceId.hasPrefix("folder:") {
                 // Fallback: extract folder URL from identifier pattern
                 let folderPath = String(sourceId.dropFirst("folder:".count))
                 let folderURL = URL(fileURLWithPath: folderPath)
+                invalidateDescendantCache(under: folderPath)
                 Bookmarks.remove(url: folderURL)
             }
         }
@@ -524,6 +562,10 @@ final class ContentManager {
     // Mark a source's decorator cache as dirty (needs refresh)
     func markDecoratorsNeedRefresh(for sourceId: String) {
         _decoratorCacheDirty.insert(sourceId)
+    }
+
+    func invalidateDescendantCache(under path: String? = nil) {
+        removeDescendantEntries(withPrefix: path)
     }
     
     // Clear decorator cache for a source (when source is removed)
@@ -623,6 +665,8 @@ final class ContentManager {
                 let childIDs = descendantTextItemIDs(for: item)
                 for cid in childIDs {
                     exampleItemIds.remove(cid)
+                    _hiddenSelectedItems.removeValue(forKey: cid)
+                    _pendingHiddenFetch.remove(cid)
                 }
             }
         } else {
@@ -635,6 +679,9 @@ final class ContentManager {
                     selectedItemIds.insert(cid)
                     exampleItemIds.insert(cid)
                 }
+                if !childIDs.isEmpty {
+                    scheduleHiddenSelectionPrefetch(for: Set(childIDs))
+                }
             }
         }
         markSelectedDirty()
@@ -643,43 +690,91 @@ final class ContentManager {
     // Collect all textual descendant file UUIDs for a folder item by scanning the filesystem
     private func descendantTextItemIDs(for folder: ContentItem) -> [UUID] {
         guard folder.isFolder, let baseURL = folder.fileURL else { return [] }
-        let fileURLs = self.enumerateDescendantFiles(at: baseURL)
-        var ids: [UUID] = []
-        for url in fileURLs {
-            if isTextURL(url) {
-                let id = stableUUID(for: url)
-                ids.append(id)
+        let files = descendantFiles(at: baseURL)
+        return files.filter { $0.isText }.map { $0.id }
+    }
+
+    private func visibleChildItems(of folder: ContentItem) -> [ContentItem] {
+        rebuildItemCachesIfNeeded()
+        guard let sourceItems = _itemsBySource[folder.sourceId],
+              let startIndex = sourceItems.firstIndex(where: { $0.id == folder.id }) else { return [] }
+
+        let childDepth = folder.depth + 1
+        var results: [ContentItem] = []
+        var index = startIndex + 1
+
+        while index < sourceItems.count {
+            let item = sourceItems[index]
+            if item.depth <= folder.depth { break }
+            if item.depth == childDepth {
+                results.append(item)
             }
+            index += 1
         }
-        return ids
+        return results
     }
     
     // File enumeration helpers
-    nonisolated private func enumerateDescendantFiles(at baseURL: URL) -> [URL] {
-        var results: [URL] = []
+    nonisolated private func descendantFiles(at baseURL: URL) -> [DescendantFileInfo] {
+        let folderPath = baseURL.path
+        let directoryModDate = (try? baseURL.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
+
+        if let cached = cachedDescendantEntry(for: folderPath), cached.directoryModificationDate == directoryModDate {
+            return cached.files
+        }
+
+        var results: [DescendantFileInfo] = []
         let fm = FileManager.default
         if let enumerator = fm.enumerator(at: baseURL, includingPropertiesForKeys: [.isDirectoryKey, .contentTypeKey], options: [.skipsHiddenFiles]) {
             for case let url as URL in enumerator {
                 do {
-                    let vals = try url.resourceValues(forKeys: [.isDirectoryKey])
-                    if vals.isDirectory == true { continue }
-                    results.append(url)
+                    let values = try url.resourceValues(forKeys: [.isDirectoryKey, .contentTypeKey])
+                    if values.isDirectory == true { continue }
+                    let type = values.contentType ?? FileSystemSource.resolvedType(for: url)
+                    let info = DescendantFileInfo(
+                        id: stableUUID(for: url),
+                        isText: isTextType(type)
+                    )
+                    results.append(info)
                 } catch {
                     continue
                 }
             }
         }
+
+        storeDescendantEntry(
+            DescendantCacheEntry(files: results, directoryModificationDate: directoryModDate),
+            for: folderPath
+        )
         return results
     }
-    
-    private func isTextURL(_ url: URL) -> Bool {
-        let type = FileSystemSource.resolvedType(for: url)
-        if type?.conforms(to: .text) == true { return true }
+
+    nonisolated private func cachedDescendantEntry(for path: String) -> DescendantCacheEntry? {
+        DescendantCacheStore.shared.entry(for: path)
+    }
+
+    nonisolated private func storeDescendantEntry(_ entry: DescendantCacheEntry, for path: String) {
+        DescendantCacheStore.shared.store(entry, for: path)
+    }
+
+    nonisolated private func removeDescendantEntries(withPrefix prefix: String?) {
+        guard let prefix, !prefix.isEmpty else {
+            DescendantCacheStore.shared.removeAll()
+            return
+        }
+
+        DescendantCacheStore.shared.remove(prefix: prefix)
+    }
+
+    nonisolated private func isTextType(_ type: UTType?) -> Bool {
+        guard let type else { return false }
+        if type.conforms(to: .text) { return true }
         if type == .rtf || type == .rtfd || type == .html { return true }
-        // Markdown special cases
-        if type?.identifier == "net.daringfireball.markdown" ||
-           type?.identifier == "public.markdown" ||
-           type?.preferredFilenameExtension == "md" { return true }
+        if type.identifier == "net.daringfireball.markdown" ||
+            type.identifier == "public.markdown" ||
+            type.preferredFilenameExtension == "md" {
+            return true
+        }
         return false
     }
     
@@ -701,10 +796,9 @@ final class ContentManager {
         if item.isFolder {
             // Allow folder examples only if all descendant files are textual and there is at least one file
             guard let baseURL = item.fileURL else { return false }
-            let files = enumerateDescendantFiles(at: baseURL)
-            let textual = files.filter { isTextURL($0) }
+            let files = descendantFiles(at: baseURL)
             guard !files.isEmpty else { return false }
-            return files.count == textual.count
+            return files.allSatisfy { $0.isText }
         }
         
         // Disallow media or non-text files as examples
@@ -883,6 +977,39 @@ extension ContentManager {
     }
 }
 
+extension ContentManager {
+    private final class DescendantCacheStore: @unchecked Sendable {
+        static let shared = DescendantCacheStore()
+
+        private let lock = NSLock()
+        private var storage: [String: DescendantCacheEntry] = [:]
+
+        func entry(for path: String) -> DescendantCacheEntry? {
+            lock.lock()
+            defer { lock.unlock() }
+            return storage[path]
+        }
+
+        func store(_ entry: DescendantCacheEntry, for path: String) {
+            lock.lock()
+            storage[path] = entry
+            lock.unlock()
+        }
+
+        func removeAll() {
+            lock.lock()
+            storage.removeAll()
+            lock.unlock()
+        }
+
+        func remove(prefix: String) {
+            lock.lock()
+            storage = storage.filter { !$0.key.hasPrefix(prefix) }
+            lock.unlock()
+        }
+    }
+}
+
 #if DEBUG
 extension ContentManager {
     func resetForTesting() {
@@ -912,6 +1039,7 @@ extension ContentManager {
         _decoratorCacheDirty.removeAll()
         _hiddenSelectedItems.removeAll()
         _pendingHiddenFetch.removeAll()
+        removeDescendantEntries(withPrefix: nil)
     }
 }
 #endif

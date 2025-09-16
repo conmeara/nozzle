@@ -183,6 +183,7 @@ final class FileSystemSource: ContentSource {
         ContentManager.shared.markItemsDirty()
         // Visible slice changed; invalidate selectedItems cache
         ContentManager.shared.markSelectedDirty()
+        ContentManager.shared.invalidateDescendantCache(under: folderURL.path)
 
 #if DEBUG
         let elapsed = Date().timeIntervalSince(refreshStart)
@@ -223,9 +224,11 @@ final class FileSystemSource: ContentSource {
             directoryModDateCache = directoryModDateCache.filter { cachedPath, _ in
                 !cachedPath.hasPrefix(specificPath)
             }
+            ContentManager.shared.invalidateDescendantCache(under: specificPath)
         } else {
             // Clear entire cache
             directoryModDateCache.removeAll()
+            ContentManager.shared.invalidateDescendantCache(under: folderURL.path)
         }
     }
 
@@ -272,6 +275,7 @@ final class FileSystemSource: ContentSource {
         // Visible slice changed; invalidate selectedItems cache and decorators cache
         ContentManager.shared.markDecoratorsNeedRefresh(for: self.id)
         ContentManager.shared.markSelectedDirty()
+        ContentManager.shared.invalidateDescendantCache(under: folderPath)
     }
 
     @MainActor
