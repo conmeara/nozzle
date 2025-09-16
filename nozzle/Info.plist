@@ -29,7 +29,7 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © Conor O'Meara</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>nozzle needs access to your microphone for speech-to-text dictation</string>
+	<string>Nozzle needs access to your microphone for speech-to-text dictation</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
