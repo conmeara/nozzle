@@ -57,6 +57,26 @@ final class ContentManagerSelectionTests: XCTestCase {
         }
         XCTAssertLessThan(folderIndex, fileIndex)
         XCTAssertEqual(manager.selectedItems[fileIndex].id, hiddenId)
+
+        // Rename the hidden file and ensure the cached selection refreshes
+        let renamedURL = nestedFolder.appendingPathComponent("february.txt")
+        try FileManager.default.moveItem(at: hiddenFile, to: renamedURL)
+
+        await source.refresh()
+
+        let renameDeadline = Date().addingTimeInterval(2.0)
+        var refreshedTitle: String?
+        repeat {
+            if let match = manager.selectedItems.first(where: { $0.id == hiddenId }) {
+                if match.title == "february.txt" {
+                    refreshedTitle = match.title
+                    break
+                }
+            }
+            try await Task.sleep(nanoseconds: 50_000_000)
+        } while Date() < renameDeadline
+
+        XCTAssertEqual(refreshedTitle, "february.txt", "Renamed hidden selection should refresh cached metadata")
     }
 
     private func makeTemporaryDirectory() throws -> URL {

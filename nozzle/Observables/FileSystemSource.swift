@@ -181,6 +181,7 @@ final class FileSystemSource: ContentSource {
         self.lastRefreshTime = Date()
         self.rebuildIndexes()
         ContentManager.shared.markItemsDirty()
+        ContentManager.shared.clearHiddenSelections(for: self.id, underPath: folderURL.path)
         // Visible slice changed; invalidate selectedItems cache
         ContentManager.shared.markSelectedDirty()
         ContentManager.shared.invalidateDescendantCache(under: folderURL.path)
@@ -225,10 +226,12 @@ final class FileSystemSource: ContentSource {
                 !cachedPath.hasPrefix(specificPath)
             }
             ContentManager.shared.invalidateDescendantCache(under: specificPath)
+            ContentManager.shared.clearHiddenSelections(for: id, underPath: specificPath)
         } else {
             // Clear entire cache
             directoryModDateCache.removeAll()
             ContentManager.shared.invalidateDescendantCache(under: folderURL.path)
+            ContentManager.shared.clearHiddenSelections(for: id, underPath: folderURL.path)
         }
     }
 
@@ -276,6 +279,7 @@ final class FileSystemSource: ContentSource {
         ContentManager.shared.markDecoratorsNeedRefresh(for: self.id)
         ContentManager.shared.markSelectedDirty()
         ContentManager.shared.invalidateDescendantCache(under: folderPath)
+        ContentManager.shared.clearHiddenSelections(for: self.id, underPath: folderPath)
     }
 
     @MainActor

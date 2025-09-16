@@ -137,6 +137,40 @@ final class ContentManager {
         _pendingHiddenFetch.formIntersection(selectedItemIds)
     }
 
+    func clearHiddenSelections(for sourceId: String, underPath prefixPath: String? = nil) {
+        guard !_hiddenSelectedItems.isEmpty else { return }
+
+        let normalizedPrefix: String? = {
+            guard let prefixPath else { return nil }
+            if prefixPath.hasSuffix("/") { return prefixPath }
+            return prefixPath + "/"
+        }()
+
+        var removedAny = false
+
+        for (id, item) in _hiddenSelectedItems where item.sourceId == sourceId {
+            if let prefixPath,
+               let itemPath = item.fileURL?.path {
+                if itemPath != prefixPath,
+                   let normalizedPrefix,
+                   !itemPath.hasPrefix(normalizedPrefix) {
+                    continue
+                }
+            } else if prefixPath != nil {
+                continue
+            }
+
+            _hiddenSelectedItems.removeValue(forKey: id)
+            _pendingHiddenFetch.remove(id)
+            removedAny = true
+        }
+
+        if removedAny {
+            markSelectedDirty()
+            _allItemsCacheDirty = true
+        }
+    }
+
     func item(for id: UUID?) -> ContentItem? {
         guard let id else { return nil }
         rebuildItemCachesIfNeeded()
@@ -484,13 +518,7 @@ final class ContentManager {
         }
 
         // Clear hidden caches tied to this source
-        let hiddenIdsToRemove = _hiddenSelectedItems
-            .filter { $0.value.sourceId == sourceId }
-            .map { $0.key }
-        for hiddenId in hiddenIdsToRemove {
-            _hiddenSelectedItems.removeValue(forKey: hiddenId)
-            _pendingHiddenFetch.remove(hiddenId)
-        }
+        clearHiddenSelections(for: sourceId)
 
         // For folder sources, also remove the bookmark
         if source.type == .folder {

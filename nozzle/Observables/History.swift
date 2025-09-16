@@ -15,11 +15,7 @@ class History { // swiftlint:disable:this type_body_length
 
   var items: [HistoryItemDecorator] = [] {
     didSet {
-      // Visible list for clipboard changed; refresh selectedItems cache order
-      ContentManager.shared.markSelectedDirty()
-      ContentManager.shared.markItemsDirty()
-      ContentManager.shared.markDecoratorsNeedRefresh(for: "clipboard")
-      contentVersion &+= 1
+      notifyContentChanged()
     }
   }
   var selectedItem: HistoryItemDecorator? {
@@ -41,6 +37,10 @@ class History { // swiftlint:disable:this type_body_length
   var unpinnedItems: [HistoryItemDecorator] { items.filter(\.isUnpinned) }
 
   var itemsRevision: Int { contentVersion }
+
+  func registerDecoratorMutation() {
+    notifyContentChanged()
+  }
 
   var searchQuery: String = "" {
     didSet {
@@ -122,6 +122,7 @@ class History { // swiftlint:disable:this type_body_length
           item.title = title
           item.item.title = title
         }
+        notifyContentChanged()
       }
     }
 
@@ -413,5 +414,12 @@ class History { // swiftlint:disable:this type_body_length
       item.shortcuts = KeyShortcut.create(character: String(index))
       index += 1
     }
+  }
+
+  private func notifyContentChanged() {
+    ContentManager.shared.markSelectedDirty()
+    ContentManager.shared.markItemsDirty()
+    ContentManager.shared.markDecoratorsNeedRefresh(for: "clipboard")
+    contentVersion &+= 1
   }
 }

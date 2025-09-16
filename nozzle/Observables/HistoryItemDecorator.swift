@@ -23,11 +23,29 @@ class HistoryItemDecorator: ListItemDecorator {
 
   let id = UUID()
 
-  var title: String = ""
+  @ObservationIgnored
+  private var hasFinishedInitialization = false
+
+  var title: String = "" {
+    didSet {
+      guard hasFinishedInitialization, oldValue != title else { return }
+      History.shared.registerDecoratorMutation()
+    }
+  }
   var attributedTitle: AttributedString?
 
-  var isVisible: Bool = true
-  var isSelected: Bool = false
+  var isVisible: Bool = true {
+    didSet {
+      guard hasFinishedInitialization, oldValue != isVisible else { return }
+      History.shared.registerDecoratorMutation()
+    }
+  }
+  var isSelected: Bool = false {
+    didSet {
+      guard hasFinishedInitialization, oldValue != isSelected else { return }
+      History.shared.registerDecoratorMutation()
+    }
+  }
   // Note: We no longer tie isSelected to preview display
   // as isSelected now represents checkbox state, not focus state
   var shortcuts: [KeyShortcut] = []
@@ -157,6 +175,8 @@ class HistoryItemDecorator: ListItemDecorator {
     Task { @MainActor in
       sizeImages()
     }
+
+    hasFinishedInitialization = true
   }
 
   @MainActor
