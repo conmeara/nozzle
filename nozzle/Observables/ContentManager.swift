@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import UniformTypeIdentifiers
 import Observation
 
 enum FolderSelectionState {
@@ -368,7 +369,14 @@ final class ContentManager {
         let token = registerDescendantSelectionTask(for: folderId)
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
-            let snapshot = await self.snapshotForFolder(folderId, sourceId: sourceId)
+            let context = await self.backgroundSelectionInputs(for: folderId, sourceId: sourceId)
+            let snapshot: HierarchyDescendantSnapshot
+            if let folderPath = context.folderPath,
+               context.supportsBackgroundEnumeration {
+                snapshot = ContentManager.makeDescendantSnapshot(atPath: folderPath)
+            } else {
+                snapshot = await self.snapshotOnMain(for: folderId, sourceId: sourceId)
+            }
             let resolvedItems: [ContentItem]
             if snapshot.isEmpty {
                 resolvedItems = []
@@ -391,7 +399,14 @@ final class ContentManager {
         let token = registerDescendantSelectionTask(for: folderId)
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
-            let snapshot = await self.snapshotForFolder(folderId, sourceId: sourceId)
+            let context = await self.backgroundSelectionInputs(for: folderId, sourceId: sourceId)
+            let snapshot: HierarchyDescendantSnapshot
+            if let folderPath = context.folderPath,
+               context.supportsBackgroundEnumeration {
+                snapshot = ContentManager.makeDescendantSnapshot(atPath: folderPath)
+            } else {
+                snapshot = await self.snapshotOnMain(for: folderId, sourceId: sourceId)
+            }
             let resolvedItems: [ContentItem]
             if snapshot.isEmpty {
                 resolvedItems = []
@@ -415,12 +430,66 @@ final class ContentManager {
         return token
     }
 
+    private struct BackgroundSelectionContext: Sendable {
+        let folderPath: String?
+        let supportsBackgroundEnumeration: Bool
+    }
+
     @MainActor
-    private func snapshotForFolder(_ folderId: UUID, sourceId: String) -> HierarchyDescendantSnapshot {
+    private func backgroundSelectionInputs(for folderId: UUID, sourceId: String) -> BackgroundSelectionContext {
+        guard let source = sources[sourceId] else {
+            return BackgroundSelectionContext(folderPath: nil, supportsBackgroundEnumeration: false)
+        }
+
+        let item = source.items.first(where: { $0.id == folderId })
+        let folderPath = item?.fileURL?.path
+        let supportsBackground = source.type == .folder && folderPath != nil
+
+        return BackgroundSelectionContext(
+            folderPath: folderPath,
+            supportsBackgroundEnumeration: supportsBackground
+        )
+    }
+
+    @MainActor
+    private func snapshotOnMain(for folderId: UUID, sourceId: String) -> HierarchyDescendantSnapshot {
         guard let source = sources[sourceId] as? HierarchicalContentSource else {
             return HierarchyDescendantSnapshot(items: [])
         }
         return source.descendantSnapshot(for: folderId)
+    }
+
+    nonisolated private static func makeDescendantSnapshot(atPath path: String) -> HierarchyDescendantSnapshot {
+        let baseURL = URL(fileURLWithPath: path)
+        var descendants: [HierarchyDescendantItem] = []
+        let fm = FileManager.default
+
+        if let enumerator = fm.enumerator(
+            at: baseURL,
+            includingPropertiesForKeys: [.isDirectoryKey, .contentTypeKey, .fileResourceIdentifierKey],
+            options: [.skipsHiddenFiles]
+        ) {
+            for case let url as URL in enumerator {
+                guard let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .contentTypeKey, .fileResourceIdentifierKey]) else {
+                    continue
+                }
+                if values.isDirectory == true { continue }
+
+                let type = values.contentType ?? FileSystemSource.resolvedType(for: url)
+                let identity = values.fileResourceIdentifier as? Data
+                let id = FileSystemSource.makeStableUUID(identity: identity, fallbackPath: url.absoluteString)
+
+                descendants.append(
+                    HierarchyDescendantItem(
+                        id: id,
+                        path: url.path,
+                        isText: isTextType(type)
+                    )
+                )
+            }
+        }
+
+        return HierarchyDescendantSnapshot(items: descendants)
     }
 
     @MainActor
@@ -1089,6 +1158,20 @@ extension ContentManager {
                 }
             }
         }
+    }
+}
+
+private extension ContentManager {
+    nonisolated static func isTextType(_ type: UTType?) -> Bool {
+        guard let type else { return false }
+        if type.conforms(to: .text) { return true }
+        if type == .rtf || type == .rtfd || type == .html { return true }
+        if type.identifier == "net.daringfireball.markdown" ||
+            type.identifier == "public.markdown" ||
+            type.preferredFilenameExtension == "md" {
+            return true
+        }
+        return false
     }
 }
 
