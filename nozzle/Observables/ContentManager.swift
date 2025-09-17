@@ -141,9 +141,18 @@ final class ContentManager {
 
         guard !keysToRemove.isEmpty else { return }
 
+        var needsPrefetch: Set<UUID> = []
         for id in keysToRemove {
-            _hiddenSelectedItems.removeValue(forKey: id)
-            _pendingHiddenFetch.remove(id)
+            if selectedItemIds.contains(id) {
+                _pendingHiddenFetch.insert(id)
+                needsPrefetch.insert(id)
+            } else {
+                _hiddenSelectedItems.removeValue(forKey: id)
+                _pendingHiddenFetch.remove(id)
+            }
+        }
+        if !needsPrefetch.isEmpty {
+            scheduleHiddenSelectionPrefetch(for: needsPrefetch)
         }
 
         markSelectedDirty()
@@ -376,6 +385,14 @@ final class ContentManager {
             } else if path == override.path {
                 return true
             }
+        }
+        return false
+    }
+
+    private func hasDeselectionOverrideUnder(prefixOf folder: ContentItem) -> Bool {
+        guard let base = normalizedPath(for: folder) else { return false }
+        for (_, override) in _folderSelectionExclusions where override.path.hasPrefix(base) {
+            return true
         }
         return false
     }
@@ -680,15 +697,29 @@ final class ContentManager {
             }
 
             let snapshot = hierarchical.descendantSnapshot(for: folderId)
-            guard !snapshot.itemIds.isEmpty else { return .none }
+            let fileIds = snapshot.items.filter { !$0.isFolder }.map(\.id)
 
-            let selectedCount = snapshot.itemIds.reduce(into: 0) { count, id in
+            guard !fileIds.isEmpty else {
+                return selectedItemIds.contains(folderItem.id) ? .all : .none
+            }
+
+            if selectedItemIds.contains(folderItem.id),
+               !hasDeselectionOverrideUnder(prefixOf: folderItem) {
+                return .all
+            }
+
+            let explicit = fileIds.reduce(into: 0) { count, id in
                 if selectedItemIds.contains(id) { count += 1 }
             }
 
-            if selectedCount == 0 { return .none }
-            if selectedCount == snapshot.itemIds.count { return .all }
-            return .partial
+            if explicit == 0 {
+                if selectedItemIds.contains(folderItem.id) {
+                    return hasDeselectionOverrideUnder(prefixOf: folderItem) ? .partial : .all
+                }
+                return .none
+            }
+
+            return (explicit == fileIds.count) ? .all : .partial
         }
         
         // For expanded folders, calculate based on per-child state so mixed selections stay accurate
@@ -700,7 +731,7 @@ final class ContentManager {
 
         // Files are fully selected only when their UUID is tracked in the selection set
         for file in fileChildren {
-            if selectedItemIds.contains(file.id) {
+            if isSelected(effectively: file) {
                 anySelection = true
             } else {
                 allFullySelected = false
