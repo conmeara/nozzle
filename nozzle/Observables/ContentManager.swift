@@ -152,7 +152,7 @@ final class ContentManager {
             }
         }
         if !needsPrefetch.isEmpty {
-            scheduleHiddenSelectionPrefetch(for: needsPrefetch)
+            scheduleHiddenSelectionPrefetch(for: needsPrefetch, force: true)
         }
 
         markSelectedDirty()
@@ -1222,8 +1222,8 @@ extension ContentManager {
 }
 
 extension ContentManager {
-    private func scheduleHiddenSelectionPrefetch(for ids: Set<UUID>) {
-        let newRequests = ids.subtracting(_pendingHiddenFetch)
+    private func scheduleHiddenSelectionPrefetch(for ids: Set<UUID>, force: Bool = false) {
+        let newRequests: Set<UUID> = force ? ids : ids.subtracting(_pendingHiddenFetch)
         guard !newRequests.isEmpty else { return }
 
         _pendingHiddenFetch.formUnion(newRequests)
