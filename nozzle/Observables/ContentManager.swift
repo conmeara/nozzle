@@ -525,7 +525,8 @@ final class ContentManager {
                     HierarchyDescendantItem(
                         id: id,
                         path: url.path,
-                        isText: isTextType(type)
+                        isText: isTextType(type),
+                        isFolder: values.isDirectory == true
                     )
                 )
             }
