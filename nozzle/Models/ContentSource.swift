@@ -18,15 +18,17 @@ public protocol ContentSource: AnyObject {
 }
 
 public struct HierarchyDescendantItem: Sendable {
-    public init(id: UUID, path: String, isText: Bool) {
+    public init(id: UUID, path: String, isText: Bool, isFolder: Bool) {
         self.id = id
         self.path = path
         self.isText = isText
+        self.isFolder = isFolder
     }
 
     public let id: UUID
     public let path: String
     public let isText: Bool
+    public let isFolder: Bool
 }
 
 public struct HierarchyDescendantSnapshot: Sendable {
@@ -41,7 +43,7 @@ public struct HierarchyDescendantSnapshot: Sendable {
     public var itemIds: [UUID] { items.map(\.id) }
 
     public var textItemIds: [UUID] {
-        items.filter(\.isText).map(\.id)
+        items.filter { $0.isText && !$0.isFolder }.map(\.id)
     }
 }
 

@@ -116,28 +116,37 @@ final class ContentManager {
             return prefixPath + "/"
         }()
 
-        var removedAny = false
+        var keysToRemove: [UUID] = []
 
         for (id, item) in _hiddenSelectedItems where item.sourceId == sourceId {
-            if let prefixPath,
-               let itemPath = item.fileURL?.path {
-                if itemPath != prefixPath,
-                   let normalizedPrefix,
-                   !itemPath.hasPrefix(normalizedPrefix) {
-                    continue
+            let shouldRemove: Bool
+
+            if let prefixPath {
+                guard let itemPath = item.fileURL?.path else { continue }
+                if itemPath == prefixPath {
+                    shouldRemove = true
+                } else if let normalizedPrefix {
+                    shouldRemove = itemPath.hasPrefix(normalizedPrefix)
+                } else {
+                    shouldRemove = false
                 }
-            } else if prefixPath != nil {
-                continue
+            } else {
+                shouldRemove = true
             }
 
-            _hiddenSelectedItems.removeValue(forKey: id)
-            _pendingHiddenFetch.remove(id)
-            removedAny = true
+            if shouldRemove {
+                keysToRemove.append(id)
+            }
         }
 
-        if removedAny {
-            markSelectedDirty()
+        guard !keysToRemove.isEmpty else { return }
+
+        for id in keysToRemove {
+            _hiddenSelectedItems.removeValue(forKey: id)
+            _pendingHiddenFetch.remove(id)
         }
+
+        markSelectedDirty()
     }
 
     func item(for id: UUID?) -> ContentItem? {
@@ -335,8 +344,12 @@ final class ContentManager {
         var changed = false
 
         for (id, override) in _folderSelectionExclusions {
-            guard let item = item(for: id),
-                  let newPath = normalizedPath(for: item) else {
+            guard let item = item(for: id) else {
+                changed = true
+                continue
+            }
+
+            guard let newPath = normalizedPath(for: item) else {
                 changed = true
                 continue
             }
@@ -405,7 +418,7 @@ final class ContentManager {
             } else {
                 snapshot = await self.snapshotOnMain(for: folderId, sourceId: sourceId)
             }
-            let snapshotIds = snapshot.isEmpty ? Set<UUID>() : Set(snapshot.itemIds)
+            let snapshotIds = snapshot.isEmpty ? Set<UUID>() : Set(snapshot.items.filter { !$0.isFolder }.map(\.id))
             if !snapshotIds.isEmpty {
                 await self.markHiddenFetchPending(for: snapshotIds)
             }
@@ -439,7 +452,7 @@ final class ContentManager {
             } else {
                 snapshot = await self.snapshotOnMain(for: folderId, sourceId: sourceId)
             }
-            let snapshotIds = snapshot.isEmpty ? Set<UUID>() : Set(snapshot.itemIds)
+            let snapshotIds = snapshot.isEmpty ? Set<UUID>() : Set(snapshot.items.filter { !$0.isFolder }.map(\.id))
             if !snapshotIds.isEmpty {
                 await self.markHiddenFetchPending(for: snapshotIds)
             }
@@ -515,7 +528,6 @@ final class ContentManager {
                 guard let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .contentTypeKey, .fileResourceIdentifierKey]) else {
                     continue
                 }
-                if values.isDirectory == true { continue }
 
                 let type = values.contentType ?? FileSystemSource.resolvedType(for: url)
                 let identity = values.fileResourceIdentifier as? Data
@@ -571,6 +583,13 @@ final class ContentManager {
 
         if selecting {
             for item in processed {
+                if item.isFolder {
+                    selectedItemIds.remove(item.id)
+                    exampleItemIds.remove(item.id)
+                    _folderSelectionExclusions.removeValue(forKey: item.id)
+                    continue
+                }
+
                 selectedItemIds.insert(item.id)
                 exampleItemIds.remove(item.id)
                 _folderSelectionExclusions.removeValue(forKey: item.id)
@@ -578,13 +597,20 @@ final class ContentManager {
                     _hiddenSelectedItems[item.id] = resolved
                 }
             }
-            if !processed.isEmpty {
-                _pendingHiddenFetch.subtract(Set(processed.map(\.id)))
+            let fileIDs = processed.filter { !$0.isFolder }.map(\.id)
+            if !fileIDs.isEmpty {
+                _pendingHiddenFetch.subtract(Set(fileIDs))
             }
         } else {
             for item in processed {
                 selectedItemIds.remove(item.id)
                 exampleItemIds.remove(item.id)
+
+                if item.isFolder {
+                    _folderSelectionExclusions.removeValue(forKey: item.id)
+                    continue
+                }
+
                 _hiddenSelectedItems.removeValue(forKey: item.id)
                 _pendingHiddenFetch.remove(item.id)
             }

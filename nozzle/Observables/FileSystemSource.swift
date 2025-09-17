@@ -638,12 +638,18 @@ final class FileSystemSource: ContentSource, HierarchicalContentSource {
             for case let url as URL in enumerator {
                 do {
                     let values = try url.resourceValues(forKeys: [.isDirectoryKey, .contentTypeKey, .fileResourceIdentifierKey])
-                    if values.isDirectory == true { continue }
                     let type = values.contentType ?? Self.resolvedType(for: url)
                     let snapshot = FileIdentity.snapshot(for: url)
                     let id = Self.makeStableUUID(identity: snapshot.identity, fallbackPath: url.absoluteString)
                     let isText = isTextType(type)
-                    descendants.append(HierarchyDescendantItem(id: id, path: url.path, isText: isText))
+                    descendants.append(
+                        HierarchyDescendantItem(
+                            id: id,
+                            path: url.path,
+                            isText: isText,
+                            isFolder: values.isDirectory == true
+                        )
+                    )
                 } catch {
                     continue
                 }
