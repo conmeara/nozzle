@@ -104,6 +104,7 @@ final class ContentManager {
     func markItemsDirty() {
         _hiddenSelectedItems = _hiddenSelectedItems.filter { selectedItemIds.contains($0.key) }
         _pendingHiddenFetch.formIntersection(selectedItemIds)
+        resyncDeselectionOverridesWithCurrentPaths()
     }
 
     func clearHiddenSelections(for sourceId: String, underPath prefixPath: String? = nil) {
@@ -324,6 +325,33 @@ final class ContentManager {
               let path = normalizedPath(for: item) else { return false }
         if _folderSelectionExclusions[item.id] != nil { return true }
         return hasDeselectionOverride(forPath: path, excluding: item.id)
+    }
+
+    private func resyncDeselectionOverridesWithCurrentPaths() {
+        guard !_folderSelectionExclusions.isEmpty else { return }
+
+        var updated: [UUID: DeselectionOverride] = [:]
+        updated.reserveCapacity(_folderSelectionExclusions.count)
+        var changed = false
+
+        for (id, override) in _folderSelectionExclusions {
+            guard let item = item(for: id),
+                  let newPath = normalizedPath(for: item) else {
+                changed = true
+                continue
+            }
+
+            if newPath != override.path {
+                updated[id] = DeselectionOverride(path: newPath, appliesToDescendants: override.appliesToDescendants)
+                changed = true
+            } else {
+                updated[id] = override
+            }
+        }
+
+        if changed {
+            _folderSelectionExclusions = updated
+        }
     }
 
     private func hasDeselectionOverride(forPath path: String, excluding id: UUID? = nil) -> Bool {
