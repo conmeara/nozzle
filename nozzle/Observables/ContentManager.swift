@@ -377,6 +377,10 @@ final class ContentManager {
             } else {
                 snapshot = await self.snapshotOnMain(for: folderId, sourceId: sourceId)
             }
+            let snapshotIds = snapshot.isEmpty ? Set<UUID>() : Set(snapshot.itemIds)
+            if !snapshotIds.isEmpty {
+                await self.markHiddenFetchPending(for: snapshotIds)
+            }
             let resolvedItems: [ContentItem]
             if snapshot.isEmpty {
                 resolvedItems = []
@@ -406,6 +410,10 @@ final class ContentManager {
                 snapshot = ContentManager.makeDescendantSnapshot(atPath: folderPath)
             } else {
                 snapshot = await self.snapshotOnMain(for: folderId, sourceId: sourceId)
+            }
+            let snapshotIds = snapshot.isEmpty ? Set<UUID>() : Set(snapshot.itemIds)
+            if !snapshotIds.isEmpty {
+                await self.markHiddenFetchPending(for: snapshotIds)
             }
             let resolvedItems: [ContentItem]
             if snapshot.isEmpty {
@@ -457,6 +465,12 @@ final class ContentManager {
             return HierarchyDescendantSnapshot(items: [])
         }
         return source.descendantSnapshot(for: folderId)
+    }
+
+    @MainActor
+    private func markHiddenFetchPending(for ids: Set<UUID>) {
+        guard !ids.isEmpty else { return }
+        _pendingHiddenFetch.formUnion(ids)
     }
 
     nonisolated private static func makeDescendantSnapshot(atPath path: String) -> HierarchyDescendantSnapshot {
