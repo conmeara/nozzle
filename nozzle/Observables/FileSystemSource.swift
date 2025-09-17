@@ -546,7 +546,7 @@ final class FileSystemSource: ContentSource, HierarchicalContentSource {
                 let timestamp = values.contentModificationDate ?? Date()
                 let uniformType = values.contentType?.identifier ?? (isDirectory ? nil : Self.resolvedType(for: url)?.identifier)
                 let relativePath = url.path.replacingOccurrences(of: baseURL.path + "/", with: "")
-                let depth = relativePath.components(separatedBy: "/").count
+                let depth = max(0, relativePath.components(separatedBy: "/").count - 1)
                 let parentPath = url.deletingLastPathComponent().path
 
                 let item = ContentItem(
