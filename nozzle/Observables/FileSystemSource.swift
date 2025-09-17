@@ -641,13 +641,15 @@ final class FileSystemSource: ContentSource, HierarchicalContentSource {
                     let type = values.contentType ?? Self.resolvedType(for: url)
                     let snapshot = FileIdentity.snapshot(for: url)
                     let id = Self.makeStableUUID(identity: snapshot.identity, fallbackPath: url.absoluteString)
+                    let isDirectory = values.isDirectory == true
                     let isText = isTextType(type)
+                    let normalizedPath = isDirectory ? normalizedFolderPath(url.path) : url.path
                     descendants.append(
                         HierarchyDescendantItem(
                             id: id,
-                            path: url.path,
+                            path: normalizedPath,
                             isText: isText,
-                            isFolder: values.isDirectory == true
+                            isFolder: isDirectory
                         )
                     )
                 } catch {

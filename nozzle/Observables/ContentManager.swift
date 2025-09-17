@@ -400,8 +400,12 @@ final class ContentManager {
         return item.isFolder ? normalizedFolderPath(path) : path
     }
 
-    private func normalizedFolderPath(_ path: String) -> String {
+    nonisolated private static func normalizedFolderPath(_ path: String) -> String {
         path.hasSuffix("/") ? path : path + "/"
+    }
+
+    private func normalizedFolderPath(_ path: String) -> String {
+        Self.normalizedFolderPath(path)
     }
     
     // Helper functions for collapsed folder selection
@@ -532,13 +536,15 @@ final class ContentManager {
                 let type = values.contentType ?? FileSystemSource.resolvedType(for: url)
                 let identity = values.fileResourceIdentifier as? Data
                 let id = FileSystemSource.makeStableUUID(identity: identity, fallbackPath: url.absoluteString)
+                let isDirectory = values.isDirectory == true
+                let normalizedPath = isDirectory ? normalizedFolderPath(url.path) : url.path
 
                 descendants.append(
                     HierarchyDescendantItem(
                         id: id,
-                        path: url.path,
+                        path: normalizedPath,
                         isText: isTextType(type),
-                        isFolder: values.isDirectory == true
+                        isFolder: isDirectory
                     )
                 )
             }
@@ -576,7 +582,10 @@ final class ContentManager {
 
         let processed: [HierarchyDescendantItem]
         if selecting {
-            processed = snapshot.items.filter { !hasDeselectionOverride(forPath: $0.path) }
+            processed = snapshot.items.filter { item in
+                let path = item.isFolder ? Self.normalizedFolderPath(item.path) : item.path
+                return !hasDeselectionOverride(forPath: path)
+            }
         } else {
             processed = snapshot.items
         }
