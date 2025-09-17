@@ -339,8 +339,7 @@ struct ContentView: View {
                 HStack(spacing: 4) {
                 // Always visible: Aggregated tab
                 TabButtonWithIcon(
-                  icon: "square.stack.3d.up.badge.automatic.fill",
-                  badgeCount: contentManager.selectedFileCount,
+                  icon: contentManager.selectedFileCount > 0 ? "square.stack.3d.up.fill" : "square.stack.3d.up",
                   isSelected: selectedTab == "aggregated"
                 ) {
                   selectedTab = "aggregated"
@@ -980,36 +979,19 @@ struct TabButtonLabel: View {
   }
 }
 
-// Tab button with icon and badge count
+// Tab button with icon
 struct TabButtonWithIcon: View {
   let icon: String
-  let badgeCount: Int
   let isSelected: Bool
   let action: () -> Void
   
   var body: some View {
     Button(action: action) {
       HStack(spacing: 4) {
-        // Use base SF Symbol with overlay badge when count > 0
-        ZStack {
-          Image(systemName: badgeCount > 0 ? "square.stack.3d.up.fill" : "square.stack.3d.up")
-            .font(.system(size: 13))
-            .foregroundColor(isSelected ? .primary : .secondary)
-            .opacity(isSelected ? 1.0 : 0.8)
-          
-          // Native SF Symbol-style badge overlay (bottom-right position)
-          if badgeCount > 0 {
-            Text(badgeCount > 99 ? "99+" : "\(badgeCount)")
-              .font(.system(size: 7, weight: .bold))
-              .foregroundColor(.white)
-              .padding(.horizontal, badgeCount > 9 ? 2.5 : 3)
-              .padding(.vertical, 1.5)
-              .background(Color(NSColor.systemGray))
-              .clipShape(Circle())
-              .offset(x: 7, y: 7)
-              .scaleEffect(0.75)
-          }
-        }
+        Image(systemName: icon)
+          .font(.system(size: 13))
+          .foregroundColor(isSelected ? .primary : .secondary)
+          .opacity(isSelected ? 1.0 : 0.8)
       }
       .padding(.horizontal, 8)
       .padding(.vertical, 3.5)
