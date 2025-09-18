@@ -2,6 +2,29 @@ import AppKit
 import Foundation
 import UniformTypeIdentifiers
 
+public struct ContentCapabilities: OptionSet, Sendable {
+    public let rawValue: Int
+
+    public init(rawValue: Int) {
+        self.rawValue = rawValue
+    }
+
+    public static let hierarchical = Self(rawValue: 1 << 0)
+    public static let pasteable   = Self(rawValue: 1 << 1)
+    public static let textual     = Self(rawValue: 1 << 2)
+    public static let image       = Self(rawValue: 1 << 3)
+    public static let previewable = Self(rawValue: 1 << 4)
+    public static let exampleable = Self(rawValue: 1 << 5)
+}
+
+public enum PastePayload {
+    case fileURL(URL)
+    case text(String)
+    case rtf(Data)
+    case html(Data)
+    case image(NSImage)
+}
+
 public struct ContentItem: Identifiable, Hashable, Sendable {
     public let id: UUID
     public let title: String
@@ -104,5 +127,52 @@ extension ContentItem {
     
     var isPlainText: Bool {
         fileUTType == .plainText || fileUTType == .utf8PlainText || fileUTType == .utf16PlainText
+    }
+}
+
+public extension ContentItem {
+    var key: ContentKey { .init(sourceId: sourceId, itemId: id) }
+
+    var capabilities: ContentCapabilities {
+        var caps: ContentCapabilities = []
+
+        if isFolder {
+            caps.insert(.hierarchical)
+        } else {
+            caps.insert(.pasteable)
+        }
+
+        if isText || plainText != nil || rtfData != nil || htmlData != nil {
+            caps.formUnion([.textual, .exampleable])
+        }
+
+        if imageData != nil || isImage {
+            caps.formUnion([.image, .previewable, .pasteable])
+        }
+
+        if fileURL != nil {
+            caps.insert(.previewable)
+        }
+
+        return caps
+    }
+
+    var pastePayload: PastePayload? {
+        if let url = fileURL, !isFolder {
+            return .fileURL(url)
+        }
+        if let text = plainText {
+            return .text(text)
+        }
+        if let data = rtfData {
+            return .rtf(data)
+        }
+        if let data = htmlData {
+            return .html(data)
+        }
+        if let data = imageData, let image = NSImage(data: data) {
+            return .image(image)
+        }
+        return nil
     }
 }

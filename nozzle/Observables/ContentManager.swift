@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import UniformTypeIdentifiers
 import Observation
+import OSLog
 
 enum FolderSelectionState {
     case none     // No children selected
@@ -18,13 +19,30 @@ final class ContentManager {
     var activeSourceId: String = "clipboard"   // default tab
     // Remember the last non-Prompts source so we can return after picking a prompt
     var lastNonPromptsSourceId: String = "clipboard"
+
+    private let signposter = OSSignposter(logger: Logger(subsystem: "org.conmeara.nozzle", category: "Perf.ContentManager"))
     
     // Phase 2: Centralized selection
-    private(set) var selectedItemIds: Set<UUID> = []
-    // Subset of selected items that are marked as examples
-    private(set) var exampleItemIds: Set<UUID> = []
+    let selectionStore = SelectionStore()
     // Observable version counter to trigger UI updates when selection changes
     private(set) var selectionVersion: Int = 0
+
+    private var selectedItemIds: Set<UUID> {
+        Set(selectionStore.selected.map(\.itemId))
+    }
+
+    private func selectItemIfPresent(_ id: UUID, removeExample: Bool = true) {
+        guard let content = item(for: id) else { return }
+        selectionStore.insert(content.key)
+        if removeExample {
+            selectionStore.removeExample(content.key)
+        }
+    }
+
+    private func key(for id: UUID) -> ContentKey? {
+        guard let content = item(for: id) else { return nil }
+        return content.key
+    }
     
     // Preview focus tracking
     private(set) var focusedItemId: UUID?
@@ -75,11 +93,23 @@ final class ContentManager {
     
     // Convenience: selected items split into context vs examples
     var selectedContextItems: [ContentItem] {
-        selectedItems.filter { !exampleItemIds.contains($0.id) }
+        let orderedKeys = selectionStore.orderedSelection
+        guard !orderedKeys.isEmpty else { return [] }
+        let map = Dictionary(uniqueKeysWithValues: selectedItems.map { ($0.key, $0) })
+        return orderedKeys.compactMap { key in
+            guard let item = map[key], !selectionStore.isExample(key) else { return nil }
+            return item
+        }
     }
     
     var selectedExampleItems: [ContentItem] {
-        selectedItems.filter { exampleItemIds.contains($0.id) }
+        let orderedKeys = selectionStore.orderedSelection
+        guard !orderedKeys.isEmpty else { return [] }
+        let map = Dictionary(uniqueKeysWithValues: selectedItems.map { ($0.key, $0) })
+        return orderedKeys.compactMap { key in
+            guard let item = map[key], selectionStore.isExample(key) else { return nil }
+            return item
+        }
     }
     
     // Count of selected files only (excludes folders for badge display)
@@ -143,7 +173,7 @@ final class ContentManager {
 
         var needsPrefetch: Set<UUID> = []
         for id in keysToRemove {
-            if selectedItemIds.contains(id) {
+            if isSelected(id) {
                 _pendingHiddenFetch.insert(id)
                 needsPrefetch.insert(id)
             } else {
@@ -177,6 +207,25 @@ final class ContentManager {
 
         return nil
     }
+
+    func item(for key: ContentKey) -> ContentItem? {
+        if let hidden = _hiddenSelectedItems[key.itemId], hidden.sourceId == key.sourceId {
+            return hidden
+        }
+
+        guard let source = sources[key.sourceId] else { return nil }
+
+        if let hierarchical = source as? HierarchicalContentSource,
+           let resolved = hierarchical.item(with: key.itemId) {
+            return resolved
+        }
+
+        if let match = source.items.first(where: { $0.id == key.itemId }) {
+            return match
+        }
+
+        return nil
+    }
     
     // Selection management
     func toggleSelection(_ id: UUID) {
@@ -185,17 +234,15 @@ final class ContentManager {
             toggleFolderSelection(id)
         } else {
             // Regular item selection
-            let wasSelected = selectedItemIds.contains(id)
+            guard let toggledItem = item(for: id) else { return }
+            let key = toggledItem.key
+            let wasSelected = selectionStore.contains(key)
             if wasSelected {
-                selectedItemIds.remove(id)
-                // Clear example state if deselected
-                exampleItemIds.remove(id)
+                selectionStore.remove(key)
             } else {
-                selectedItemIds.insert(id)
+                selectionStore.insert(key)
             }
-            if let toggledItem = item(for: id) {
-                updateFolderDeselectionOverride(for: toggledItem, deselected: wasSelected)
-            }
+            updateFolderDeselectionOverride(for: toggledItem, deselected: wasSelected)
             // Bridge to clipboard selection if needed
             syncClipboardSelection(id)
         }
@@ -214,8 +261,8 @@ final class ContentManager {
         case .none:
             // No children selected - select everything
             removeDeselectionOverrides(inSubtreeOf: folderItem)
-            selectedItemIds.insert(folderId)
-            exampleItemIds.remove(folderId)
+            selectionStore.insert(folderItem.key)
+            selectionStore.removeExample(folderItem.key)
             updateFolderDeselectionOverride(for: folderItem, deselected: false)
             if children.isEmpty {
                 // Collapsed folder - enumerate and select all descendant files via source
@@ -227,8 +274,7 @@ final class ContentManager {
             
         case .partial, .all:
             // Some or all children selected - deselect everything
-            selectedItemIds.remove(folderId)
-            exampleItemIds.remove(folderId)
+            selectionStore.remove(folderItem.key)
             updateFolderDeselectionOverride(for: folderItem, deselected: true)
             if children.isEmpty {
                 // Collapsed folder - enumerate and deselect all descendant files via source
@@ -248,8 +294,8 @@ final class ContentManager {
         
         let children = visibleChildItems(of: folderItem)
 
-        selectedItemIds.insert(folderId)
-        exampleItemIds.remove(folderId)
+        selectionStore.insert(folderItem.key)
+        selectionStore.removeExample(folderItem.key)
         updateFolderDeselectionOverride(for: folderItem, deselected: false)
 
         if children.isEmpty {
@@ -262,8 +308,8 @@ final class ContentManager {
             if item.isFolder {
                 selectFolderChildren(item.id)
             } else {
-                selectedItemIds.insert(item.id)
-                exampleItemIds.remove(item.id)
+                selectionStore.insert(item.key)
+                selectionStore.removeExample(item.key)
                 updateFolderDeselectionOverride(for: item, deselected: false)
             }
         }
@@ -277,8 +323,7 @@ final class ContentManager {
 
         let children = visibleChildItems(of: folderItem)
 
-        selectedItemIds.remove(folderId)
-        exampleItemIds.remove(folderId)
+        selectionStore.remove(folderItem.key)
         updateFolderDeselectionOverride(for: folderItem, deselected: true)
 
         if children.isEmpty {
@@ -291,8 +336,7 @@ final class ContentManager {
             if item.isFolder {
                 deselectFolderChildren(item.id)
             } else {
-                selectedItemIds.remove(item.id)
-                exampleItemIds.remove(item.id)
+                selectionStore.remove(item.key)
                 updateFolderDeselectionOverride(for: item, deselected: true)
             }
         }
@@ -400,8 +444,8 @@ final class ContentManager {
     private func hasSelectedFolderAncestor(for item: ContentItem) -> Bool {
         guard item.sourceType == .folder,
               let itemPath = normalizedPath(for: item) else { return false }
-        for fid in selectedItemIds where fid != item.id {
-            guard let ancestor = self.item(for: fid),
+        for key in selectionStore.selected where key.itemId != item.id {
+            guard let ancestor = self.item(for: key),
                   ancestor.isFolder,
                   ancestor.sourceType == .folder,
                   let ancestorPath = normalizedPath(for: ancestor) else { continue }
@@ -455,6 +499,7 @@ final class ContentManager {
                 resolvedItems: resolvedItems,
                 selecting: true,
                 folderId: folderId,
+                sourceId: sourceId,
                 token: token
             )
         }
@@ -489,6 +534,7 @@ final class ContentManager {
                 resolvedItems: resolvedItems,
                 selecting: false,
                 folderId: folderId,
+                sourceId: sourceId,
                 token: token
             )
         }
@@ -582,17 +628,23 @@ final class ContentManager {
         resolvedItems: [ContentItem],
         selecting: Bool,
         folderId: UUID,
+        sourceId: String,
         token: UUID
     ) {
+        let interval = signposter.beginInterval("applyDescendantSelection")
+        defer { signposter.endInterval("applyDescendantSelection", interval) }
+
         guard _descendantSelectionTokens[folderId] == token else { return }
         _descendantSelectionTokens.removeValue(forKey: folderId)
 
         guard !snapshot.isEmpty else { return }
 
+        let folderKey = ContentKey(sourceId: sourceId, itemId: folderId)
+
         if selecting {
-            guard selectedItemIds.contains(folderId) else { return }
+            guard selectionStore.contains(folderKey) else { return }
         } else {
-            guard !selectedItemIds.contains(folderId) else { return }
+            guard !selectionStore.contains(folderKey) else { return }
         }
 
         let resolvedById = Dictionary(uniqueKeysWithValues: resolvedItems.map { ($0.id, $0) })
@@ -609,15 +661,15 @@ final class ContentManager {
 
         if selecting {
             for item in processed {
+                let key = ContentKey(sourceId: sourceId, itemId: item.id)
                 if item.isFolder {
-                    selectedItemIds.remove(item.id)
-                    exampleItemIds.remove(item.id)
+                    selectionStore.remove(key)
                     _folderSelectionExclusions.removeValue(forKey: item.id)
                     continue
                 }
 
-                selectedItemIds.insert(item.id)
-                exampleItemIds.remove(item.id)
+                selectionStore.insert(key)
+                selectionStore.removeExample(key)
                 _folderSelectionExclusions.removeValue(forKey: item.id)
                 if let resolved = resolvedById[item.id] {
                     _hiddenSelectedItems[item.id] = resolved
@@ -629,8 +681,8 @@ final class ContentManager {
             }
         } else {
             for item in processed {
-                selectedItemIds.remove(item.id)
-                exampleItemIds.remove(item.id)
+                let key = ContentKey(sourceId: sourceId, itemId: item.id)
+                selectionStore.remove(key)
 
                 if item.isFolder {
                     _folderSelectionExclusions.removeValue(forKey: item.id)
@@ -645,8 +697,7 @@ final class ContentManager {
     }
 
     func clearSelection() {
-        selectedItemIds.removeAll()
-        exampleItemIds.removeAll()
+        selectionStore.clearAll()
         // Also clear clipboard selection (boolean test only)
         if sources["clipboard"] is ClipboardSource {
             History.shared.items.forEach { $0.isSelected = false }
@@ -657,27 +708,31 @@ final class ContentManager {
         markSelectedDirty()
     }
     
-    func isSelected(_ id: UUID) -> Bool { selectedItemIds.contains(id) }
+    func isSelected(_ id: UUID) -> Bool {
+        if let item = item(for: id) {
+            return selectionStore.contains(item.key)
+        }
+        return selectionStore.contains(itemId: id)
+    }
 
     // Treat an item as selected if:
     // - It is explicitly selected, or
     // - It is a file inside any selected folder (use path prefix check)
     func isSelected(effectively item: ContentItem) -> Bool {
-        if selectedItemIds.contains(item.id) { return true }
+        if selectionStore.contains(item.key) { return true }
         if _folderSelectionExclusions[item.id] != nil { return false }
         guard item.sourceType == .folder,
               let rawPath = item.fileURL?.path else { return false }
         let normalizedPath = item.isFolder ? normalizedFolderPath(rawPath) : rawPath
         if hasDeselectionOverride(forPath: normalizedPath, excluding: item.id) { return false }
         // Any selected folder that is an ancestor of this item implies effective selection
-        for fid in selectedItemIds {
-            if let folder = self.item(for: fid),
-               folder.isFolder,
-               let folderRawPath = folder.fileURL?.path {
+        for key in selectionStore.selected {
+            guard let folder = self.item(for: key),
+                  folder.isFolder,
+                  let folderRawPath = folder.fileURL?.path else { continue }
                 let folderPath = normalizedFolderPath(folderRawPath)
-                if folder.id != item.id, normalizedPath.hasPrefix(folderPath) {
-                    return true
-                }
+            if folder.id != item.id, normalizedPath.hasPrefix(folderPath) {
+                return true
             }
         }
         return false
@@ -700,20 +755,20 @@ final class ContentManager {
             let fileIds = snapshot.items.filter { !$0.isFolder }.map(\.id)
 
             guard !fileIds.isEmpty else {
-                return selectedItemIds.contains(folderItem.id) ? .all : .none
+                return selectionStore.contains(folderItem.key) ? .all : .none
             }
 
-            if selectedItemIds.contains(folderItem.id),
+            if selectionStore.contains(folderItem.key),
                !hasDeselectionOverrideUnder(prefixOf: folderItem) {
                 return .all
             }
 
             let explicit = fileIds.reduce(into: 0) { count, id in
-                if selectedItemIds.contains(id) { count += 1 }
+                if isSelected(id) { count += 1 }
             }
 
             if explicit == 0 {
-                if selectedItemIds.contains(folderItem.id) {
+                if selectionStore.contains(folderItem.key) {
                     return hasDeselectionOverrideUnder(prefixOf: folderItem) ? .partial : .all
                 }
                 return .none
@@ -785,18 +840,18 @@ final class ContentManager {
         }) else { return }
         
         // If the folder itself is selected, select all its newly visible children
-        if selectedItemIds.contains(folderItem.id) {
+        if selectionStore.contains(folderItem.key) {
             selectFolderChildren(folderItem.id)
         }
         markSelectedDirty()
     }
-    
+
     private func syncClipboardSelection(_ id: UUID) {
         // If this is a clipboard item, sync with History
         if let item = item(for: id),
            item.sourceType == .clipboard {
             if let historyItem = History.shared.items.first(where: { $0.id == id }) {
-                historyItem.isSelected = selectedItemIds.contains(id)
+                historyItem.isSelected = selectionStore.contains(item.key)
             }
         }
     }
@@ -813,9 +868,9 @@ final class ContentManager {
         // Sync initial selection state for clipboard items
         if source is ClipboardSource {
             for item in History.shared.items where item.isSelected {
-                selectedItemIds.insert(item.id)
+                selectItemIfPresent(item.id)
             }
-            if !selectedItemIds.isEmpty {
+            if !selectionStore.isEmpty {
                 markSelectedDirty()
             }
         }
@@ -837,9 +892,15 @@ final class ContentManager {
         
         // Clear any selections from this source
         let sourceItems = source.items
-        for item in sourceItems {
-            selectedItemIds.remove(item.id)
-            exampleItemIds.remove(item.id)
+        selectionStore.removeAll(forSourceId: sourceId)
+        if !_hiddenSelectedItems.isEmpty {
+            let idsToDrop = _hiddenSelectedItems.compactMap { entry -> UUID? in
+                entry.value.sourceId == sourceId ? entry.key : nil
+            }
+            for id in idsToDrop {
+                _hiddenSelectedItems.removeValue(forKey: id)
+                _pendingHiddenFetch.remove(id)
+            }
         }
         
         // If this was the active source, switch to clipboard
@@ -855,6 +916,8 @@ final class ContentManager {
 
         // Clear hidden caches tied to this source
         clearHiddenSelections(for: sourceId)
+
+        markSelectedDirty()
 
         // For folder sources, also remove the bookmark
         if source.type == .folder {
@@ -998,8 +1061,7 @@ final class ContentManager {
     // In Aggregated tab, show only pasteable leaf items (no folder rows)
     private func filteredForAggregatedDisplay(_ items: [ContentItem]) -> [ContentItem] {
         guard activeSourceId == "aggregated" else { return items }
-        // Drop folders; keep everything else (files, clipboard entries, images)
-        return items.filter { !$0.isFolder }
+        return items.filter { $0.capabilities.contains(.pasteable) }
     }
     
     // Search
@@ -1009,35 +1071,40 @@ final class ContentManager {
     
     // MARK: - Example state
     func isExample(_ id: UUID) -> Bool {
-        exampleItemIds.contains(id)
+        guard let key = key(for: id) else { return false }
+        return selectionStore.isExample(key)
     }
-    
+
     func toggleExample(_ id: UUID) {
         // Allow toggling example state for any textual items (no need to be selected as context)
         guard isTextualItem(id) else { return }
         guard let item = item(for: id) else { return }
-        if exampleItemIds.contains(id) {
+        let key = item.key
+
+        if selectionStore.isExample(key) {
             // Turning OFF example: clear on folder and its descendants
-            exampleItemIds.remove(id)
+            selectionStore.removeExample(key)
             if item.isFolder {
                 let childIDs = descendantTextItemIDs(for: item)
                 for cid in childIDs {
-                    exampleItemIds.remove(cid)
+                    let childKey = ContentKey(sourceId: item.sourceId, itemId: cid)
+                    selectionStore.removeExample(childKey)
                     _hiddenSelectedItems.removeValue(forKey: cid)
                     _pendingHiddenFetch.remove(cid)
                 }
             }
         } else {
             // Turning ON example
-            exampleItemIds.insert(id)
+            selectionStore.addExample(key)
             if item.isFolder {
                 // Select and mark all textual descendants as examples (even if collapsed)
                 let childIDs = descendantTextItemIDs(for: item)
-                for cid in childIDs {
-                    selectedItemIds.insert(cid)
-                    exampleItemIds.insert(cid)
-                }
                 if !childIDs.isEmpty {
+                    let keys = childIDs.map { ContentKey(sourceId: item.sourceId, itemId: $0) }
+                    selectionStore.insertManyPreservingOrder(keys)
+                    for childKey in keys {
+                        selectionStore.addExample(childKey)
+                    }
                     scheduleHiddenSelectionPrefetch(for: Set(childIDs))
                 }
             }
@@ -1075,9 +1142,7 @@ final class ContentManager {
         return results
     }
     func canToggleExample(_ id: UUID) -> Bool {
-        guard selectedItemIds.contains(id),
-              item(for: id) != nil else { return false }
-        
+        guard let item = item(for: id), selectionStore.contains(item.key) else { return false }
         return isTextualItem(id)
     }
     
@@ -1142,7 +1207,7 @@ extension ContentManager {
     
     private func makeSelectedItems() -> [ContentItem] {
         let items = allItems
-        guard !selectedItemIds.isEmpty else { return [] }
+        guard !selectionStore.isEmpty else { return [] }
 
         // For folder sources, we need to handle collapsed folders with selected children
         var hiddenSelectedItems: [ContentItem] = []
@@ -1182,7 +1247,7 @@ extension ContentManager {
 
         // Determine which parent folders need to be included for display due to selected children
         var neededParentIds: Set<UUID> = []
-        for item in allItemsIncludingHidden where selectedItemIds.contains(item.id) {
+        for item in allItemsIncludingHidden where selectionStore.contains(item.key) {
             if let parentPath = item.parentPath,
                let parent = folderByPath[parentPath] {
                 neededParentIds.insert(parent.id)
@@ -1191,7 +1256,7 @@ extension ContentManager {
 
         // Build result with hierarchical grouping: parent folders followed by their selected children
         var result: [ContentItem] = []
-        result.reserveCapacity(selectedItemIds.count + neededParentIds.count)
+        result.reserveCapacity(selectionStore.selected.count + neededParentIds.count)
         var seen: Set<UUID> = []
 
         for item in allItemsIncludingHidden {
@@ -1203,7 +1268,7 @@ extension ContentManager {
 
                 if let folderPath = item.fileURL?.path,
                    let children = childrenByParent[folderPath] {
-                    for child in children where selectedItemIds.contains(child.id) && !seen.contains(child.id) {
+                    for child in children where selectionStore.contains(child.key) && !seen.contains(child.id) {
                         result.append(child)
                         seen.insert(child.id)
                     }
@@ -1211,7 +1276,7 @@ extension ContentManager {
                 continue
             }
 
-            if selectedItemIds.contains(item.id) && !seen.contains(item.id) {
+            if selectionStore.contains(item.key) && !seen.contains(item.id) {
                 result.append(item)
                 seen.insert(item.id)
             }
@@ -1293,8 +1358,7 @@ extension ContentManager {
         activeSourceId = "clipboard"
         lastNonPromptsSourceId = "clipboard"
 
-        selectedItemIds.removeAll()
-        exampleItemIds.removeAll()
+        selectionStore.clearAll()
         selectionVersion = 0
         focusedItemId = nil
         renameActiveItemId = nil
