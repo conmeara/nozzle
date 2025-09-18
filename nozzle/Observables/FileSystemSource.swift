@@ -4,6 +4,7 @@ import Observation
 import CoreServices
 import OSLog
 import Defaults
+import CryptoKit
 
 // MARK: - Sorting Enums
 
@@ -22,6 +23,7 @@ enum FileSortDirection: String, CaseIterable {
 @Observable @MainActor
 final class FileSystemSource: ContentSource, HierarchicalContentSource {
     private static let refreshLogger = Logger(subsystem: "org.conmeara.nozzle.content", category: "FileSystemSource")
+    private let signposter = OSSignposter(logger: Logger(subsystem: "org.conmeara.nozzle", category: "Perf.FileSystemSource"))
     private static let directoryResourceKeys: Set<URLResourceKey> = [
         .isDirectoryKey,
         .contentModificationDateKey,
@@ -244,6 +246,9 @@ final class FileSystemSource: ContentSource, HierarchicalContentSource {
     }
     
     private func forceRefresh() async {
+        let interval = signposter.beginInterval("forceRefresh")
+        defer { signposter.endInterval("forceRefresh", interval) }
+
         // Mark decorators as needing refresh before updating items
         ContentManager.shared.markDecoratorsNeedRefresh(for: self.id)
 
@@ -322,6 +327,9 @@ final class FileSystemSource: ContentSource, HierarchicalContentSource {
 
         let baseDepth = cachedItems[folderIdx].depth
 
+        let interval = signposter.beginInterval("refreshFolderSlice")
+        defer { signposter.endInterval("refreshFolderSlice", interval) }
+
         // Count the current contiguous descendants (until an item with depth <= baseDepth)
         var childCount = 0
         var i = folderIdx + 1
@@ -376,6 +384,9 @@ final class FileSystemSource: ContentSource, HierarchicalContentSource {
         parentPath: String?,
         expandedPaths: Set<String>? = nil
     ) async -> [ContentItem] {
+        let interval = signposter.beginInterval("buildHierarchicalItems")
+        defer { signposter.endInterval("buildHierarchicalItems", interval) }
+
         // Check if directory has changed before expensive scanning
         let hasChanged = await MainActor.run { self.hasDirectoryChanged(at: url) }
 
@@ -491,7 +502,6 @@ final class FileSystemSource: ContentSource, HierarchicalContentSource {
             // If it's a folder and should be expanded, add its children
             if item.isFolder,
                let folderURL = item.fileURL,
-               depth < 3,
                expandedSet.contains(folderURL.path) {
                 let childItems = await buildHierarchicalItems(
                     at: folderURL,
@@ -625,6 +635,9 @@ final class FileSystemSource: ContentSource, HierarchicalContentSource {
     }
 
     private nonisolated func descendantSnapshot(for folderURL: URL) -> HierarchyDescendantSnapshot {
+        let interval = signposter.beginInterval("descendantSnapshot")
+        defer { signposter.endInterval("descendantSnapshot", interval) }
+
         let folderPath = normalizedFolderPath(folderURL.path)
         let modDate = (try? folderURL.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
 
@@ -716,24 +729,17 @@ extension FileSystemSource {
             return uuid
         }
         
-        // Fallback: Use a simple hash of the path (faster than SHA256)
-        // Create deterministic UUID from path using a simpler hash
-        var hash: UInt64 = 5381
-        for byte in fallbackPath.utf8 {
-            hash = ((hash << 5) &+ hash) &+ UInt64(byte)
+        // Fallback: Use SHA256 of the path for collision-resistant identity
+        let digest = SHA256.hash(data: Data(fallbackPath.utf8))
+        return digest.withUnsafeBytes { buffer -> UUID in
+            let bytes = buffer.bindMemory(to: UInt8.self)
+            return UUID(uuid: (
+                bytes[0], bytes[1], bytes[2], bytes[3],
+                bytes[4], bytes[5], bytes[6], bytes[7],
+                bytes[8], bytes[9], bytes[10], bytes[11],
+                bytes[12], bytes[13], bytes[14], bytes[15]
+            ))
         }
-        
-        // Convert hash to UUID format
-        let bytes = withUnsafeBytes(of: hash.bigEndian) { Array($0) }
-        let padding = Array(repeating: UInt8(0), count: 8)
-        let allBytes = bytes + padding
-        
-        return UUID(uuid: (
-            allBytes[0], allBytes[1], allBytes[2], allBytes[3],
-            allBytes[4], allBytes[5], allBytes[6], allBytes[7],
-            allBytes[8], allBytes[9], allBytes[10], allBytes[11],
-            allBytes[12], allBytes[13], allBytes[14], allBytes[15]
-        ))
     }
     nonisolated static func resolvedType(for url: URL) -> UTType? {
         // Try to get type from resource values first
@@ -810,20 +816,24 @@ extension FileSystemSource {
         let paths = pendingPaths
         pendingPaths.removeAll()
 
-        // Prefer localized refresh within the nearest expanded ancestor
-        for p in paths {
-            if let ancestor = nearestExpandedAncestor(of: p) {
+        let interval = signposter.beginInterval("applyPending")
+        defer { signposter.endInterval("applyPending", interval) }
+
+        // Prefer localized refresh within expanded ancestors
+        let ancestors = Set(paths.compactMap { nearestExpandedAncestor(of: $0) })
+        if !ancestors.isEmpty {
+            for ancestor in ancestors {
                 Task { @MainActor in
-                    self.clearDirectoryModDateCache(for: ancestor) // Clear cache for ancestor path
+                    self.clearDirectoryModDateCache(for: ancestor)
                     await self.refreshFolderSlice(at: ancestor)
                 }
-                return
             }
+            return
         }
 
         // Fallback if nothing is expanded or we can't localize
         Task { @MainActor in
-            self.clearDirectoryModDateCache() // Clear entire cache
+            self.clearDirectoryModDateCache()
             await self.refresh()
         }
     }
