@@ -54,20 +54,30 @@ struct ListItemView<Title: View>: View {
     if let activeRename = contentManager.renameActiveItemId, activeRename != id {
       return false
     }
-    // Immediate hover background only when not keyboard navigating
-    if isHovering && !appState.isKeyboardNavigating { return true }
-
-    // Determine global focus across clipboard and universal sources
+    
+    // Check if this item is the focused/selected one
     let clipboardFocused = (appState.history.selectedItem?.id == id ||
                             appState.footer.selectedItem?.id == id)
     let universalFocused = (contentManager.focusedItemId == id)
     let isFocused = clipboardFocused || universalFocused
-
-    // During keyboard navigation, show focused row regardless of hover
-    if appState.isKeyboardNavigating { return isFocused }
-
-    // Mouse-driven: avoid ghost focus when hovering a different row
-    if let hoveredId = appState.hoveredListItemId { return isFocused && hoveredId == id }
+    
+    // During keyboard navigation, always show focused row
+    if appState.isKeyboardNavigating {
+      return isFocused
+    }
+    
+    // Mouse-driven: prioritize local hover state (most reliable)
+    if isHovering {
+      return true
+    }
+    
+    // Check if another item is being hovered globally
+    if let hoveredId = appState.hoveredListItemId {
+      // Show background only if this is the hovered item
+      return hoveredId == id
+    }
+    
+    // No active hover: show background for focused item (maintains selection visibility)
     return isFocused
   }
 
@@ -195,21 +205,22 @@ struct ListItemView<Title: View>: View {
       appState.isKeyboardNavigating = false
     }
     .onHover { hovering in
-      // During inline rename anywhere, freeze hover-driven selection changes
-      if contentManager.renameActiveItemId != nil {
-        return
-      }
+      // During inline rename, freeze hover-driven selection changes
+      guard contentManager.renameActiveItemId == nil else { return }
+      
       isHovering = hovering
-      // Track hovered row globally to coordinate background across rows
+      
       if hovering {
+        // Track this row as globally hovered
         appState.hoveredListItemId = id
-      } else if appState.hoveredListItemId == id {
-        appState.hoveredListItemId = nil
-      }
-      if hovering {
-        if !appState.isKeyboardNavigating {
-          // When preview pane is visible, debounce hover selection to reduce UI churn
+        
+        // Handle selection based on navigation mode
+        if appState.isKeyboardNavigating {
+          appState.hoverSelectionWhileKeyboardNavigating = id
+        } else {
+          // Mouse-driven selection
           if appState.showPreviewPane {
+            // Debounce when preview pane is visible to reduce UI churn
             ListItemHoverSelect.throttler.minimumDelay = Double(Defaults[.hoverPreviewDelay]) / 1000
             ListItemHoverSelect.throttler.throttle {
               appState.selectWithoutScrolling(id)
@@ -217,11 +228,13 @@ struct ListItemView<Title: View>: View {
           } else {
             appState.selectWithoutScrolling(id)
           }
-        } else {
-          appState.hoverSelectionWhileKeyboardNavigating = id
         }
       } else {
-        // Cancel any pending hover selection when leaving
+        // Clear global hover state if this was the hovered item
+        if appState.hoveredListItemId == id {
+          appState.hoveredListItemId = nil
+        }
+        // Cancel any pending throttled selection
         ListItemHoverSelect.throttler.cancel()
       }
     }
