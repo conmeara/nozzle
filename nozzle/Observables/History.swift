@@ -1,3 +1,4 @@
+import AppKit.NSPasteboard
 import AppKit.NSRunningApplication
 import Defaults
 import Foundation
@@ -9,6 +10,19 @@ import SwiftData
 @Observable @MainActor
 class History { // swiftlint:disable:this type_body_length
   static let shared = History()
+
+  private enum SeedConstants {
+    static let version = 1
+    static let onboardingItems: [String] = [
+      "Hello 👋",
+      "Welcome to Nozzle.",
+      "Items you copy will appear here.",
+      "Tab or click to set one as context.",
+      "Type your instructions above.",
+      "Add a saved prompt with ⌘P or ⊕.",
+      "Press Enter to paste it all."
+    ]
+  }
 
   @ObservationIgnored
   private(set) var contentVersion: Int = 0
@@ -139,7 +153,15 @@ class History { // swiftlint:disable:this type_body_length
   @MainActor
   func load() async throws {
     let descriptor = FetchDescriptor<HistoryItem>()
-    let results = try Storage.shared.context.fetch(descriptor)
+    var results = try Storage.shared.context.fetch(descriptor)
+
+    if results.isEmpty, Defaults[.clipboardSeedVersion] < SeedConstants.version {
+      seedClipboardOnboardingItems()
+      results = try Storage.shared.context.fetch(descriptor)
+    } else if !results.isEmpty, Defaults[.clipboardSeedVersion] < SeedConstants.version {
+      Defaults[.clipboardSeedVersion] = SeedConstants.version
+    }
+
     all = sorter.sort(results).map { HistoryItemDecorator($0) }
     items = all
 
@@ -161,6 +183,33 @@ class History { // swiftlint:disable:this type_body_length
         AppState.shared.isKeyboardNavigating = true
       }
     }
+  }
+
+  private func seedClipboardOnboardingItems() {
+    let now = Date()
+
+    for (index, text) in SeedConstants.onboardingItems.enumerated() {
+      let item = HistoryItem()
+      Storage.shared.context.insert(item)
+
+      let stringContent = HistoryItemContent(
+        type: NSPasteboard.PasteboardType.string.rawValue,
+        value: text.data(using: .utf8)
+      )
+
+      item.contents = [stringContent]
+
+      // Offset timestamps so items appear in the intended order (topmost = first string).
+      let timestamp = now.addingTimeInterval(TimeInterval(-index))
+      item.firstCopiedAt = timestamp
+      item.lastCopiedAt = timestamp
+
+      item.application = Bundle.main.bundleIdentifier
+      item.title = item.generateTitle()
+    }
+
+    Defaults[.clipboardSeedVersion] = SeedConstants.version
+    try? Storage.shared.context.save()
   }
 
   @discardableResult

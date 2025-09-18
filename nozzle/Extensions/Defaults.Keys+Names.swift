@@ -83,4 +83,5 @@ extension Defaults.Keys {
   // Onboarding settings
   static let hasCompletedOnboarding = Key<Bool>("hasCompletedOnboarding", default: false)
   static let onboardingVersion = Key<Int>("onboardingVersion", default: 0)
+  static let clipboardSeedVersion = Key<Int>("clipboardSeedVersion", default: 0)
 }
