@@ -679,6 +679,12 @@ struct ContentView: View {
         appState.isKeyboardNavigating = false
       }
     }
+    .onHover { hovering in
+      // Clear any stale hover state when mouse completely exits the content area
+      if !hovering {
+        appState.hoveredListItemId = nil
+      }
+    }
     .task {
       try? await appState.history.load()
     }
