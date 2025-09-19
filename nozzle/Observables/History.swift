@@ -140,19 +140,29 @@ class History { // swiftlint:disable:this type_body_length
   func load() async throws {
     let descriptor = FetchDescriptor<HistoryItem>()
     let results = try Storage.shared.context.fetch(descriptor)
-    all = sorter.sort(results).map { HistoryItemDecorator($0) }
+
+    // Add default welcome items for new users
+    if results.isEmpty {
+      await createDefaultWelcomeItems()
+      // Refetch after adding default items
+      let newResults = try Storage.shared.context.fetch(descriptor)
+      all = sorter.sort(newResults).map { HistoryItemDecorator($0) }
+    } else {
+      all = sorter.sort(results).map { HistoryItemDecorator($0) }
+    }
+
     items = all
 
     updateShortcuts()
-    
+
     // Restore preserved selections after loading
     AppState.shared.restorePreservedSelections()
-    
+
     // Ensure that panel size is proper *after* loading all items.
     Task {
       AppState.shared.popup.needsResize = true
     }
-    
+
     // Set initial selection to first item after a small delay to ensure UI is ready
     Task {
       try? await Task.sleep(for: .milliseconds(50))
@@ -413,5 +423,50 @@ class History { // swiftlint:disable:this type_body_length
       item.shortcuts = KeyShortcut.create(character: String(index))
       index += 1
     }
+  }
+
+  @MainActor
+  private func createDefaultWelcomeItems() async {
+    let welcomeTexts = [
+      "Hello 👋",
+      "Welcome to Nozzle.",
+      "Items you copy will appear here.",
+      "Tab or click to set one as context.",
+      "Type your instructions above.",
+      "Add a saved prompt with ⌘P or ⊕.",
+      "Press Enter to paste it all."
+    ]
+
+    let baseDate = Date()
+
+    for (index, text) in welcomeTexts.enumerated() {
+      let item = HistoryItem()
+      item.title = text
+      // Reverse the timestamp order - first item gets newest timestamp
+      // so it appears at top when sorted by newest first
+      item.firstCopiedAt = baseDate.addingTimeInterval(-Double(index) * 60)
+      item.lastCopiedAt = baseDate.addingTimeInterval(-Double(index) * 60)
+      item.numberOfCopies = 1
+      // Set application to nozzle itself
+      item.application = Bundle.main.bundleIdentifier
+
+      // Create content with plain text
+      let textContent = HistoryItemContent(
+        type: NSPasteboard.PasteboardType.string.rawValue,
+        value: text.data(using: .utf8) ?? Data()
+      )
+
+      // Mark as from nozzle
+      let nozzleContent = HistoryItemContent(
+        type: NSPasteboard.PasteboardType.fromnozzle.rawValue,
+        value: Data()
+      )
+
+      item.contents = [textContent, nozzleContent]
+
+      Storage.shared.context.insert(item)
+    }
+
+    try? Storage.shared.context.save()
   }
 }
