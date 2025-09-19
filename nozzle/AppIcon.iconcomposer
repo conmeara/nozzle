@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>IconComposerVersion</key>
+    <string>26.0</string>
+    <key>Platform</key>
+    <string>macOS</string>
+    <key>LiquidGlass</key>
+    <dict>
+        <key>Enabled</key>
+        <true/>
+        <key>Mode</key>
+        <string>Individual</string>
+        <key>Specular</key>
+        <true/>
+        <key>Blur</key>
+        <real>0.5</real>
+        <key>Translucency</key>
+        <real>0.3</real>
+        <key>Shadow</key>
+        <true/>
+    </dict>
+    <key>Groups</key>
+    <array>
+        <dict>
+            <key>Name</key>
+            <string>Background</string>
+            <key>Layers</key>
+            <array>
+                <dict>
+                    <key>Name</key>
+                    <string>Gradient</string>
+                    <key>Type</key>
+                    <string>gradient</string>
+                    <key>Fill</key>
+                    <dict>
+                        <key>Type</key>
+                        <string>Gradient</string>
+                        <key>From</key>
+                        <string>#1A1A2E</string>
+                        <key>To</key>
+                        <string>#0F3460</string>
+                    </dict>
+                </dict>
+            </array>
+        </dict>
+        <dict>
+            <key>Name</key>
+            <string>Main</string>
+            <key>Layers</key>
+            <array>
+                <dict>
+                    <key>Name</key>
+                    <string>NozzleIcon</string>
+                    <key>Type</key>
+                    <string>image</string>
+                    <key>Source</key>
+                    <string>designs/Icon/Nozzle App Icon v3 Exports/Nozzle App Icon v3-iOS-Default-1024x1024@1x.png</string>
+                </dict>
+            </array>
+        </dict>
+    </array>
+    <key>Appearances</key>
+    <dict>
+        <key>Default</key>
+        <dict>
+            <key>Source</key>
+            <string>designs/Icon/Nozzle App Icon v3 Exports/Nozzle App Icon v3-iOS-Default-1024x1024@1x.png</string>
+        </dict>
+        <key>Dark</key>
+        <dict>
+            <key>Source</key>
+            <string>designs/Icon/Nozzle App Icon v3 Exports/Nozzle App Icon v3-iOS-Dark-1024x1024@1x.png</string>
+        </dict>
+        <key>Tinted</key>
+        <dict>
+            <key>Clear</key>
+            <dict>
+                <key>Light</key>
+                <string>designs/Icon/Nozzle App Icon v3 Exports/Nozzle App Icon v3-iOS-ClearLight-1024x1024@1x.png</string>
+                <key>Dark</key>
+                <string>designs/Icon/Nozzle App Icon v3 Exports/Nozzle App Icon v3-iOS-ClearDark-1024x1024@1x.png</string>
+            </dict>
+            <key>Tinted</key>
+            <dict>
+                <key>Light</key>
+                <string>designs/Icon/Nozzle App Icon v3 Exports/Nozzle App Icon v3-iOS-TintedLight-1024x1024@1x.png</string>
+                <key>Dark</key>
+                <string>designs/Icon/Nozzle App Icon v3 Exports/Nozzle App Icon v3-iOS-TintedDark-1024x1024@1x.png</string>
+            </dict>
+        </dict>
+    </dict>
+</dict>
+</plist>
