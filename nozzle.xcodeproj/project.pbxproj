@@ -130,6 +130,9 @@
 		DAFEF0B8249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFEF0B7249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift */; };
 		F50C3E222E64EDF800420829 /* DesignConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50C3E212E64EDF800420829 /* DesignConstants.swift */; };
 		F50C3E262E65F9B900420829 /* FolderPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50C3E252E65F9B900420829 /* FolderPreviewView.swift */; };
+		F51ACB992E7D016C00A96387 /* Grammar Genie.txt in Resources */ = {isa = PBXBuildFile; fileRef = F51ACB962E7D016C00A96387 /* Grammar Genie.txt */; };
+		F51ACB9A2E7D016C00A96387 /* Code Architect.txt in Resources */ = {isa = PBXBuildFile; fileRef = F51ACB952E7D016C00A96387 /* Code Architect.txt */; };
+		F51ACB9B2E7D016C00A96387 /* Socratic Sage.txt in Resources */ = {isa = PBXBuildFile; fileRef = F51ACB972E7D016C00A96387 /* Socratic Sage.txt */; };
 		F55A77CA2E5E37F50039E760 /* PromptsSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A77C92E5E37F50039E760 /* PromptsSource.swift */; };
 		F55A77CC2E5E38000039E760 /* PromptEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A77CB2E5E38000039E760 /* PromptEditorView.swift */; };
 		F569FB182E6E1BFA0076D784 /* WindowAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB172E6E1BFA0076D784 /* WindowAccessor.swift */; };
@@ -552,6 +555,9 @@
 		DAFEF0B7249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyboardShortcuts.Name+Shortcuts.swift"; sourceTree = "<group>"; };
 		F50C3E212E64EDF800420829 /* DesignConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignConstants.swift; sourceTree = "<group>"; };
 		F50C3E252E65F9B900420829 /* FolderPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPreviewView.swift; sourceTree = "<group>"; };
+		F51ACB952E7D016C00A96387 /* Code Architect.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Code Architect.txt"; sourceTree = "<group>"; };
+		F51ACB962E7D016C00A96387 /* Grammar Genie.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Grammar Genie.txt"; sourceTree = "<group>"; };
+		F51ACB972E7D016C00A96387 /* Socratic Sage.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Socratic Sage.txt"; sourceTree = "<group>"; };
 		F55A77C92E5E37F50039E760 /* PromptsSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptsSource.swift; sourceTree = "<group>"; };
 		F55A77CB2E5E38000039E760 /* PromptEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEditorView.swift; sourceTree = "<group>"; };
 		F569FB162E6E1BFA0076D784 /* RenameEventCatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenameEventCatcher.swift; sourceTree = "<group>"; };
@@ -907,8 +913,19 @@
 				DAEE384D1E3DBEB100DD2966 /* Info.plist */,
 				DA6373971E4AB9BB00263391 /* Assets.xcassets */,
 				4762D6992467226100B3A2BA /* Localizable.strings */,
+				F51ACB982E7D016C00A96387 /* DefaultPrompts */,
 			);
 			path = nozzle;
+			sourceTree = "<group>";
+		};
+		F51ACB982E7D016C00A96387 /* DefaultPrompts */ = {
+			isa = PBXGroup;
+			children = (
+				F51ACB952E7D016C00A96387 /* Code Architect.txt */,
+				F51ACB962E7D016C00A96387 /* Grammar Genie.txt */,
+				F51ACB972E7D016C00A96387 /* Socratic Sage.txt */,
+			);
+			path = DefaultPrompts;
 			sourceTree = "<group>";
 		};
 		F569FB1C2E6E87E90076D784 /* Services */ = {
@@ -1186,6 +1203,9 @@
 				DA20FA742B082E0100056DD5 /* Knock.caf in Resources */,
 				DA009931256411F90030E697 /* appcast.xml in Resources */,
 				DAA5ACB52C1B803000B58513 /* GeneralSettings.strings in Resources */,
+				F51ACB992E7D016C00A96387 /* Grammar Genie.txt in Resources */,
+				F51ACB9A2E7D016C00A96387 /* Code Architect.txt in Resources */,
+				F51ACB9B2E7D016C00A96387 /* Socratic Sage.txt in Resources */,
 				00669E730162BEFCD3D9180 /* ShortcutsSettings.strings in Resources */,
 				DA740D7A2C21E6B0007B1A36 /* AdvancedSettings.strings in Resources */,
 				DA689FB02C1CD3B00009B887 /* StorageSettings.strings in Resources */,

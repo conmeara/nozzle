@@ -181,12 +181,64 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Defaults[.promptsFolderPath] = def.path
       }
       _ = def.startAccessingSecurityScopedResource()
+
+      // Copy default prompts if folder is empty (new user)
+      createDefaultPromptsIfNeeded(in: def)
+
       return def
     }()
 
     let prompts = PromptsSource(folderURL: folderURL)
     ContentManager.shared.registerSource(prompts)
     prompts.startMonitoring()
+  }
+
+  @MainActor
+  private func createDefaultPromptsIfNeeded(in folder: URL) {
+    // Check if folder is empty (new user)
+    let contents = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
+    guard contents.isEmpty else { return }
+
+    // Copy default prompts from bundle
+    guard let bundle = Bundle.main.resourceURL else { return }
+    let defaultPromptsPath = bundle.appendingPathComponent("DefaultPrompts")
+
+    let defaultPrompts = [
+      ("Grammar Genie", """
+Your task is to take the text provided and rewrite it into a clear, grammatically correct version while preserving the original meaning as closely as possible. Correct any spelling mistakes, punctuation errors, verb tense issues, word choice problems, and other grammatical mistakes.
+"""),
+      ("Socratic Sage", """
+You are an AI assistant capable of having in-depth Socratic style conversations on a wide range of topics. Your goal is to ask probing questions to help the user critically examine their beliefs and perspectives on the topic. Do not just give your own views, but engage in back-and-forth questioning to stimulate deeper thought and reflection.
+"""),
+      ("Code Architect", """
+You are a senior software architect specializing in code design and implementation planning.
+
+Analyze the task and provide:
+
+1. Task breakdown - Split into logical subtasks
+2. Files to modify - Full paths and symbols to edit
+3. New components - Functions/classes/modules to add
+4. Dependencies - Import and package updates needed
+5. Data models - Schema or model changes required
+6. Public APIs - Interface changes and contracts
+7. Configuration - Environment and settings updates
+
+For each change, specify:
+• Exact location (file path + class/function/symbol)
+• Reasoning for the change
+• Example signatures with parameters and return types
+• Possible side effects and cross-component impacts
+• Key architectural decisions and trade-offs
+
+Keep code snippets small and illustrative. Focus on architecture, not full implementation.
+""")
+    ]
+
+    // Create prompt files directly
+    for (name, content) in defaultPrompts {
+      let fileURL = folder.appendingPathComponent("\(name).txt")
+      try? content.write(to: fileURL, atomically: true, encoding: .utf8)
+    }
   }
 
   private func migrateUserDefaults() {
