@@ -121,15 +121,7 @@ struct ListItemView<Title: View>: View {
       // Copy button, checkbox, or Command shortcut
       if showCheckbox {
         ZStack {
-          if modifierFlags.flags.contains(.command) && !shortcuts.isEmpty {
-            // Show shortcut when Command is held (replaces checkmark)
-            ForEach(shortcuts) { shortcut in
-              KeyboardShortcutView(shortcut: shortcut)
-                .opacity(shortcut.isVisible(shortcuts, modifierFlags.flags) ? 1 : 0)
-            }
-            .padding(.trailing, 20)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-          } else if isSelected {
+          if isSelected {
             // Show round checkbox when item is selected
             Image(systemName: selectionSymbol)
               .font(.system(size: 14))
