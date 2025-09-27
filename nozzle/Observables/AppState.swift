@@ -75,7 +75,7 @@ class AppState {
   var selection: UUID? {
     didSet {
       selectWithoutScrolling(selection)
-      scrollTarget = selection
+      scrollTarget = isKeyboardNavigating ? selection : nil
     }
   }
 
@@ -89,6 +89,7 @@ class AppState {
 
     if let itemDecorator = history.items.first(where: { $0.id == item }) {
       history.selectedItem = itemDecorator
+      HistoryItemDecorator.showPreviewImmediately(for: itemDecorator)
     } else if let footerItem = footer.items.first(where: { $0.id == item }) {
       footer.selectedItem = footerItem
     }

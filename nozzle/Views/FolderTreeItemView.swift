@@ -1,5 +1,4 @@
 import SwiftUI
-import Defaults
 import UniformTypeIdentifiers
 
 struct FolderTreeItemView: View {
@@ -81,7 +80,23 @@ struct FolderTreeItemView: View {
                 let copyAreaThreshold: CGFloat = 42
                 let frameWidth = itemFrameWidth > 0 ? itemFrameWidth : 300  // fallback width
                 
-                if location.x > (frameWidth - copyAreaThreshold) {
+                let isSelectionAreaClick = location.x > (frameWidth - copyAreaThreshold)
+
+                let clickCount = NSApp.currentEvent?.clickCount ?? 0
+                if clickCount >= 2 {
+                    appState.isKeyboardNavigating = false
+                    if isSelectionAreaClick && contentManager.isSelected(item.id) {
+                        contentManager.toggleExample(item.id)
+                        contentManager.focus(item.id)
+                    } else {
+                        contentManager.focus(item.id)
+                        contentManager.toggleSelection(item.id)
+                        appState.updateFooterItemVisibility()
+                    }
+                    return
+                }
+
+                if isSelectionAreaClick {
                     if !contentManager.isSelected(item.id) {
                         // Copy folder path when not selected
                         item.copyToClipboard()
@@ -89,23 +104,12 @@ struct FolderTreeItemView: View {
                     } else {
                         // Toggle example state for folders
                         contentManager.toggleExample(item.id)
-                    }
-                } else {
-                    // Focus and selection
-                    contentManager.focus(item.id)
-                    contentManager.toggleSelection(item.id)
-                    appState.updateFooterItemVisibility()
-                }
-            }
-            .onHover { hovering in
-                if hovering {
-                    // Debounce preview focus while pointer dwells on the folder
-                    FolderTreeItemView.previewHoverThrottler.minimumDelay = Double(Defaults[.hoverPreviewDelay]) / 1000
-                    FolderTreeItemView.previewHoverThrottler.throttle {
                         contentManager.focus(item.id)
                     }
                 } else {
-                    FolderTreeItemView.previewHoverThrottler.cancel()
+                    appState.isKeyboardNavigating = false
+                    // Single click focuses preview without changing selection state
+                    contentManager.focus(item.id)
                 }
             }
             .background(
@@ -185,10 +189,4 @@ struct FolderTreeItemView: View {
             ContentManager.shared.markSelectedDirty()
         }
     }
-}
-
-@MainActor
-private extension FolderTreeItemView {
-    // ~200ms dwell prevents thrash while moving pointer across tree
-    static var previewHoverThrottler = Throttler(minimumDelay: 0.2)
 }

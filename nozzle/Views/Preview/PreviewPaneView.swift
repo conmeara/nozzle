@@ -88,6 +88,10 @@ struct PreviewPaneView: View {
                 NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
             }
         })
+        // Swap preview content immediately without implicit fades
+        .transaction { transaction in
+            transaction.animation = nil
+        }
     }
 }
 
