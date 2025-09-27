@@ -70,10 +70,20 @@ struct HistoryItemView: View {
       }
     )
     .onMouseMove {
-      // Mouse movement turns off keyboard navigation; hover will handle selection
+      // Mouse movement turns off keyboard navigation so pointer clicks drive focus
       appState.isKeyboardNavigating = false
     }
     .onTapGesture { location in
+      appState.isKeyboardNavigating = false
+      let clickCount = NSApp.currentEvent?.clickCount ?? 0
+      if clickCount >= 2 {
+        contentManager.focus(item.id)
+        appState.selection = item.id
+        contentManager.toggleSelection(item.id)
+        item.isSelected = contentManager.isSelected(item.id)
+        appState.updateFooterItemVisibility()
+        return
+      }
       // Check if click is in the checkbox/selection area (right 60 pixels)
       let frameWidth = copyButtonArea.width > 0 ? copyButtonArea.width : 300 // fallback width
       let selectionAreaWidth: CGFloat = 42
@@ -82,15 +92,15 @@ struct HistoryItemView: View {
       if isSelectionAreaClick && item.isSelected {
         // Toggle example state when clicking the selected checkmark area
         contentManager.toggleExample(item.id)
+        contentManager.focus(item.id)
       } else if NSEvent.modifierFlags.contains(.command) {
         // Command-click: immediate paste
         appState.history.select(item)
+        contentManager.focus(item.id)
       } else {
-        // Regular click: toggle selection using centralized system
-        contentManager.toggleSelection(item.id)
-        item.isSelected = contentManager.isSelected(item.id)
-        appState.selection = item.id  // Move focus to this item
-        appState.updateFooterItemVisibility()
+        // Single click focuses preview without changing multi-select state
+        appState.selection = item.id
+        contentManager.focus(item.id)
       }
     }
     .contextMenu {

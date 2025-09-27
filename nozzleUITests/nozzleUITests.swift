@@ -112,7 +112,7 @@ class nozzleUITests: XCTestCase {
 
   func testCopyWithEnter() {
     popUpWithMouse()
-    hover(items[copy2].firstMatch)
+    items[copy2].firstMatch.click()
     app.typeKey(.enter, modifierFlags: [])
     assertPasteboardStringEquals(copy2)
   }
@@ -410,14 +410,9 @@ class nozzleUITests: XCTestCase {
   }
 
   private func pin(_ title: String) {
-    hover(items[title].firstMatch)
+    items[title].firstMatch.click()
     app.typeKey("p", modifierFlags: [.option])
     usleep(1_500_000)
-  }
-
-  private func hover(_ element: XCUIElement) {
-    element.hover()
-    usleep(20000)
   }
 
   private func search(_ string: String) {

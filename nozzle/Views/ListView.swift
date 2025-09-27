@@ -194,6 +194,7 @@ struct ListView: View {
                 }
                 .onChange(of: configuration.enableScrollTargeting ? contentManager.focusedItemId : nil) { _, newValue in
                     guard configuration.enableScrollTargeting,
+                          appState.isKeyboardNavigating,
                           let id = newValue else { return }
                     withAnimation(.easeInOut(duration: 0.15)) {
                         proxy.scrollTo(id, anchor: .center)

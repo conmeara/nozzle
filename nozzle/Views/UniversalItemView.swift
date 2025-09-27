@@ -3,12 +3,6 @@ import Defaults
 import AppKit
 import KeyboardShortcuts
 
-@MainActor
-private extension UniversalItemView {
-    // ~200ms feels good; wire to Defaults if you want.
-    static var previewHoverThrottler = Throttler(minimumDelay: 0.2)
-}
-
 // Local inline text field that selects only the base name (excluding extension)
 private struct InlineBaseNameTextField: NSViewRepresentable {
     @Binding var text: String
@@ -117,6 +111,29 @@ struct UniversalItemView: View {
                     ) { titleView() }
                     .onTapGesture { location in
                         if isRenaming { finishRename(); return }
+                        appState.isKeyboardNavigating = false
+                        let clickCount = NSApp.currentEvent?.clickCount ?? 0
+                        if clickCount >= 2 {
+                            if let activeRename = contentManager.renameActiveItemId, activeRename != item.id {
+                                NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
+                            }
+                            if item.base.sourceId == "prompts",
+                               !(item.base.uniformTypeIdentifier?.hasPrefix("org.nozzle.command.") ?? false),
+                               let url = item.base.fileURL {
+                                appState.addPromptChip(url: url)
+                                let previous = contentManager.lastNonPromptsSourceId
+                                contentManager.activeSourceId = "prompts"
+                                contentManager.focus(item.id)
+                                appState.updateFooterItemVisibility()
+                                appState.requestFocusInput()
+                                contentManager.activeSourceId = previous
+                            } else {
+                                contentManager.focus(item.id)
+                                contentManager.toggleSelection(item.id)
+                                appState.updateFooterItemVisibility()
+                            }
+                            return
+                        }
                         // If another row is in rename mode, clicking here should exit rename mode and do nothing else
                         if let activeRename = contentManager.renameActiveItemId, activeRename != item.id {
                             NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
@@ -126,51 +143,20 @@ struct UniversalItemView: View {
                         let selectionAreaThreshold: CGFloat = 42
                         let frameWidth = itemFrameWidth > 0 ? itemFrameWidth : 300  // fallback width
                         
-                        if location.x > (frameWidth - selectionAreaThreshold) && item.isSelected {
+                        let isSelectionAreaClick = location.x > (frameWidth - selectionAreaThreshold)
+
+                        if isSelectionAreaClick && item.isSelected {
                             // Toggle example state when clicking the selected checkmark area
                             contentManager.toggleExample(item.id)
+                            contentManager.focus(item.id)
                         } else {
                             // Command-click to rename (Prompts only)
                             if item.base.sourceId == "prompts", NSEvent.modifierFlags.contains(.command) {
                                 beginRename()
                                 return
                             }
-                            // Special handling for Prompts: add as chip instead of aggregated selection
-                            if item.base.sourceId == "prompts",
-                               !(item.base.uniformTypeIdentifier?.hasPrefix("org.nozzle.command.") ?? false),
-                               let url = item.base.fileURL {
-                                appState.addPromptChip(url: url)
-                                // Keep preview focused on this prompt
-                                let previous = contentManager.lastNonPromptsSourceId
-                                contentManager.activeSourceId = "prompts"
-                                // Focus for preview and align hover/selection
-                                contentManager.focus(item.id)
-                                appState.selectWithoutScrolling(item.id)
-                                appState.updateFooterItemVisibility()
-                                appState.requestFocusInput()
-                                // Return to the previous tab after adding the chip
-                                contentManager.activeSourceId = previous
-                            } else {
-                                // Update focus for preview
-                                contentManager.focus(item.id)
-                                // Toggle selection using centralized system
-                                contentManager.toggleSelection(item.id)
-                                appState.updateFooterItemVisibility()
-                            }
-                        }
-                    }
-                    .onHover { hovering in
-                        // Freeze focus changes due to hover while any rename is active
-                        if contentManager.renameActiveItemId != nil { return }
-                        if hovering {
-                            // Debounce focus so we only preview when the pointer "dwells"
-                            UniversalItemView.previewHoverThrottler.minimumDelay = Double(Defaults[.hoverPreviewDelay]) / 1000
-                            UniversalItemView.previewHoverThrottler.throttle {
-                                // If the item is still hovered after the delay, focus it
-                                contentManager.focus(item.id)
-                            }
-                        } else {
-                            UniversalItemView.previewHoverThrottler.cancel()
+                            // Single click focuses preview without altering multi-select state
+                            contentManager.focus(item.id)
                         }
                     }
                 }
