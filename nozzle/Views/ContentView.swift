@@ -1,6 +1,57 @@
 import SwiftData
 import SwiftUI
 import KeyboardShortcuts
+import AppKit
+
+/// A view that makes a specific area draggable for window movement.
+/// This enables selective dragging zones while preserving text selection in other areas.
+struct DraggableZone: NSViewRepresentable {
+    
+    func makeNSView(context: Context) -> DraggableNSView {
+        return DraggableNSView()
+    }
+    
+    func updateNSView(_ nsView: DraggableNSView, context: Context) {
+        // No updates needed
+    }
+}
+
+/// Custom NSView that handles mouse events for window dragging
+class DraggableNSView: NSView {
+    
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        setup()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setup()
+    }
+    
+    private func setup() {
+        // Make sure we receive mouse events
+        wantsLayer = true
+    }
+    
+    override func mouseDown(with event: NSEvent) {
+        // Start window dragging when mouse is pressed in this zone
+        window?.performDrag(with: event)
+    }
+    
+    override var acceptsFirstResponder: Bool {
+        return false
+    }
+    
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        // Always return self if the point is within bounds
+        // This ensures we capture mouse events for dragging
+        if bounds.contains(point) {
+            return self
+        }
+        return super.hitTest(point)
+    }
+}
 
 struct ContentView: View {
   @State private var appState = AppState.shared
@@ -146,6 +197,11 @@ struct ContentView: View {
         VStack(spacing: 0) {
           // Header: chips (always show when present), input field, and controls with tabs
           VStack(spacing: 0) {
+            // Thin draggable strip at the very top
+            DraggableZone()
+              .frame(height: 6)
+              .frame(maxWidth: .infinity)
+            
             if !appState.promptChips.isEmpty {
               PromptChipsBarView()
             }
@@ -199,10 +255,10 @@ struct ContentView: View {
             }
           }
           
-            // Controls and tab buttons row
+            // Controls and tab buttons row  
             HStack(alignment: .center, spacing: 0) {
-            // Icon group with tight spacing
-            HStack(spacing: 8) {
+              // Icon group with tight spacing
+              HStack(spacing: 8) {
               // Mode icon (search or plus) that switches mode on click
               Button(action: {
                 if appState.isSearchMode {
@@ -609,6 +665,20 @@ struct ContentView: View {
     .animation(.easeInOut(duration: 0.15), value: appState.showPreviewPane)
     .padding(.horizontal, 5)
     .padding(.top, appState.popup.verticalPadding)
+    .overlay {
+      // Side margin draggable zones
+      HStack {
+        // Left side margin
+        DraggableZone()
+          .frame(width: 5)
+        
+        Spacer()
+        
+        // Right side margin  
+        DraggableZone()
+          .frame(width: 5)
+      }
+    }
     .background {
       if reduceTransparency {
         Color(NSColor.windowBackgroundColor)
