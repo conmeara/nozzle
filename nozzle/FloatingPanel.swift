@@ -38,7 +38,7 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
     collectionBehavior = [.auxiliary, .stationary, .moveToActiveSpace, .fullScreenAuxiliary]
     titleVisibility = .hidden
     titlebarAppearsTransparent = true
-    isMovableByWindowBackground = true
+    isMovableByWindowBackground = false
     hidesOnDeactivate = false
     
     // Configure transparency for Liquid Glass
