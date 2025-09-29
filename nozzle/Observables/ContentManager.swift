@@ -709,6 +709,7 @@ final class ContentManager {
     }
     
     func isSelected(_ id: UUID) -> Bool {
+        _ = selectionVersion  // Establish dependency for SwiftUI observation
         if let item = item(for: id) {
             return selectionStore.contains(item.key)
         }
@@ -739,6 +740,7 @@ final class ContentManager {
     }
     
     func getFolderSelectionState(_ folderId: UUID) -> FolderSelectionState {
+        _ = selectionVersion  // Establish dependency for SwiftUI observation
         guard let folderItem = item(for: folderId),
               folderItem.isFolder,
               let source = sources[folderItem.sourceId] else { return .none }
@@ -1071,6 +1073,7 @@ final class ContentManager {
     
     // MARK: - Example state
     func isExample(_ id: UUID) -> Bool {
+        _ = selectionVersion  // Establish dependency for SwiftUI observation
         guard let key = key(for: id) else { return false }
         return selectionStore.isExample(key)
     }

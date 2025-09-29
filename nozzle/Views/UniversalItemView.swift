@@ -98,21 +98,22 @@ struct UniversalItemView: View {
                     
                     ListItemView(
                         id: item.id,
-                        appIcon: (item.base.sourceId == "prompts" ? nil : item.appIcon),        // Show app icons for all sources except Prompts
+                        appIcon: (item.base.sourceId == "prompts" ? nil : item.appIcon),
                         image: item.image,
                         accessoryImage: nil,
                         attributedTitle: nil,
-                        shortcuts: [],                       // no numbered shortcuts for file sources in Phase 1
+                        shortcuts: [],
                         isSelected: item.isSelected,
                         selectionSymbol: (item.isExample ? "pencil.circle.fill" : "checkmark.circle.fill"),
                         selectionSymbolColor: .white,
-                        selectionBackgroundColor: (item.isExample ? .yellow : nil),
-                        onCopyAction: { item.copyToClipboard() }
+                        selectionBackgroundColor: (item.isExample ? .yellow : nil)
                     ) { titleView() }
                     .onTapGesture { location in
                         if isRenaming { finishRename(); return }
                         appState.isKeyboardNavigating = false
                         let clickCount = NSApp.currentEvent?.clickCount ?? 0
+
+                        // Handle double-click first
                         if clickCount >= 2 {
                             if let activeRename = contentManager.renameActiveItemId, activeRename != item.id {
                                 NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
@@ -134,28 +135,43 @@ struct UniversalItemView: View {
                             }
                             return
                         }
-                        // If another row is in rename mode, clicking here should exit rename mode and do nothing else
+
+                        // If another row is in rename mode, exit rename mode first
                         if let activeRename = contentManager.renameActiveItemId, activeRename != item.id {
                             NotificationCenter.default.post(name: .CommitActiveRename, object: nil)
                             return
                         }
-                        // Check if click is in the checkbox/selection area (right 42 pixels)
-                        let selectionAreaThreshold: CGFloat = 42
-                        let frameWidth = itemFrameWidth > 0 ? itemFrameWidth : 300  // fallback width
-                        
-                        let isSelectionAreaClick = location.x > (frameWidth - selectionAreaThreshold)
 
-                        if isSelectionAreaClick && item.isSelected {
-                            // Toggle example state when clicking the selected checkmark area
+                        // Handle modifier keys before checking click location
+                        if NSEvent.modifierFlags.contains(.option) {
+                            // Option-click anywhere: toggle example state
                             contentManager.toggleExample(item.id)
                             contentManager.focus(item.id)
-                        } else {
-                            // Command-click to rename (Prompts only)
-                            if item.base.sourceId == "prompts", NSEvent.modifierFlags.contains(.command) {
-                                beginRename()
-                                return
+                            return
+                        }
+
+                        if item.base.sourceId == "prompts", NSEvent.modifierFlags.contains(.command) {
+                            // Command-click (Prompts only): rename
+                            beginRename()
+                            return
+                        }
+
+                        // Check if click is in the selection area (right 42 pixels)
+                        let selectionAreaThreshold: CGFloat = 42
+                        let frameWidth = itemFrameWidth > 0 ? itemFrameWidth : 300
+
+                        let isSelectionAreaClick = location.x > (frameWidth - selectionAreaThreshold)
+
+                        if isSelectionAreaClick {
+                            // Toggle selection on/off (also clears example state if deselecting)
+                            if item.isSelected && contentManager.isExample(item.id) {
+                                contentManager.toggleExample(item.id)
                             }
-                            // Single click focuses preview without altering multi-select state
+                            contentManager.toggleSelection(item.id)
+                            appState.updateFooterItemVisibility()
+                            contentManager.focus(item.id)
+                        } else {
+                            // Regular click: focus preview without changing selection
                             contentManager.focus(item.id)
                         }
                     }

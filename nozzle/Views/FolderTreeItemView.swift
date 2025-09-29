@@ -76,39 +76,52 @@ struct FolderTreeItemView: View {
                     .truncationMode(.middle)
             }
             .onTapGesture { location in
-                // Handle folder selection and focus
-                let copyAreaThreshold: CGFloat = 42
-                let frameWidth = itemFrameWidth > 0 ? itemFrameWidth : 300  // fallback width
-                
-                let isSelectionAreaClick = location.x > (frameWidth - copyAreaThreshold)
-
+                appState.isKeyboardNavigating = false
                 let clickCount = NSApp.currentEvent?.clickCount ?? 0
+
+                // Handle double-click first
                 if clickCount >= 2 {
-                    appState.isKeyboardNavigating = false
-                    if isSelectionAreaClick && contentManager.isSelected(item.id) {
-                        contentManager.toggleExample(item.id)
-                        contentManager.focus(item.id)
+                    contentManager.focus(item.id)
+                    let state = contentManager.getFolderSelectionState(item.id)
+                    if state == .none {
+                        contentManager.selectFolderChildren(item.id)
                     } else {
-                        contentManager.focus(item.id)
-                        contentManager.toggleSelection(item.id)
-                        appState.updateFooterItemVisibility()
+                        contentManager.deselectFolderChildren(item.id)
                     }
+                    appState.updateFooterItemVisibility()
                     return
                 }
 
+                // Handle modifier keys before checking click location
+                if NSEvent.modifierFlags.contains(.option) {
+                    // Option-click anywhere: toggle example state
+                    contentManager.toggleExample(item.id)
+                    contentManager.focus(item.id)
+                    return
+                }
+
+                // Check if click is in the selection area (right 42 pixels)
+                let selectionAreaThreshold: CGFloat = 42
+                let frameWidth = itemFrameWidth > 0 ? itemFrameWidth : 300
+
+                let isSelectionAreaClick = location.x > (frameWidth - selectionAreaThreshold)
+
                 if isSelectionAreaClick {
-                    if !contentManager.isSelected(item.id) {
-                        // Copy folder path when not selected
-                        item.copyToClipboard()
-                        appState.popup.close()
+                    // Toggle folder selection (select/deselect all children)
+                    let state = contentManager.getFolderSelectionState(item.id)
+                    if state == .none {
+                        contentManager.selectFolderChildren(item.id)
                     } else {
-                        // Toggle example state for folders
-                        contentManager.toggleExample(item.id)
-                        contentManager.focus(item.id)
+                        // If folder has selections or examples, clear them
+                        if contentManager.isExample(item.id) {
+                            contentManager.toggleExample(item.id)
+                        }
+                        contentManager.deselectFolderChildren(item.id)
                     }
+                    appState.updateFooterItemVisibility()
+                    contentManager.focus(item.id)
                 } else {
-                    appState.isKeyboardNavigating = false
-                    // Single click focuses preview without changing selection state
+                    // Regular click: focus preview without changing selection
                     contentManager.focus(item.id)
                 }
             }

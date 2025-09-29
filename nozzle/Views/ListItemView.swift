@@ -14,7 +14,6 @@ struct ListItemView<Title: View>: View {
   var selectionSymbol: String = "checkmark.circle.fill"
   var selectionSymbolColor: Color = .white
   var selectionBackgroundColor: Color? = nil
-  var onCopyAction: (() -> Void)? = nil
   @ViewBuilder var title: () -> Title
 
   @Default(.showApplicationIcons) private var showIcons
@@ -22,26 +21,6 @@ struct ListItemView<Title: View>: View {
   @Environment(ContentManager.self) private var contentManager
   @Environment(ModifierFlags.self) private var modifierFlags
   @State private var isHovering = false
-  @State private var showCopiedFeedback = false
-  
-  private func triggerCopyFeedback() {
-    // Visual feedback
-    withAnimation(.easeInOut(duration: 0.2)) {
-      showCopiedFeedback = true
-    }
-    
-    // Audio feedback
-    if let sound = NSSound(named: "Write") {
-      sound.play()
-    }
-    
-    // Reset after delay
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-      withAnimation(.easeInOut(duration: 0.3)) {
-        showCopiedFeedback = false
-      }
-    }
-  }
   
   private enum HighlightState {
     case none
@@ -55,10 +34,8 @@ struct ListItemView<Title: View>: View {
       return .none
     }
 
-    // Determine whether this row is the current preview target
-    let isPreviewed = (appState.history.selectedItem?.id == id ||
-                       appState.footer.selectedItem?.id == id ||
-                       contentManager.focusedItemId == id)
+    // Use ContentManager's focusedItemId as the single source of truth for preview
+    let isPreviewed = (contentManager.focusedItemId == id)
 
     // During keyboard navigation, always show the previewed row
     if appState.isKeyboardNavigating {
@@ -129,7 +106,7 @@ struct ListItemView<Title: View>: View {
           .frame(maxWidth: .infinity, alignment: .leading)
       }
 
-      // Copy button, checkbox, or Command shortcut
+      // Selection toggle, checkbox, or Command shortcut
       if showCheckbox {
         ZStack {
           if modifierFlags.flags.contains(.command) && !shortcuts.isEmpty {
@@ -148,26 +125,13 @@ struct ListItemView<Title: View>: View {
               .opacity(0.8)
               .frame(maxWidth: .infinity, alignment: .trailing)
           } else if isHovering {
-            // Show copy button when hovering, or checkmark when copied
-            if showCopiedFeedback {
-              Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 12))
-                .foregroundColor(.green)
-                .opacity(0.8)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .transition(.scale.combined(with: .opacity))
-            } else {
-              Image(systemName: "doc.on.doc")
-                .font(.system(size: 12))
-                .foregroundColor(.primary)
-                .opacity(0.6)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .transition(.scale.combined(with: .opacity))
-                .onTapGesture {
-                  onCopyAction?()
-                  triggerCopyFeedback()
-                }
-            }
+            // Show empty circle when hovering (for selection toggle)
+            Image(systemName: "circle")
+              .font(.system(size: 14))
+              .foregroundColor(.primary)
+              .opacity(0.4)
+              .frame(maxWidth: .infinity, alignment: .trailing)
+              .transition(.scale.combined(with: .opacity))
           }
         }
         .frame(width: 30)
@@ -206,10 +170,6 @@ struct ListItemView<Title: View>: View {
     .clipShape(.rect(cornerRadius: DesignConstants.cornerRadius))
     .padding(.leading, 3)
     .padding(.trailing, 5)
-    // Any mouse movement exits keyboard navigation mode
-    .onMouseMove {
-      appState.isKeyboardNavigating = false
-    }
     .onHover { hovering in
       // During inline rename, freeze hover-driven hover state changes
       guard contentManager.renameActiveItemId == nil else { return }

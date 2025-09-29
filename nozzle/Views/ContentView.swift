@@ -698,6 +698,7 @@ struct ContentView: View {
         if appState.selection == nil,
            let firstItem = appState.history.unpinnedItems.first(where: \.isVisible) ?? appState.history.pinnedItems.first(where: \.isVisible) {
           appState.selection = firstItem.id
+          contentManager.focus(firstItem.id)
           appState.isKeyboardNavigating = true
         }
       }
@@ -723,6 +724,7 @@ struct ContentView: View {
       if newSourceId == "clipboard" {
         if let first = appState.history.items.first(where: \.isVisible) {
           appState.selection = first.id
+          contentManager.focus(first.id)
         }
       } else if newSourceId == "aggregated" {
         // Selected Items view: focus first context item, else first example item

@@ -53,8 +53,7 @@ struct HistoryItemView: View {
       isSelected: item.isSelected,
       selectionSymbol: (contentManager.isExample(item.id) ? "pencil.circle.fill" : "checkmark.circle.fill"),
       selectionSymbolColor: .white,
-      selectionBackgroundColor: (contentManager.isExample(item.id) ? .yellow : nil),
-      onCopyAction: copyItemToClipboard
+      selectionBackgroundColor: (contentManager.isExample(item.id) ? .yellow : nil)
     ) {
       Text(verbatim: item.title)
     }
@@ -76,6 +75,8 @@ struct HistoryItemView: View {
     .onTapGesture { location in
       appState.isKeyboardNavigating = false
       let clickCount = NSApp.currentEvent?.clickCount ?? 0
+
+      // Handle double-click first
       if clickCount >= 2 {
         contentManager.focus(item.id)
         appState.selection = item.id
@@ -84,21 +85,38 @@ struct HistoryItemView: View {
         appState.updateFooterItemVisibility()
         return
       }
-      // Check if click is in the checkbox/selection area (right 60 pixels)
-      let frameWidth = copyButtonArea.width > 0 ? copyButtonArea.width : 300 // fallback width
-      let selectionAreaWidth: CGFloat = 42
-      let isSelectionAreaClick = location.x > (frameWidth - selectionAreaWidth)
-      
-      if isSelectionAreaClick && item.isSelected {
-        // Toggle example state when clicking the selected checkmark area
+
+      // Handle modifier keys before checking click location
+      if NSEvent.modifierFlags.contains(.option) {
+        // Option-click anywhere: toggle example state
         contentManager.toggleExample(item.id)
         contentManager.focus(item.id)
-      } else if NSEvent.modifierFlags.contains(.command) {
-        // Command-click: immediate paste
+        return
+      }
+
+      if NSEvent.modifierFlags.contains(.command) {
+        // Command-click anywhere: immediate paste
         appState.history.select(item)
         contentManager.focus(item.id)
+        return
+      }
+
+      // Check if click is in the selection area (right 42 pixels)
+      let frameWidth = copyButtonArea.width > 0 ? copyButtonArea.width : 300
+      let selectionAreaWidth: CGFloat = 42
+      let isSelectionAreaClick = location.x > (frameWidth - selectionAreaWidth)
+
+      if isSelectionAreaClick {
+        // Toggle selection on/off (also clears example state if deselecting)
+        if item.isSelected && contentManager.isExample(item.id) {
+          contentManager.toggleExample(item.id)
+        }
+        contentManager.toggleSelection(item.id)
+        item.isSelected = contentManager.isSelected(item.id)
+        appState.updateFooterItemVisibility()
+        contentManager.focus(item.id)
       } else {
-        // Single click focuses preview without changing multi-select state
+        // Regular click: focus preview without changing selection
         appState.selection = item.id
         contentManager.focus(item.id)
       }
