@@ -60,6 +60,7 @@ extension Defaults.Keys {
   static let showPreviewPane = Key<Bool>("showPreviewPane", default: true)
   static let showRecentCopyInMenuBar = Key<Bool>("showRecentCopyInMenuBar", default: false)
   static let showSearch = Key<Bool>("showSearch", default: true)
+  static let showShortcutsBar = Key<Bool>("showShortcutsBar", default: true)
   static let searchVisibility = Key<SearchVisibility>("searchVisibility", default: .always)
   static let showSpecialSymbols = Key<Bool>("showSpecialSymbols", default: false)
   static let showTitle = Key<Bool>("showTitle", default: true)

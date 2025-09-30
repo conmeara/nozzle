@@ -248,6 +248,13 @@ struct ListView: View {
                 }
             }
         }
+        .contextMenu {
+            Button(Defaults[.showShortcutsBar] ? "Hide Shortcuts Bar" : "Show Shortcuts Bar") {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    Defaults[.showShortcutsBar].toggle()
+                }
+            }
+        }
     }
     
     @ViewBuilder

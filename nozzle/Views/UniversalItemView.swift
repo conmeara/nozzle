@@ -251,6 +251,14 @@ struct UniversalItemView: View {
                     .backspace,
                     modifiers: KeyboardShortcuts.Shortcut(name: .delete)?.toEventModifiers() ?? [.option]
                 )
+
+                Divider()
+
+                Button(Defaults[.showShortcutsBar] ? "Hide Shortcuts Bar" : "Show Shortcuts Bar") {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        Defaults[.showShortcutsBar].toggle()
+                    }
+                }
             } else if !item.base.isFolder, let url = item.base.fileURL {
                 // Context menu for regular files
                 Button("Copy") {
@@ -281,9 +289,17 @@ struct UniversalItemView: View {
                 }
                 
                 Divider()
-                
+
                 Button("Reveal in Finder") {
                     NSWorkspace.shared.activateFileViewerSelecting([url])
+                }
+
+                Divider()
+
+                Button(Defaults[.showShortcutsBar] ? "Hide Shortcuts Bar" : "Show Shortcuts Bar") {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        Defaults[.showShortcutsBar].toggle()
+                    }
                 }
             }
         }

@@ -170,6 +170,14 @@ struct HistoryItemView: View {
       Button(contentManager.isExample(item.id) ? "Remove as Example" : "Mark as Example") {
         contentManager.toggleExample(item.id)
       }
+
+      Divider()
+
+      Button(Defaults[.showShortcutsBar] ? "Hide Shortcuts Bar" : "Show Shortcuts Bar") {
+        withAnimation(.easeInOut(duration: 0.2)) {
+          Defaults[.showShortcutsBar].toggle()
+        }
+      }
     }
   }
 }

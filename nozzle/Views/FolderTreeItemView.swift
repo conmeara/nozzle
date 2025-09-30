@@ -1,4 +1,5 @@
 import SwiftUI
+import Defaults
 import UniformTypeIdentifiers
 
 struct FolderTreeItemView: View {
@@ -183,7 +184,15 @@ struct FolderTreeItemView: View {
                     }
                     
                     Divider()
-                    
+
+                    Button(Defaults[.showShortcutsBar] ? "Hide Shortcuts Bar" : "Show Shortcuts Bar") {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            Defaults[.showShortcutsBar].toggle()
+                        }
+                    }
+
+                    Divider()
+
                     Button("Remove from Sources", role: .destructive) {
                         contentManager.removeSource(item.sourceId)
                     }

@@ -128,6 +128,8 @@
 		DAFE2DDA268A521B00990986 /* String+Shortened.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFE2DD9268A521A00990986 /* String+Shortened.swift */; };
 		DAFE2DE9268A9B1B00990986 /* HistoryItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFE2DE8268A9B1B00990986 /* HistoryItemTests.swift */; };
 		DAFEF0B8249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFEF0B7249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift */; };
+		F507DA012E8B781E00974B61 /* ContextualShortcutsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F507DA002E8B781E00974B61 /* ContextualShortcutsProvider.swift */; };
+		F507DA032E8B784400974B61 /* ShortcutsBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F507DA022E8B784400974B61 /* ShortcutsBar.swift */; };
 		F50C3E222E64EDF800420829 /* DesignConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50C3E212E64EDF800420829 /* DesignConstants.swift */; };
 		F50C3E262E65F9B900420829 /* FolderPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50C3E252E65F9B900420829 /* FolderPreviewView.swift */; };
 		F51ACB992E7D016C00A96387 /* Grammar Genie.txt in Resources */ = {isa = PBXBuildFile; fileRef = F51ACB962E7D016C00A96387 /* Grammar Genie.txt */; };
@@ -553,6 +555,8 @@
 		DAFE2DD9268A521A00990986 /* String+Shortened.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Shortened.swift"; sourceTree = "<group>"; };
 		DAFE2DE8268A9B1B00990986 /* HistoryItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItemTests.swift; sourceTree = "<group>"; };
 		DAFEF0B7249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyboardShortcuts.Name+Shortcuts.swift"; sourceTree = "<group>"; };
+		F507DA002E8B781E00974B61 /* ContextualShortcutsProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualShortcutsProvider.swift; sourceTree = "<group>"; };
+		F507DA022E8B784400974B61 /* ShortcutsBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsBar.swift; sourceTree = "<group>"; };
 		F50C3E212E64EDF800420829 /* DesignConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignConstants.swift; sourceTree = "<group>"; };
 		F50C3E252E65F9B900420829 /* FolderPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPreviewView.swift; sourceTree = "<group>"; };
 		F51ACB952E7D016C00A96387 /* Code Architect.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Code Architect.txt"; sourceTree = "<group>"; };
@@ -795,6 +799,7 @@
 		DA3BCB902C3EEC1000B01BC1 /* Observables */ = {
 			isa = PBXGroup;
 			children = (
+				F507DA002E8B781E00974B61 /* ContextualShortcutsProvider.swift */,
 				F5C180382E622C8B007ED483 /* DictationManager.swift */,
 				F55A77C92E5E37F50039E760 /* PromptsSource.swift */,
 				F5758B002E5D228200FC0F19 /* FolderExpansionState.swift */,
@@ -962,6 +967,7 @@
 		F56CE2772E739CA3004E76C1 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				F507DA022E8B784400974B61 /* ShortcutsBar.swift */,
 				F56CE2762E739CA3004E76C1 /* ShortcutKeyView.swift */,
 			);
 			path = Components;
@@ -1247,6 +1253,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F56CE2722E733999004E76C1 /* WelcomeSetupScreen.swift in Sources */,
+				F507DA032E8B784400974B61 /* ShortcutsBar.swift in Sources */,
 				F56CE2732E733999004E76C1 /* GetStartedScreen.swift in Sources */,
 				F5A0B0012EE1AAAA00AAA001 /* SelectedItemsView.swift in Sources */,
 				DA19691C2C3F3EAC00258481 /* Collection+Surrounding.swift in Sources */,
@@ -1261,6 +1268,7 @@
 				DA5078992CF2676B00215488 /* MouseMovedViewModifer.swift in Sources */,
 				DA19690E2C3EEFA900258481 /* KeyboardShortcutView.swift in Sources */,
 				DA243D122C2F64830012A27F /* ContentView.swift in Sources */,
+				F507DA012E8B781E00974B61 /* ContextualShortcutsProvider.swift in Sources */,
 				F50C3E222E64EDF800420829 /* DesignConstants.swift in Sources */,
 				DAD665662898A1C000975096 /* KeyChord.swift in Sources */,
 				DA689FC42C1CF0F00009B887 /* AppearanceSettingsPane.swift in Sources */,

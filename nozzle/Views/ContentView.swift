@@ -2,6 +2,7 @@ import SwiftData
 import SwiftUI
 import KeyboardShortcuts
 import AppKit
+import Defaults
 
 /// A view that makes a specific area draggable for window movement.
 /// This enables selective dragging zones while preserving text selection in other areas.
@@ -72,8 +73,9 @@ struct ContentView: View {
   @State private var updateTabsTask: Task<Void, Never>? // Debouncing task
 
   @FocusState private var inputFocused: Bool
+  @State private var hoverBottomRight = false
   @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-  
+
   // Tab pagination computed properties
   private var maxTabWidth: CGFloat { 120 }
   private var tabSpacing: CGFloat { 4 }
@@ -295,7 +297,7 @@ struct ContentView: View {
                   .animation(.easeInOut(duration: 0.2), value: appState.isSearchMode)
               }
               .buttonStyle(PlainButtonStyle())
-              .help(appState.isSearchMode ? "Exit search mode" : "Open Prompts")
+              .help(appState.isSearchMode ? "Exit search mode" : "Open Prompts  ⌘P")
               .contextMenu {
                 if !appState.isSearchMode {
                   Button("New") {
@@ -346,7 +348,7 @@ struct ContentView: View {
                   .padding(.all, 2)
               }
               .buttonStyle(PlainButtonStyle())
-              .help(appState.isSearchMode ? "Exit search mode" : (dictationManager.isRecording ? "Stop dictation (⌥D)" : "Start dictation (⌥D)"))
+              .help(appState.isSearchMode ? "Exit search mode" : (dictationManager.isRecording ? "Stop dictation  ⌥D" : "Start dictation  ⌥D"))
               
               
               // Enhance prompt button
@@ -381,7 +383,7 @@ struct ContentView: View {
                 .padding(.all, 2)
               }
               .buttonStyle(PlainButtonStyle())
-              .help(appState.isSearchMode ? "Exit search mode" : (appState.isEnhancingPrompt ? "Enhancing..." : "Enhance prompt with AI (⌘⇧E)"))
+              .help(appState.isSearchMode ? "Exit search mode" : (appState.isEnhancingPrompt ? "Enhancing..." : "Enhance prompt  ⌘E"))
             }
             
             // Padding between icon group and tab group
@@ -508,7 +510,7 @@ struct ContentView: View {
               let hasContent = hasSelected || hasChips || !appState.promptText.isEmpty
               return hasContent ? 1.0 : 0.3
             }())
-            .help("Submit (⏎)")
+            .help("Paste Combined  ⏎")
             .padding(.trailing, 8)
             .padding(.bottom, 4)
             }
@@ -567,6 +569,13 @@ struct ContentView: View {
                     }
                   }
                 }
+                .contextMenu {
+                  Button(Defaults[.showShortcutsBar] ? "Hide Shortcuts Bar" : "Show Shortcuts Bar") {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                      Defaults[.showShortcutsBar].toggle()
+                    }
+                  }
+                }
               } else {
                 ListView(contextItems: contextItems, exampleItems: exampleItems)
                   .contextMenu {
@@ -600,6 +609,14 @@ struct ContentView: View {
                         for item in contextItems {
                           contentManager.toggleExample(item.id)
                         }
+                      }
+                    }
+
+                    Divider()
+
+                    Button(Defaults[.showShortcutsBar] ? "Hide Shortcuts Bar" : "Show Shortcuts Bar") {
+                      withAnimation(.easeInOut(duration: 0.2)) {
+                        Defaults[.showShortcutsBar].toggle()
                       }
                     }
                   }
@@ -648,10 +665,18 @@ struct ContentView: View {
                   Button("New") {
                     (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt()
                   }
-                  
+
                   Button("Add") {
                     let currentText = appState.isSearchMode ? appState.history.searchQuery : appState.promptText
                     (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt(initialContents: currentText)
+                  }
+
+                  Divider()
+
+                  Button(Defaults[.showShortcutsBar] ? "Hide Shortcuts Bar" : "Show Shortcuts Bar") {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                      Defaults[.showShortcutsBar].toggle()
+                    }
                   }
                 }
               } else {
@@ -680,6 +705,32 @@ struct ContentView: View {
                 await dictationManager.stopDictation(saveTranscription: true)
               }
             }
+          }
+
+          // Contextual shortcuts bar at the bottom
+          ShortcutsBar()
+        }
+        // Overlay hover zone in bottom right when bar is hidden
+        .overlay(alignment: .bottomTrailing) {
+          if !Defaults[.showShortcutsBar] {
+            Button(action: {
+              withAnimation(.easeInOut(duration: 0.2)) {
+                Defaults[.showShortcutsBar] = true
+              }
+            }) {
+              Image(systemName: "chevron.up")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.tertiary)
+                .opacity(hoverBottomRight ? 0.7 : 0.0)
+                .frame(width: 50, height: 30)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .help("Show shortcuts bar")
+            .onHover { hovering in
+              hoverBottomRight = hovering
+            }
+            .padding(.trailing, 12)
+            .padding(.bottom, 4)
           }
         }
       }
