@@ -387,7 +387,7 @@ struct ContentView: View {
             // Padding between icon group and tab group
             Spacer()
               .frame(width: 16)
-            
+
             // Tab group with pagination
             GeometryReader { geometry in
               VStack {
@@ -485,8 +485,32 @@ struct ContentView: View {
               }
             }
             .frame(height: 32)
-            
+
             Spacer()
+
+            // Submit button (blue enter arrow) - positioned at far right
+            Button(action: {
+              appState.performCombinedPaste()
+            }) {
+              Image(systemName: "arrow.turn.down.left")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .frame(width: 30, height: 30)
+            .background(
+              Circle()
+                .fill(Color(nsColor: .controlAccentColor))
+            )
+            .opacity({
+              let hasSelected = !contentManager.selectedItems.isEmpty
+              let hasChips = !appState.promptChips.isEmpty
+              let hasContent = hasSelected || hasChips || !appState.promptText.isEmpty
+              return hasContent ? 1.0 : 0.3
+            }())
+            .help("Submit (⏎)")
+            .padding(.trailing, 8)
+            .padding(.bottom, 4)
             }
             .padding(.leading, 8)
             .padding(.trailing, 0)
