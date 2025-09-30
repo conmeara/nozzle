@@ -94,8 +94,21 @@ struct FolderTreeItemView: View {
 
                 // Handle modifier keys before checking click location
                 if NSEvent.modifierFlags.contains(.option) {
-                    // Option-click anywhere: toggle example state
-                    contentManager.toggleExample(item.id)
+                    // Option-click: toggle between unselected and example (skip context state)
+                    let state = contentManager.getFolderSelectionState(item.id)
+                    if contentManager.isExample(item.id) {
+                        // Currently example → deselect completely
+                        contentManager.toggleExample(item.id)
+                        contentManager.deselectFolderChildren(item.id)
+                    } else if state != .none {
+                        // Currently context (has selections) → switch to example
+                        contentManager.toggleExample(item.id)
+                    } else {
+                        // Currently unselected → select children and mark as example
+                        contentManager.selectFolderChildren(item.id)
+                        contentManager.toggleExample(item.id)
+                    }
+                    appState.updateFooterItemVisibility()
                     contentManager.focus(item.id)
                     return
                 }

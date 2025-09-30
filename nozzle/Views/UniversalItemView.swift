@@ -144,8 +144,20 @@ struct UniversalItemView: View {
 
                         // Handle modifier keys before checking click location
                         if NSEvent.modifierFlags.contains(.option) {
-                            // Option-click anywhere: toggle example state
-                            contentManager.toggleExample(item.id)
+                            // Option-click: toggle between unselected and example (skip context state)
+                            if contentManager.isExample(item.id) {
+                                // Currently example → deselect completely
+                                contentManager.toggleExample(item.id)
+                                contentManager.toggleSelection(item.id)
+                            } else if item.isSelected {
+                                // Currently context → switch to example
+                                contentManager.toggleExample(item.id)
+                            } else {
+                                // Currently unselected → select and mark as example
+                                contentManager.toggleSelection(item.id)
+                                contentManager.toggleExample(item.id)
+                            }
+                            appState.updateFooterItemVisibility()
                             contentManager.focus(item.id)
                             return
                         }
