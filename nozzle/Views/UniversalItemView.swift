@@ -106,7 +106,9 @@ struct UniversalItemView: View {
                         isSelected: item.isSelected,
                         selectionSymbol: (item.isExample ? "pencil.circle.fill" : "checkmark.circle.fill"),
                         selectionSymbolColor: .white,
-                        selectionBackgroundColor: (item.isExample ? .yellow : nil)
+                        selectionBackgroundColor: (item.isExample ? .yellow : nil),
+                        isPromptItem: item.base.sourceId == "prompts",
+                        onPlusButtonClick: { addPromptToInput() }
                     ) { titleView() }
                     .onMouseMove {
                         // Mouse movement turns off keyboard navigation so pointer clicks drive focus
@@ -129,6 +131,7 @@ struct UniversalItemView: View {
                                 let previous = contentManager.lastNonPromptsSourceId
                                 contentManager.activeSourceId = "prompts"
                                 contentManager.focus(item.id)
+                                contentManager.toggleSelection(item.id)
                                 appState.updateFooterItemVisibility()
                                 appState.requestFocusInput()
                                 contentManager.activeSourceId = previous
@@ -217,12 +220,17 @@ struct UniversalItemView: View {
                 }
                 
                 Divider()
-                
-                Button("Apply to input") {
-                    (contentManager.sources["prompts"] as? PromptsSource)?.applyPrompt(at: url)
-                    appState.addPromptChip(url: url)
-                    appState.isSearchMode = false
+
+                Button("Add to Input") {
+                    addPromptToInput()
                 }
+
+                Button("Add as Prompt Chip") {
+                    appState.addPromptChip(url: url)
+                    contentManager.toggleSelection(item.id)
+                    appState.updateFooterItemVisibility()
+                }
+
                 Divider()
                 Button("Copy") {
                     item.copyToClipboard()
@@ -390,5 +398,13 @@ private extension UniversalItemView {
     func cancelRename() {
         isRenaming = false
         contentManager.renameActiveItemId = nil
+    }
+
+    func addPromptToInput() {
+        guard item.base.sourceId == "prompts", let url = item.base.fileURL else { return }
+        (contentManager.sources["prompts"] as? PromptsSource)?.addPromptToInput(at: url)
+        contentManager.focus(item.id)
+        appState.isSearchMode = false
+        appState.requestFocusInput()
     }
 }

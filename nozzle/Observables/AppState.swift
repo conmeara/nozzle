@@ -551,6 +551,17 @@ class AppState {
     NotificationCenter.default.post(name: Self.focusInputNotification, object: nil)
   }
 
+  func appendToInput(_ text: String) {
+    // Append text to promptText with appropriate newline handling
+    if promptText.isEmpty {
+      promptText = text
+    } else {
+      // Add newline before appending if there's existing content
+      promptText += "\n" + text
+    }
+    updateFooterItemVisibility()
+  }
+
   // Update a prompt chip's URL after a rename while preserving its id
   func updatePromptChipURL(from oldURL: URL, to newURL: URL) {
     if let idx = promptChips.firstIndex(where: { $0.url == oldURL }) {

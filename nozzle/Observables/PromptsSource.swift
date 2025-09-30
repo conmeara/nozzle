@@ -211,6 +211,12 @@ final class PromptsSource: ContentSource {
         }
     }
 
+    func addPromptToInput(at url: URL) {
+        if let text = TextFileFormatter.loadPlainText(from: url) {
+            AppState.shared.appendToInput(text)
+        }
+    }
+
     // MARK: - Utils
 
     private func uniqueURL(basename: String, ext: String) -> URL {

@@ -14,6 +14,8 @@ struct ListItemView<Title: View>: View {
   var selectionSymbol: String = "checkmark.circle.fill"
   var selectionSymbolColor: Color = .white
   var selectionBackgroundColor: Color? = nil
+  var isPromptItem: Bool = false
+  var onPlusButtonClick: (() -> Void)? = nil
   @ViewBuilder var title: () -> Title
 
   @Default(.showApplicationIcons) private var showIcons
@@ -21,6 +23,7 @@ struct ListItemView<Title: View>: View {
   @Environment(ContentManager.self) private var contentManager
   @Environment(ModifierFlags.self) private var modifierFlags
   @State private var isHovering = false
+  @State private var showAddFeedback = false
   
   private enum HighlightState {
     case none
@@ -109,7 +112,15 @@ struct ListItemView<Title: View>: View {
       // Selection toggle, checkbox, or Command shortcut
       if showCheckbox {
         ZStack {
-          if modifierFlags.flags.contains(.command) && !shortcuts.isEmpty {
+          if showAddFeedback {
+            // Show green checkmark feedback after adding to input
+            Image(systemName: "checkmark.circle.fill")
+              .font(.system(size: 14))
+              .foregroundColor(.green)
+              .opacity(0.8)
+              .frame(maxWidth: .infinity, alignment: .trailing)
+              .transition(.scale.combined(with: .opacity))
+          } else if modifierFlags.flags.contains(.command) && !shortcuts.isEmpty {
             // Show shortcut when Command is held (replaces checkmark)
             ForEach(shortcuts) { shortcut in
               KeyboardShortcutView(shortcut: shortcut)
@@ -125,13 +136,39 @@ struct ListItemView<Title: View>: View {
               .opacity(0.8)
               .frame(maxWidth: .infinity, alignment: .trailing)
           } else if isHovering && !appState.isKeyboardNavigating {
-            // Show empty circle when hovering (for selection toggle)
-            Image(systemName: "circle")
-              .font(.system(size: 14))
-              .foregroundColor(.primary)
-              .opacity(0.4)
-              .frame(maxWidth: .infinity, alignment: .trailing)
+            if isPromptItem {
+              // Show plus icon for prompts
+              Button(action: {
+                onPlusButtonClick?()
+                // Show feedback animation
+                withAnimation(.easeInOut(duration: 0.2)) {
+                  showAddFeedback = true
+                }
+                // Hide feedback after 1 second
+                Task { @MainActor in
+                  try? await Task.sleep(for: .seconds(1))
+                  withAnimation(.easeOut(duration: 0.3)) {
+                    showAddFeedback = false
+                  }
+                }
+              }) {
+                Image(systemName: "plus.circle.fill")
+                  .font(.system(size: 14))
+                  .foregroundColor(.primary)
+                  .opacity(0.6)
+                  .frame(maxWidth: .infinity, alignment: .trailing)
+              }
+              .buttonStyle(PlainButtonStyle())
               .transition(.scale.combined(with: .opacity))
+            } else {
+              // Show empty circle when hovering (for selection toggle)
+              Image(systemName: "circle")
+                .font(.system(size: 14))
+                .foregroundColor(.primary)
+                .opacity(0.4)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .transition(.scale.combined(with: .opacity))
+            }
           }
         }
         .frame(width: 30)
