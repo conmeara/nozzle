@@ -33,9 +33,8 @@ struct SelectedItemsView: View {
             }
             .onChange(of: contentManager.focusedItemId) { _, newValue in
                 if let id = newValue {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        proxy.scrollTo(id, anchor: .center)
-                    }
+                    // Use default macOS scroll behavior (only scroll if item is out of view)
+                    proxy.scrollTo(id)
                 }
             }
         }

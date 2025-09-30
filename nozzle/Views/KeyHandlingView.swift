@@ -376,6 +376,7 @@ struct KeyHandlingView<Content: View>: View {
           // Toggle the item's selection
           contentManager.toggleSelection(item.id)
           appState.selection = item.id
+          contentManager.focus(item.id)
           appState.updateFooterItemVisibility()
           return .handled
         }
@@ -388,6 +389,7 @@ struct KeyHandlingView<Content: View>: View {
            let item = appState.history.items.first(where: { $0.shortcuts.contains(where: { $0.key == key }) }) {
           // Paste this specific item
           appState.selection = item.id
+          contentManager.focus(item.id)
           appState.popup.close()
           Clipboard.shared.copy(item.item)
           Clipboard.shared.paste()
@@ -400,6 +402,7 @@ struct KeyHandlingView<Content: View>: View {
         // Original logic for other modifier combinations
         if let item = appState.history.pressedShortcutItem {
           appState.selection = item.id
+          contentManager.focus(item.id)
           Task {
             try? await Task.sleep(for: .milliseconds(50))
             appState.history.select(item)

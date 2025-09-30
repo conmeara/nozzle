@@ -164,6 +164,9 @@ class AppState {
   private func selectFromKeyboardNavigation(_ id: UUID?) {
     isKeyboardNavigating = true
     selection = id
+    if let id {
+      ContentManager.shared.focus(id)
+    }
   }
 
   func highlightFirst() {

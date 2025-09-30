@@ -196,9 +196,8 @@ struct ListView: View {
                     guard configuration.enableScrollTargeting,
                           appState.isKeyboardNavigating,
                           let id = newValue else { return }
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        proxy.scrollTo(id, anchor: .center)
-                    }
+                    // Use default macOS scroll behavior (only scroll if item is out of view)
+                    proxy.scrollTo(id)
                 }
                 .onChange(of: scenePhase) {
                     guard configuration.enableScenePhaseHandling else { return }
@@ -211,6 +210,7 @@ struct ListView: View {
                         // Force selection of first visible item
                         if let firstItem = unpinnedItems.first(where: \.isVisible) ?? pinnedItems.first(where: \.isVisible) {
                             appState.selection = firstItem.id
+                            contentManager.focus(firstItem.id)
                         }
                     } else {
                         modifierFlags.flags = []
