@@ -78,6 +78,15 @@ struct PromptChipsBarView: View {
       return
     }
     let isActiveChip = isActive(chip)
+
+    // Find and deselect the corresponding prompt item
+    if let promptItem = contentManager.getItems(for: "prompts").first(where: { $0.fileURL == chip.url }) {
+      if contentManager.isSelected(promptItem.id) {
+        contentManager.toggleSelection(promptItem.id)
+        appState.updateFooterItemVisibility()
+      }
+    }
+
     appState.removePromptChip(id: chip.id)
     if appState.activePromptChipId == chip.id { appState.activePromptChipId = nil }
     if isActiveChip {
