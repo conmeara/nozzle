@@ -108,6 +108,10 @@ struct UniversalItemView: View {
                         selectionSymbolColor: .white,
                         selectionBackgroundColor: (item.isExample ? .yellow : nil)
                     ) { titleView() }
+                    .onMouseMove {
+                        // Mouse movement turns off keyboard navigation so pointer clicks drive focus
+                        appState.isKeyboardNavigating = false
+                    }
                     .onTapGesture { location in
                         if isRenaming { finishRename(); return }
                         appState.isKeyboardNavigating = false

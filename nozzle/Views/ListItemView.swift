@@ -124,7 +124,7 @@ struct ListItemView<Title: View>: View {
               .foregroundColor(selectionSymbolColor)
               .opacity(0.8)
               .frame(maxWidth: .infinity, alignment: .trailing)
-          } else if isHovering {
+          } else if isHovering && !appState.isKeyboardNavigating {
             // Show empty circle when hovering (for selection toggle)
             Image(systemName: "circle")
               .font(.system(size: 14))
