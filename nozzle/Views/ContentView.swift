@@ -533,16 +533,18 @@ struct ContentView: View {
             .frame(height: 1)
 
           // Main content area with optional preview pane
-          HStack(spacing: 0) {
-            // Content list based on active source
-            if contentManager.activeSourceId == "clipboard" {
-              ListView(
-                historyItems: appState.history.items.filter(\.isVisible),
-                searchQuery: $appState.history.searchQuery,
-                searchFocused: $inputFocused
-              )
-              .frame(minWidth: 300)
-            } else if contentManager.activeSourceId == "aggregated" {
+          GeometryReader { geometry in
+            HStack(spacing: 0) {
+              // Content list based on active source
+              if contentManager.activeSourceId == "clipboard" {
+                ListView(
+                  historyItems: appState.history.items.filter(\.isVisible),
+                  searchQuery: $appState.history.searchQuery,
+                  searchFocused: $inputFocused
+                )
+                .frame(minWidth: 300)
+                .layoutPriority(1)
+              } else if contentManager.activeSourceId == "aggregated" {
               // Aggregated view showing selected items from all sources, split into Context and Examples
               let contextItems = contentManager.selectedContextDecorators
               let exampleItems = contentManager.selectedExampleDecorators
@@ -558,6 +560,7 @@ struct ContentView: View {
                   Spacer()
                 }
                 .frame(minWidth: 300, maxWidth: .infinity)
+                .layoutPriority(1)
                 .contentShape(Rectangle())
                 .onTapGesture {
                   // Commit any active rename when clicking empty space
@@ -621,6 +624,7 @@ struct ContentView: View {
                     }
                   }
                   .frame(minWidth: 300)
+                  .layoutPriority(1)
               }
             } else {
               // Non-clipboard sources use unified ListView with cached decorators
@@ -661,6 +665,7 @@ struct ContentView: View {
                   }
                 }
                 .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
+                .layoutPriority(1)
                 .contextMenu {
                   Button("New") {
                     (contentManager.sources["prompts"] as? PromptsSource)?.createNewPrompt()
@@ -682,19 +687,54 @@ struct ContentView: View {
               } else {
                 ListView(universalItems: items)
                   .frame(minWidth: 300)
+                  .layoutPriority(1)
               }
             }
             
-            // Preview pane (conditional with fixed width)
-            if appState.showPreviewPane {
-              Divider()
-              
-              // Gate preview by active tab so it always matches the visible list
-              PreviewPaneView(
-                clipboardItem: contentManager.activeSourceId == "clipboard" ? appState.previewItem : nil,
-                fileItem: contentManager.activeSourceId == "clipboard" ? nil : contentManager.focusedContentItem
-              )
-              .frame(width: 350)
+              // Preview pane (conditional with resizable width)
+              if appState.showPreviewPane {
+                let availableWidth = geometry.size.width
+                let minListWidth: CGFloat = 300
+                let minPreviewWidth: CGFloat = 200
+                let maxPreviewWidth: CGFloat = availableWidth - minListWidth - 1 // -1 for divider
+                let actualPreviewWidth = min(appState.previewPaneWidth, maxPreviewWidth, availableWidth * 0.6)
+
+                // Draggable divider
+                Rectangle()
+                  .fill(Color.secondary.opacity(0.3))
+                  .frame(width: 1)
+                  .overlay(
+                    Rectangle()
+                      .fill(Color.clear)
+                      .frame(width: 8)
+                      .contentShape(Rectangle())
+                  )
+                  .onHover { hovering in
+                    if hovering {
+                      NSCursor.resizeLeftRight.push()
+                    } else {
+                      NSCursor.pop()
+                    }
+                  }
+                  .gesture(
+                    DragGesture()
+                      .onChanged { value in
+                        let newWidth = appState.previewPaneWidth - value.translation.width
+                        let maxAllowed = availableWidth - minListWidth - 1
+                        appState.previewPaneWidth = max(minPreviewWidth, min(maxAllowed, newWidth))
+                      }
+                      .onEnded { _ in
+                        NSCursor.pop()
+                      }
+                  )
+
+                // Gate preview by active tab so it always matches the visible list
+                PreviewPaneView(
+                  clipboardItem: contentManager.activeSourceId == "clipboard" ? appState.previewItem : nil,
+                  fileItem: contentManager.activeSourceId == "clipboard" ? nil : contentManager.focusedContentItem
+                )
+                .frame(width: max(minPreviewWidth, actualPreviewWidth))
+              }
             }
           }
           .onTapGesture {

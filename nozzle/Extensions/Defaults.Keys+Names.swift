@@ -58,6 +58,7 @@ extension Defaults.Keys {
   static let showFooter = Key<Bool>("showFooter", default: true)
   static let showInStatusBar = Key<Bool>("showInStatusBar", default: true)
   static let showPreviewPane = Key<Bool>("showPreviewPane", default: true)
+  static let previewPaneWidth = Key<CGFloat>("previewPaneWidth", default: 350)
   static let showRecentCopyInMenuBar = Key<Bool>("showRecentCopyInMenuBar", default: false)
   static let showSearch = Key<Bool>("showSearch", default: true)
   static let showShortcutsBar = Key<Bool>("showShortcutsBar", default: true)

@@ -66,7 +66,13 @@ class AppState {
       Defaults[.showPreviewPane] = showPreviewPane
     }
   }
-  
+
+  var previewPaneWidth: CGFloat = Defaults[.previewPaneWidth] {
+    didSet {
+      Defaults[.previewPaneWidth] = previewPaneWidth
+    }
+  }
+
   var previewItem: HistoryItemDecorator? {
     return history.selectedItem
   }

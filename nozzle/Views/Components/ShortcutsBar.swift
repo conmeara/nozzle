@@ -15,8 +15,8 @@ struct ShortcutsBar: View {
             VStack(spacing: 0) {
                 // Subtle divider
                 Rectangle()
-                    .fill(Color.secondary.opacity(0.15))
-                    .frame(height: 0.5)
+                    .fill(Color.secondary.opacity(0.3))
+                    .frame(height: 1)
 
                 // Shortcuts bar content
                 HStack(spacing: 0) {
@@ -64,7 +64,7 @@ struct ShortcutsBar: View {
                         isHovering = hovering
                     }
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, 6)
                 .background(
                     reduceTransparency
                         ? Color(NSColor.windowBackgroundColor).opacity(0.98)
