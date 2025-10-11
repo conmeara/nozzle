@@ -469,16 +469,48 @@ class AppState {
       finalizeCombinedPaste(promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState)
       return
     }
-    
+
     let item = mediaItems[index]
-    
+
     // Skip folders - their contents are already captured in the selection
     if item.isFolder {
       // Move to next item without pasting
       pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
       return
     }
-    
+
+    // Handle screenshot items with on-demand capture
+    if item.sourceType == .screenshot {
+      Task { @MainActor in
+        guard let screenshotSource = contentManager.sources["screenshots"] as? ScreenshotSource else {
+          // Skip this item if screenshot source not available
+          self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
+          return
+        }
+
+        // Capture screenshot
+        if let capturedImage = await screenshotSource.captureScreenshot(for: item.id) {
+          let pasteboard = NSPasteboard.general
+          pasteboard.clearContents()
+          pasteboard.writeObjects([capturedImage])
+
+          // Wait for clipboard update, then paste
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
+            Clipboard.shared.paste()
+
+            // Wait before next media item
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+              self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
+            }
+          }
+        } else {
+          // Screenshot capture failed, skip to next item
+          self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
+        }
+      }
+      return
+    }
+
     // Copy content item to clipboard
     if let imageData = item.imageData, let image = NSImage(data: imageData) {
       let pasteboard = NSPasteboard.general
@@ -496,11 +528,11 @@ class AppState {
         Clipboard.shared.copyContentData(contentData)
       }
     }
-    
+
     // Wait for clipboard update, then paste
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
       Clipboard.shared.paste()
-      
+
       // Wait before next media item
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
         self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)

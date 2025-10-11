@@ -98,13 +98,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Initialize ContentManager and register sources
     let contentManager = ContentManager.shared
-    
+
     // Register clipboard source
     contentManager.registerSource(ClipboardSource())
-    
+
     // Register Prompts source
     registerPromptsSource()
-    
+
+    // Register screenshot source
+    let screenshotSource = ScreenshotSource()
+    contentManager.registerSource(screenshotSource)
+    Task {
+      await screenshotSource.refresh()
+      screenshotSource.startMonitoring()
+    }
+
     // Restore folder sources from bookmarks
     for url in Bookmarks.resolveAll() {
       // Skip and clean up bookmarks that no longer exist
