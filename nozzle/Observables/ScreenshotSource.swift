@@ -9,7 +9,7 @@ final class ScreenshotSource: ContentSource {
     private static let logger = Logger(subsystem: "org.conmeara.nozzle.content", category: "ScreenshotSource")
 
     let id: String = "screenshots"
-    let name: String = "Screenshots"
+    let name: String = "Screenshot"
     let icon: NSImage
     let type: ContentSourceType = .screenshot
     var isMonitoring: Bool = false
@@ -177,10 +177,10 @@ final class ScreenshotSource: ContentSource {
 
     @available(macOS 12.3, *)
     private func generateThumbnails(for windowInfos: [WindowInfo], content: SCShareableContent) async {
-        // Generate thumbnails with reduced resolution
+        // Generate thumbnails with good preview resolution
         let config = SCStreamConfiguration()
-        config.width = 300
-        config.height = 200
+        config.width = 1200
+        config.height = 800
         config.minimumFrameInterval = CMTime(value: 1, timescale: 1)
 
         for info in windowInfos {

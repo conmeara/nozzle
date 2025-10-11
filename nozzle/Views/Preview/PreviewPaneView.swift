@@ -65,6 +65,19 @@ struct PreviewPaneView: View {
                     } else {
                         EmptyPreviewView()
                     }
+                } else if fileItem.sourceType == .screenshot {
+                    // Screenshot items: show thumbnail preview
+                    if let data = fileItem.imageData, let image = NSImage(data: data) {
+                        Image(nsImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .clipShape(.rect(cornerRadius: DesignConstants.cornerRadius))
+                            .padding()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .previewSurfaceStyle()
+                    } else {
+                        EmptyPreviewView()
+                    }
                 } else if fileItem.isFolder, let fileURL = fileItem.fileURL {
                     FolderPreviewView(folderURL: fileURL, item: fileItem)
                 } else if !fileItem.isFolder, let fileURL = fileItem.fileURL {
