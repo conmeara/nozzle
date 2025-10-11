@@ -191,7 +191,7 @@ enum ShortcutData {
         
         ShortcutCategory("Paste Operations", shortcuts: [
             ShortcutItem("Paste combined", fixed: .special("⏎")),
-            ShortcutItem("Paste current item", fixed: .modifier("⌘"), .special("⏎")),
+            ShortcutItem("Paste single item", fixed: .modifier("⌘"), .special("⏎")),
             ShortcutItem("Paste numbered", fixed: .modifier("⌘"), .modifier("⇧"), .key("1-9")),
             ShortcutItem("Copy to clipboard", fixed: .modifier("⌘"), .key("C"))
         ]),

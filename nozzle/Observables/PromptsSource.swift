@@ -120,10 +120,11 @@ final class PromptsSource: ContentSource {
     }
 
     func deletePrompt(at url: URL) {
-        NSWorkspace.shared.recycle([url]) { _, _ in }
-        Task { @MainActor in 
-            ContentManager.shared.markDecoratorsNeedRefresh(for: "prompts")
-            await inner.refresh() 
+        NSWorkspace.shared.recycle([url]) { _, _ in
+            Task { @MainActor in
+                ContentManager.shared.markDecoratorsNeedRefresh(for: "prompts")
+                await self.inner.refresh()
+            }
         }
     }
 
