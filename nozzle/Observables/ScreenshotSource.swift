@@ -83,6 +83,15 @@ final class ScreenshotSource: ContentSource {
                       window.frame.width >= 50 && window.frame.height >= 50 else {
                     continue
                 }
+
+                // Filter out system windows that shouldn't be captured
+                let title = info.title.lowercased()
+                if title.contains("backstop") ||
+                   title.contains("wallpaper") ||
+                   title.isEmpty {
+                    continue
+                }
+
                 windowInfos.append(info)
             }
 
