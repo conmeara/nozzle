@@ -86,9 +86,14 @@ final class ScreenshotSource: ContentSource {
 
                 // Filter out system windows that shouldn't be captured
                 let title = info.title.lowercased()
+                let appName = info.owningApplication.lowercased()
+
+                // Skip windows with problematic titles or missing app names
                 if title.contains("backstop") ||
                    title.contains("wallpaper") ||
-                   title.isEmpty {
+                   title.isEmpty ||
+                   appName.isEmpty ||
+                   appName == "window server" {
                     continue
                 }
 
