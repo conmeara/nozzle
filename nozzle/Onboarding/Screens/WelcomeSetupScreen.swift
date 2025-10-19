@@ -48,14 +48,26 @@ struct WelcomeSetupScreen: View {
             }
             
             VStack(spacing: 8) {
-                // Accessibility Permission (simple row style to match Launch at Login)
+                // Accessibility Permission (required)
                 permissionRow(
                     icon: "accessibility",
                     title: "Accessibility Access",
                     description: "Required for clipboard monitoring and keyboard shortcuts",
-                    isGranted: onboardingState.hasAccessibilityPermission
+                    isGranted: onboardingState.hasAccessibilityPermission,
+                    isRequired: true
                 ) {
                     onboardingState.requestAccessibilityPermission()
+                }
+
+                // Screen Recording Permission (optional, for screenshots)
+                permissionRow(
+                    icon: "camera.viewfinder",
+                    title: "Screen Recording",
+                    description: "Optional - enables screenshot capture functionality",
+                    isGranted: onboardingState.hasScreenRecordingPermission,
+                    isRequired: false
+                ) {
+                    onboardingState.requestScreenRecordingPermission()
                 }
             }
         }
@@ -67,6 +79,7 @@ struct WelcomeSetupScreen: View {
         title: String,
         description: String,
         isGranted: Bool,
+        isRequired: Bool = true,
         action: @escaping () -> Void
     ) -> some View {
         HStack(spacing: 16) {
@@ -76,9 +89,20 @@ struct WelcomeSetupScreen: View {
                 .frame(width: 30)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.primary)
+                HStack(spacing: 6) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.primary)
+                    if isRequired {
+                        Text("Required")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.red.opacity(0.8))
+                            .clipShape(Capsule())
+                    }
+                }
                 Text(description)
                     .font(.system(size: 13))
                     .foregroundColor(.secondary)

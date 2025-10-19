@@ -2,6 +2,7 @@ import SwiftUI
 import Defaults
 @preconcurrency import AppKit
 import LaunchAtLogin
+import ScreenCaptureKit
 
 @Observable @MainActor
 final class OnboardingState {
@@ -40,6 +41,7 @@ final class OnboardingState {
     
     var currentScreen: Screen = .welcomeSetup
     var hasAccessibilityPermission = false
+    var hasScreenRecordingPermission = false
     var launchAtLoginEnabled = true  // Default to ON
     
     // Computed properties
@@ -78,13 +80,35 @@ final class OnboardingState {
     nonisolated func checkPermissions() {
         Task { @MainActor in
             hasAccessibilityPermission = AXIsProcessTrustedWithOptions(nil)
+
+            // Check screen recording permission for screenshot functionality
+            if #available(macOS 12.3, *) {
+                hasScreenRecordingPermission = await checkScreenRecordingPermission()
+            }
+        }
+    }
+
+    @available(macOS 12.3, *)
+    private func checkScreenRecordingPermission() async -> Bool {
+        // Try to get shareable content - this will fail if permission is denied
+        do {
+            _ = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
+            return true
+        } catch {
+            return false
         }
     }
     
     func requestAccessibilityPermission() {
-        // TODO: Implement accessibility permission request
-        // For now, just open System Settings manually
+        // Open System Settings to Accessibility privacy pane
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    func requestScreenRecordingPermission() {
+        // Open System Settings to Screen Recording privacy pane
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
             NSWorkspace.shared.open(url)
         }
     }
