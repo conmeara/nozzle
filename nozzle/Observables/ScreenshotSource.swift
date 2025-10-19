@@ -6,7 +6,7 @@ import OSLog
 
 @Observable @MainActor
 final class ScreenshotSource: ContentSource {
-    private static let logger = Logger(subsystem: "org.conmeara.nozzle.content", category: "ScreenshotSource")
+    nonisolated private static let logger = Logger(subsystem: "org.conmeara.nozzle.content", category: "ScreenshotSource")
 
     let id: String = "screenshots"
     let name: String = "Screenshot"
@@ -18,6 +18,9 @@ final class ScreenshotSource: ContentSource {
     private var cachedItems: [ContentItem] = []
     private var windowInfoCache: [UUID: WindowInfo] = [:]
     private var thumbnailCache: [UUID: Data] = [:]
+    private var hasScreenRecordingPermission: Bool?
+    private var lastRefreshTime: Date = .distantPast
+    private let refreshInterval: TimeInterval = 5.0 // Refresh every 5 seconds when tab is active
 
     init() {
         if let symbolImage = NSImage(systemSymbolName: "camera.viewfinder", accessibilityDescription: "Screenshots") {
@@ -47,6 +50,14 @@ final class ScreenshotSource: ContentSource {
         isMonitoring = false
     }
 
+    func refreshIfNeeded() async {
+        // Only refresh if data is stale (older than refreshInterval)
+        let timeSinceLastRefresh = Date().timeIntervalSince(lastRefreshTime)
+        if timeSinceLastRefresh > refreshInterval {
+            await refresh()
+        }
+    }
+
     func refresh() async {
         guard #available(macOS 12.3, *) else {
             Self.logger.error("ScreenCaptureKit requires macOS 12.3 or later")
@@ -55,8 +66,12 @@ final class ScreenshotSource: ContentSource {
         }
 
         do {
-            // Check for screen recording permission
-            guard await checkScreenRecordingPermission() else {
+            // Check for screen recording permission (use cached value if available)
+            if hasScreenRecordingPermission == nil {
+                hasScreenRecordingPermission = await checkScreenRecordingPermission()
+            }
+
+            guard hasScreenRecordingPermission == true else {
                 Self.logger.warning("Screen recording permission not granted")
                 cachedItems = [createPermissionRequiredItem()]
                 return
@@ -88,6 +103,11 @@ final class ScreenshotSource: ContentSource {
                 let title = info.title.lowercased()
                 let appName = info.owningApplication.lowercased()
 
+                // Skip nozzle's own windows
+                if info.applicationBundleIdentifier == Bundle.main.bundleIdentifier {
+                    continue
+                }
+
                 // Skip windows with problematic titles or missing app names
                 if title.contains("backstop") ||
                    title.contains("wallpaper") ||
@@ -102,6 +122,7 @@ final class ScreenshotSource: ContentSource {
 
             // Store window info for later capture
             windowInfoCache.removeAll()
+            thumbnailCache.removeAll() // Clear thumbnail cache to prevent memory leak
             for info in windowInfos {
                 windowInfoCache[info.id] = info
             }
@@ -123,10 +144,13 @@ final class ScreenshotSource: ContentSource {
             }
 
             cachedItems = items
+            lastRefreshTime = Date()
             Self.logger.info("Refreshed screenshot source with \(items.count) items")
 
         } catch {
             Self.logger.error("Failed to get shareable content: \(error.localizedDescription)")
+            // Reset permission cache on error (permissions may have been revoked)
+            hasScreenRecordingPermission = nil
             cachedItems = [createErrorItem(error)]
         }
     }
@@ -197,6 +221,10 @@ final class ScreenshotSource: ContentSource {
         config.height = 800
         config.minimumFrameInterval = CMTime(value: 1, timescale: 1)
 
+        // NOTE: Serial processing is required because SCWindow and SCDisplay are not Sendable
+        // in current ScreenCaptureKit API. Parallel processing with TaskGroup causes data races.
+        // Future optimization: When ScreenCaptureKit types become Sendable, use TaskGroup for
+        // concurrent thumbnail generation to improve performance.
         for info in windowInfos {
             do {
                 let filter: SCContentFilter

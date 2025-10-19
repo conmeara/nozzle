@@ -1,4 +1,5 @@
 import AppKit
+import CryptoKit
 import Foundation
 import ScreenCaptureKit
 
@@ -42,18 +43,18 @@ public struct WindowInfo: Identifiable, Hashable, Sendable {
 
         let appName = app.applicationName
 
-        // Create deterministic UUID from window ID
-        let windowIDString = String(format: "%08d", window.windowID)
-        let paddedString = String(repeating: "0", count: max(0, 32 - windowIDString.count)) + windowIDString
-
-        let part1 = String(paddedString.prefix(8))
-        let part2 = String(paddedString.dropFirst(8).prefix(4))
-        let part3 = String(paddedString.dropFirst(12).prefix(4))
-        let part4 = String(paddedString.dropFirst(16).prefix(4))
-        let part5 = String(paddedString.dropFirst(20).prefix(12))
-
-        let formatted = "\(part1)-\(part2)-\(part3)-\(part4)-\(part5)"
-        let uuid = UUID(uuidString: formatted) ?? UUID()
+        // Create deterministic UUID from window ID using SHA256 for collision-resistant identity
+        let stableIdString = "window:\(window.windowID)"
+        let digest = SHA256.hash(data: Data(stableIdString.utf8))
+        let uuid = digest.withUnsafeBytes { buffer -> UUID in
+            let bytes = buffer.bindMemory(to: UInt8.self)
+            return UUID(uuid: (
+                bytes[0], bytes[1], bytes[2], bytes[3],
+                bytes[4], bytes[5], bytes[6], bytes[7],
+                bytes[8], bytes[9], bytes[10], bytes[11],
+                bytes[12], bytes[13], bytes[14], bytes[15]
+            ))
+        }
 
         let title = window.title ?? "Untitled Window"
 
@@ -74,18 +75,18 @@ public struct WindowInfo: Identifiable, Hashable, Sendable {
     public static func forDisplay(_ display: SCDisplay, index: Int) -> WindowInfo {
         let displayName = index == 0 ? "Desktop" : "Desktop \(index + 1)"
 
-        // Create deterministic UUID from display ID
-        let displayIDString = String(format: "d%07d", display.displayID)
-        let paddedString = String(repeating: "0", count: max(0, 32 - displayIDString.count)) + displayIDString
-
-        let part1 = String(paddedString.prefix(8))
-        let part2 = String(paddedString.dropFirst(8).prefix(4))
-        let part3 = String(paddedString.dropFirst(12).prefix(4))
-        let part4 = String(paddedString.dropFirst(16).prefix(4))
-        let part5 = String(paddedString.dropFirst(20).prefix(12))
-
-        let formatted = "\(part1)-\(part2)-\(part3)-\(part4)-\(part5)"
-        let uuid = UUID(uuidString: formatted) ?? UUID()
+        // Create deterministic UUID from display ID using SHA256 for collision-resistant identity
+        let stableIdString = "display:\(display.displayID)"
+        let digest = SHA256.hash(data: Data(stableIdString.utf8))
+        let uuid = digest.withUnsafeBytes { buffer -> UUID in
+            let bytes = buffer.bindMemory(to: UInt8.self)
+            return UUID(uuid: (
+                bytes[0], bytes[1], bytes[2], bytes[3],
+                bytes[4], bytes[5], bytes[6], bytes[7],
+                bytes[8], bytes[9], bytes[10], bytes[11],
+                bytes[12], bytes[13], bytes[14], bytes[15]
+            ))
+        }
 
         return WindowInfo(
             id: uuid,

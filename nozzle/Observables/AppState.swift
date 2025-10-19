@@ -1,12 +1,14 @@
 import AppKit
 import Defaults
 import Foundation
+import OSLog
 import Settings
 import UniformTypeIdentifiers
 
 @Observable @MainActor
 class AppState {
   static let shared = AppState()
+  private static let logger = Logger(subsystem: "org.conmeara.nozzle.app", category: "AppState")
 
   var appDelegate: AppDelegate?
   private let contentManager = ContentManager.shared
@@ -504,7 +506,9 @@ class AppState {
             }
           }
         } else {
-          // Screenshot capture failed, skip to next item
+          // Screenshot capture failed - notify user and skip to next item
+          Self.logger.error("Failed to capture screenshot for item: \(item.title)")
+          NSSound.beep()
           self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
         }
       }
