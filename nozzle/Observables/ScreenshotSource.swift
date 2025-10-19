@@ -8,7 +8,8 @@ import OSLog
 final class ScreenshotSource: ContentSource {
     nonisolated private static let logger = Logger(subsystem: "org.conmeara.nozzle.content", category: "ScreenshotSource")
 
-    let id: String = "screenshots"
+    static let sourceID = "screenshots"
+    let id: String = ScreenshotSource.sourceID
     let name: String = "Screenshot"
     let icon: NSImage
     let type: ContentSourceType = .screenshot
@@ -17,7 +18,12 @@ final class ScreenshotSource: ContentSource {
 
     private var cachedItems: [ContentItem] = []
     private var windowInfoCache: [UUID: WindowInfo] = [:]
-    private var thumbnailCache: [UUID: Data] = [:]
+    private let thumbnailCache: NSCache<NSUUID, NSData> = {
+        let cache = NSCache<NSUUID, NSData>()
+        cache.countLimit = 50 // Limit to 50 thumbnails
+        cache.totalCostLimit = 100 * 1024 * 1024 // 100 MB limit
+        return cache
+    }()
     private var hasScreenRecordingPermission: Bool?
     private var lastRefreshTime: Date = .distantPast
     private let refreshInterval: TimeInterval = 5.0 // Refresh every 5 seconds when tab is active
@@ -122,7 +128,7 @@ final class ScreenshotSource: ContentSource {
 
             // Store window info for later capture
             windowInfoCache.removeAll()
-            thumbnailCache.removeAll() // Clear thumbnail cache to prevent memory leak
+            thumbnailCache.removeAllObjects() // Clear thumbnail cache to prevent memory leak
             for info in windowInfos {
                 windowInfoCache[info.id] = info
             }
@@ -132,13 +138,14 @@ final class ScreenshotSource: ContentSource {
 
             // Convert to ContentItems
             let items = windowInfos.map { info -> ContentItem in
-                ContentItem(
+                let thumbnailData = thumbnailCache.object(forKey: info.id as NSUUID) as Data?
+                return ContentItem(
                     id: info.id,
                     title: info.isDesktop ? info.title : "\(info.owningApplication) - \(info.title)",
                     timestamp: Date(),
                     sourceType: .screenshot,
                     sourceId: id,
-                    imageData: thumbnailCache[info.id],
+                    imageData: thumbnailData,
                     applicationBundleId: info.applicationBundleIdentifier
                 )
             }
@@ -183,15 +190,15 @@ final class ScreenshotSource: ContentSource {
             if windowInfo.isDesktop {
                 // Capture display
                 guard let display = content.displays.first(where: { $0.displayID == windowInfo.displayID }) else {
-                    Self.logger.error("Display not found for id: \(windowInfo.displayID ?? 0)")
+                    Self.logger.warning("Display no longer available for capture: \(windowInfo.displayID ?? 0)")
                     return nil
                 }
                 filter = SCContentFilter(display: display, excludingWindows: [])
             } else {
-                // Capture specific window
+                // Capture specific window - may have closed since last refresh
                 guard let windowID = windowInfo.windowID,
                       let window = content.windows.first(where: { $0.windowID == windowID }) else {
-                    Self.logger.error("Window not found for id: \(windowInfo.windowID ?? 0)")
+                    Self.logger.warning("Window '\(windowInfo.title)' no longer available (may have been closed)")
                     return nil
                 }
                 filter = SCContentFilter(desktopIndependentWindow: window)
@@ -252,7 +259,7 @@ final class ScreenshotSource: ContentSource {
                 if let tiffData = nsImage.tiffRepresentation,
                    let bitmapImage = NSBitmapImageRep(data: tiffData),
                    let pngData = bitmapImage.representation(using: .png, properties: [:]) {
-                    thumbnailCache[info.id] = pngData
+                    thumbnailCache.setObject(pngData as NSData, forKey: info.id as NSUUID, cost: pngData.count)
                 }
             } catch {
                 Self.logger.debug("Failed to generate thumbnail for \(info.title): \(error.localizedDescription)")

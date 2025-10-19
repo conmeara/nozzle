@@ -484,7 +484,7 @@ class AppState {
     // Handle screenshot items with on-demand capture
     if item.sourceType == .screenshot {
       Task { @MainActor in
-        guard let screenshotSource = contentManager.sources["screenshots"] as? ScreenshotSource else {
+        guard let screenshotSource = contentManager.sources[ScreenshotSource.sourceID] as? ScreenshotSource else {
           // Skip this item if screenshot source not available
           self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
           return
