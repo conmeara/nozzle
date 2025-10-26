@@ -16,8 +16,17 @@ final class ScreenshotSource: ContentSource {
     var isMonitoring: Bool = false
     var searchQuery: String = ""
 
+    private struct WindowRecord {
+        var info: WindowInfo
+        var lastSeen: Date
+    }
+
     private var cachedItems: [ContentItem] = []
-    private var windowInfoCache: [UUID: WindowInfo] = [:]
+    private var windowRecords: [UUID: WindowRecord] = [:]
+    private var orderedWindowIds: [UUID] = []
+    private var thumbnailCacheKeys: Set<UUID> = []
+    private let staleWindowGracePeriod: TimeInterval = 12.0
+    private let minimumWindowDimension: CGFloat = 32.0
     private let thumbnailCache: NSCache<NSUUID, NSData> = {
         let cache = NSCache<NSUUID, NSData>()
         cache.countLimit = 50 // Limit to 50 thumbnails
@@ -89,70 +98,90 @@ final class ScreenshotSource: ContentSource {
                 onScreenWindowsOnly: true
             )
 
-            var windowInfos: [WindowInfo] = []
+            let now = Date()
+            var newOrderedIds: [UUID] = []
+            var seenIds = Set<UUID>()
+            var infosNeedingThumbnails: [WindowInfo] = []
 
-            // Add desktop/displays first
+            // Add desktop/displays first to keep them at the top of the list
             for (index, display) in content.displays.enumerated() {
                 let info = WindowInfo.forDisplay(display, index: index)
-                windowInfos.append(info)
+                if register(info: info, seenAt: now) {
+                    infosNeedingThumbnails.append(info)
+                }
+                if seenIds.insert(info.id).inserted {
+                    newOrderedIds.append(info.id)
+                }
             }
 
-            // Add windows
+            Self.logger.debug("Total windows from ScreenCaptureKit: \(content.windows.count)")
+
             for window in content.windows {
-                // Skip windows without titles or that are too small
-                guard let info = WindowInfo.from(window),
-                      window.frame.width >= 50 && window.frame.height >= 50 else {
+                guard let info = WindowInfo.from(window) else {
+                    Self.logger.debug("Filtered out window (missing owning application): \(window.title ?? "nil") [\(window.windowID)]")
                     continue
                 }
 
-                // Filter out system windows that shouldn't be captured
-                let title = info.title.lowercased()
-                let appName = info.owningApplication.lowercased()
-
-                // Skip nozzle's own windows
-                if info.applicationBundleIdentifier == Bundle.main.bundleIdentifier {
+                if let reason = exclusionReason(for: info) {
+                    Self.logger.debug("Filtered out window (\(reason)): \(info.title) [\(info.owningApplication)]")
                     continue
                 }
 
-                // Skip windows with problematic titles or missing app names
-                if title.contains("backstop") ||
-                   title.contains("wallpaper") ||
-                   title.isEmpty ||
-                   appName.isEmpty ||
-                   appName == "window server" {
-                    continue
+                if register(info: info, seenAt: now) {
+                    infosNeedingThumbnails.append(info)
                 }
 
-                windowInfos.append(info)
+                Self.logger.debug("Including window: \(info.title) [\(info.owningApplication)] ID:\(window.windowID) UUID:\(info.id)")
+                if seenIds.insert(info.id).inserted {
+                    newOrderedIds.append(info.id)
+                }
             }
 
-            // Store window info for later capture
-            windowInfoCache.removeAll()
-            thumbnailCache.removeAllObjects() // Clear thumbnail cache to prevent memory leak
-            for info in windowInfos {
-                windowInfoCache[info.id] = info
+            if !orderedWindowIds.isEmpty {
+                for id in orderedWindowIds where !seenIds.contains(id) {
+                    if let record = windowRecords[id] {
+                        if now.timeIntervalSince(record.lastSeen) <= staleWindowGracePeriod {
+                            if seenIds.insert(id).inserted {
+                                newOrderedIds.append(id)
+                            }
+                        } else {
+                            windowRecords.removeValue(forKey: id)
+                            thumbnailCache.removeObject(forKey: id as NSUUID)
+                            Self.logger.debug("Pruned stale window: \(record.info.title)")
+                        }
+                    }
+                }
             }
 
-            // Generate thumbnails in background
-            await generateThumbnails(for: windowInfos, content: content)
+            orderedWindowIds = newOrderedIds
 
-            // Convert to ContentItems
-            let items = windowInfos.map { info -> ContentItem in
-                let thumbnailData = thumbnailCache.object(forKey: info.id as NSUUID) as Data?
+            let activeKeySet = Set(newOrderedIds)
+            let removedKeys = thumbnailCacheKeys.subtracting(activeKeySet)
+            for id in removedKeys {
+                thumbnailCache.removeObject(forKey: id as NSUUID)
+            }
+            thumbnailCacheKeys = activeKeySet
+
+            await generateThumbnails(for: infosNeedingThumbnails, content: content)
+
+            self.cachedItems = self.orderedWindowIds.compactMap { id -> ContentItem? in
+                guard let record = self.windowRecords[id] else { return nil }
+                let info = record.info
+                let thumbnailData = self.thumbnailCache.object(forKey: id as NSUUID) as NSData?
+
                 return ContentItem(
                     id: info.id,
                     title: info.isDesktop ? info.title : "\(info.owningApplication) - \(info.title)",
-                    timestamp: Date(),
+                    timestamp: record.lastSeen,
                     sourceType: .screenshot,
-                    sourceId: id,
-                    imageData: thumbnailData,
+                    sourceId: self.id,
+                    imageData: thumbnailData as Data?,
                     applicationBundleId: info.applicationBundleIdentifier
                 )
             }
 
-            cachedItems = items
-            lastRefreshTime = Date()
-            Self.logger.info("Refreshed screenshot source with \(items.count) items")
+            lastRefreshTime = now
+            Self.logger.info("Refreshed screenshot source with \(self.cachedItems.count) items (filtered from \(content.windows.count) windows)")
 
         } catch {
             Self.logger.error("Failed to get shareable content: \(error.localizedDescription)")
@@ -173,10 +202,13 @@ final class ScreenshotSource: ContentSource {
     /// Capture a screenshot for a specific window or display
     @available(macOS 12.3, *)
     func captureScreenshot(for itemId: UUID) async -> NSImage? {
-        guard let windowInfo = windowInfoCache[itemId] else {
+        guard let record = windowRecords[itemId] else {
             Self.logger.error("Window info not found for id: \(itemId)")
             return nil
         }
+
+        let windowInfo = record.info
+        windowRecords[itemId]?.lastSeen = Date()
 
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(
@@ -220,8 +252,137 @@ final class ScreenshotSource: ContentSource {
 
     // MARK: - Private Helpers
 
+    private func register(info: WindowInfo, seenAt timestamp: Date) -> Bool {
+        let previous = windowRecords[info.id]
+        windowRecords[info.id] = WindowRecord(info: info, lastSeen: timestamp)
+
+        guard let previous else {
+            return true
+        }
+
+        if thumbnailCache.object(forKey: info.id as NSUUID) == nil {
+            return true
+        }
+
+        if previous.info.title == info.title,
+           previous.info.owningApplication == info.owningApplication,
+           previous.info.isDesktop == info.isDesktop,
+           previous.info.bounds.equalTo(info.bounds) {
+            return false
+        }
+
+        return true
+    }
+
+    private func exclusionReason(for info: WindowInfo) -> String? {
+        if info.isDesktop {
+            return nil
+        }
+
+        // Filter out nozzle itself
+        if info.applicationBundleIdentifier == Bundle.main.bundleIdentifier {
+            return "nozzle window"
+        }
+
+        // Filter by bundle ID - most reliable method for system apps
+        if let bundleId = info.applicationBundleIdentifier {
+            let systemBundleIds: Set<String> = [
+                "com.apple.controlcenter",
+                "com.apple.dock",
+                "com.apple.WindowManager",
+                "com.apple.systemuiserver",
+                "com.apple.notificationcenterui",
+                "com.apple.Spotlight",
+                "com.apple.CoreSimulator.SimulatorTrampoline"
+            ]
+
+            if systemBundleIds.contains(bundleId) {
+                return "system UI (\(bundleId))"
+            }
+        }
+
+        // Filter by application name (fallback for when bundle ID is unavailable)
+        let loweredAppName = info.owningApplication.lowercased()
+        let systemAppNames: Set<String> = [
+            "control center",
+            "dock",
+            "systemuiserver",
+            "notification center",
+            "window server",
+            "spotlight"
+        ]
+
+        if systemAppNames.contains(loweredAppName) {
+            return "system application (\(info.owningApplication))"
+        }
+
+        // Filter by window size
+        if info.bounds.width < minimumWindowDimension || info.bounds.height < minimumWindowDimension {
+            return "window too small (\(Int(info.bounds.width))x\(Int(info.bounds.height)))"
+        }
+
+        // Filter by window aspect ratio (menu bar extras and status items)
+        let aspectRatio = info.bounds.width / info.bounds.height
+        if aspectRatio > 15.0 {
+            return "aspect ratio too wide (likely menu bar item)"
+        }
+        if aspectRatio < 0.067 { // 1/15
+            return "aspect ratio too narrow (likely status item)"
+        }
+
+        // Filter menu bar items by position and height
+        // Menu bar is at top of screen (y ≈ 0) with typical height of ~25-44 pixels
+        if info.bounds.origin.y <= 5.0 && info.bounds.height < 50.0 {
+            return "menu bar position (y=\(Int(info.bounds.origin.y)), h=\(Int(info.bounds.height)))"
+        }
+
+        // Filter by title patterns
+        let loweredTitle = info.title.lowercased()
+
+        // Generic system titles
+        if loweredTitle.contains("backstop") || loweredTitle.contains("wallpaper") {
+            return "background wallpaper"
+        }
+
+        if loweredTitle == "menubar" || loweredTitle == "menu bar" {
+            return "menu bar window"
+        }
+
+        // Generic "Item-0", "Item-1", etc. titles
+        if loweredTitle.range(of: "^item-\\d+$", options: .regularExpression) != nil {
+            return "generic item title"
+        }
+
+        // Status windows and floating indicators
+        if loweredTitle == "status" || loweredTitle.hasSuffix(" - status") || loweredTitle.hasSuffix(" status") {
+            return "status window"
+        }
+
+        // Other utility/non-content window patterns
+        let utilityPatterns = [
+            "^untitled window$",  // Generic untitled windows without content
+            " - preferences$",    // Floating preferences panels (actual prefs windows usually have longer titles)
+            " - settings$"        // Floating settings panels
+        ]
+
+        for pattern in utilityPatterns {
+            if loweredTitle.range(of: pattern, options: .regularExpression) != nil {
+                return "utility window (\(info.title))"
+            }
+        }
+
+        // Very short or unhelpful titles (but allow single-char titles for some apps)
+        if info.title.trimmingCharacters(in: .whitespaces).count == 0 {
+            return "empty title"
+        }
+
+        return nil
+    }
+
     @available(macOS 12.3, *)
     private func generateThumbnails(for windowInfos: [WindowInfo], content: SCShareableContent) async {
+        guard !windowInfos.isEmpty else { return }
+
         // Generate thumbnails with good preview resolution
         let config = SCStreamConfiguration()
         config.width = 1200

@@ -34,19 +34,20 @@ public struct WindowInfo: Identifiable, Hashable, Sendable {
         self.isDesktop = isDesktop
     }
 
-    /// Create WindowInfo from SCWindow
-    @available(macOS 12.3, *)
-    public static func from(_ window: SCWindow) -> WindowInfo? {
-        guard let app = window.owningApplication else {
-            return nil
-        }
+    /// Generate a stable UUID for a window identifier using SHA256 hashing
+    static func stableIdentifier(forWindowID windowID: CGWindowID) -> UUID {
+        stableIdentifier(namespace: "window", value: "\(windowID)")
+    }
 
-        let appName = app.applicationName
+    /// Generate a stable UUID for a display identifier using SHA256 hashing
+    static func stableIdentifier(forDisplayID displayID: CGDirectDisplayID) -> UUID {
+        stableIdentifier(namespace: "display", value: "\(displayID)")
+    }
 
-        // Create deterministic UUID from window ID using SHA256 for collision-resistant identity
-        let stableIdString = "window:\(window.windowID)"
+    private static func stableIdentifier(namespace: String, value: String) -> UUID {
+        let stableIdString = "\(namespace):\(value)"
         let digest = SHA256.hash(data: Data(stableIdString.utf8))
-        let uuid = digest.withUnsafeBytes { buffer -> UUID in
+        return digest.withUnsafeBytes { buffer -> UUID in
             let bytes = buffer.bindMemory(to: UInt8.self)
             return UUID(uuid: (
                 bytes[0], bytes[1], bytes[2], bytes[3],
@@ -55,11 +56,26 @@ public struct WindowInfo: Identifiable, Hashable, Sendable {
                 bytes[12], bytes[13], bytes[14], bytes[15]
             ))
         }
+    }
 
-        let title = window.title ?? "Untitled Window"
+    /// Create WindowInfo from SCWindow
+    @available(macOS 12.3, *)
+    public static func from(_ window: SCWindow) -> WindowInfo? {
+        guard let app = window.owningApplication else {
+            return nil
+        }
+
+        let trimmedAppName = app.applicationName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let appName = trimmedAppName.isEmpty
+            ? (app.bundleIdentifier ?? "Unknown Application")
+            : trimmedAppName
+
+        // Handle both nil and empty string titles
+        let rawTitle = window.title ?? ""
+        let title = rawTitle.trimmingCharacters(in: .whitespaces).isEmpty ? "Untitled Window" : rawTitle
 
         return WindowInfo(
-            id: uuid,
+            id: stableIdentifier(forWindowID: window.windowID),
             windowID: window.windowID,
             displayID: nil,
             title: title,
@@ -75,21 +91,8 @@ public struct WindowInfo: Identifiable, Hashable, Sendable {
     public static func forDisplay(_ display: SCDisplay, index: Int) -> WindowInfo {
         let displayName = index == 0 ? "Desktop" : "Desktop \(index + 1)"
 
-        // Create deterministic UUID from display ID using SHA256 for collision-resistant identity
-        let stableIdString = "display:\(display.displayID)"
-        let digest = SHA256.hash(data: Data(stableIdString.utf8))
-        let uuid = digest.withUnsafeBytes { buffer -> UUID in
-            let bytes = buffer.bindMemory(to: UInt8.self)
-            return UUID(uuid: (
-                bytes[0], bytes[1], bytes[2], bytes[3],
-                bytes[4], bytes[5], bytes[6], bytes[7],
-                bytes[8], bytes[9], bytes[10], bytes[11],
-                bytes[12], bytes[13], bytes[14], bytes[15]
-            ))
-        }
-
         return WindowInfo(
-            id: uuid,
+            id: stableIdentifier(forDisplayID: display.displayID),
             windowID: nil,
             displayID: display.displayID,
             title: displayName,

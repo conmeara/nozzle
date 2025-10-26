@@ -9,6 +9,10 @@ import UniformTypeIdentifiers
 class AppState {
   static let shared = AppState()
   private static let logger = Logger(subsystem: "org.conmeara.nozzle.app", category: "AppState")
+  private enum PasteDelays {
+    static let clipboardSettle: UInt64 = 40_000_000 // 40 ms
+    static let betweenItems: UInt64 = 100_000_000   // 100 ms
+  }
 
   var appDelegate: AppDelegate?
   private let contentManager = ContentManager.shared
@@ -423,11 +427,10 @@ class AppState {
     originalClipboardState: Clipboard.ClipboardSnapshot,
     clipboardContentCache: [UUID: [Clipboard.ClipboardContentData]]
   ) {
-    // Step 1: Combine and paste all text content as one operation (off main thread)
-    if !contextTextItems.isEmpty || !exampleTextItems.isEmpty || !promptText.isEmpty || !promptChips.isEmpty {
-      // Compute the combined text off the main thread, then orchestrate pastes on MainActor
-      Task { @MainActor in
-        // Capture prompt chips explicitly to avoid capturing self in detached task
+    let allMedia = contextMediaItems + exampleMediaItems
+
+    Task { @MainActor in
+      if !contextTextItems.isEmpty || !exampleTextItems.isEmpty || !promptText.isEmpty || !promptChips.isEmpty {
         let chips = self.promptChips
         let plain = await Task.detached(priority: nil) { () -> String in
           await CombinedContentBuilder.build(
@@ -439,36 +442,27 @@ class AppState {
         }.value
 
         Clipboard.shared.copyString(plain)
-        // Wait for clipboard update, then paste
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
-          Clipboard.shared.paste()
-          // Step 2: After text is pasted, paste media items sequentially
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // Paste context media first, then example media to preserve order
-            let allMedia = contextMediaItems + exampleMediaItems
-            self.pasteMediaItems(
-              allMedia,
-              index: 0,
-              promptText: promptText,
-              hasClipboardItems: hasClipboardItems,
-              originalClipboardState: originalClipboardState,
-              clipboardContentCache: clipboardContentCache
-            )
-          }
-        }
+        try? await Task.sleep(nanoseconds: PasteDelays.clipboardSettle)
+        Clipboard.shared.paste()
+        try? await Task.sleep(nanoseconds: PasteDelays.betweenItems)
       }
-    } else {
-      // No text content, just paste media items
-      let allMedia = contextMediaItems + exampleMediaItems
-      pasteMediaItems(allMedia, index: 0, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
+
+      await self.pasteMediaItems(
+        allMedia,
+        index: 0,
+        promptText: promptText,
+        hasClipboardItems: hasClipboardItems,
+        originalClipboardState: originalClipboardState,
+        clipboardContentCache: clipboardContentCache
+      )
     }
   }
   
   @MainActor
-  private func pasteMediaItems(_ mediaItems: [ContentItem], index: Int, promptText: String, hasClipboardItems: Bool, originalClipboardState: Clipboard.ClipboardSnapshot, clipboardContentCache: [UUID: [Clipboard.ClipboardContentData]]) {
+  private func pasteMediaItems(_ mediaItems: [ContentItem], index: Int, promptText: String, hasClipboardItems: Bool, originalClipboardState: Clipboard.ClipboardSnapshot, clipboardContentCache: [UUID: [Clipboard.ClipboardContentData]]) async {
     guard index < mediaItems.count else {
       // All operations complete, restore state
-      finalizeCombinedPaste(promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState)
+      await finalizeCombinedPaste(promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState)
       return
     }
 
@@ -477,40 +471,31 @@ class AppState {
     // Skip folders - their contents are already captured in the selection
     if item.isFolder {
       // Move to next item without pasting
-      pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
+      await pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
       return
     }
 
     // Handle screenshot items with on-demand capture
     if item.sourceType == .screenshot {
-      Task { @MainActor in
-        guard let screenshotSource = contentManager.sources[ScreenshotSource.sourceID] as? ScreenshotSource else {
-          // Skip this item if screenshot source not available
-          self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
-          return
-        }
+      guard let screenshotSource = contentManager.sources[ScreenshotSource.sourceID] as? ScreenshotSource else {
+        await pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
+        return
+      }
 
-        // Capture screenshot
-        if let capturedImage = await screenshotSource.captureScreenshot(for: item.id) {
-          let pasteboard = NSPasteboard.general
-          pasteboard.clearContents()
-          pasteboard.writeObjects([capturedImage])
+      if let capturedImage = await screenshotSource.captureScreenshot(for: item.id) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.writeObjects([capturedImage])
 
-          // Wait for clipboard update, then paste
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
-            Clipboard.shared.paste()
-
-            // Wait before next media item
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-              self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
-            }
-          }
-        } else {
-          // Screenshot capture failed - notify user and skip to next item
-          Self.logger.error("Failed to capture screenshot for item: \(item.title)")
-          NSSound.beep()
-          self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
-        }
+        try? await Task.sleep(nanoseconds: PasteDelays.clipboardSettle)
+        Clipboard.shared.paste()
+        try? await Task.sleep(nanoseconds: PasteDelays.betweenItems)
+        await pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
+      } else {
+        // Screenshot capture failed - notify user and skip to next item
+        Self.logger.error("Failed to capture screenshot for item: \(item.title)")
+        NSSound.beep()
+        await pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
       }
       return
     }
@@ -533,19 +518,14 @@ class AppState {
       }
     }
 
-    // Wait for clipboard update, then paste
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
-      Clipboard.shared.paste()
-
-      // Wait before next media item
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-        self.pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
-      }
-    }
+    try? await Task.sleep(nanoseconds: PasteDelays.clipboardSettle)
+    Clipboard.shared.paste()
+    try? await Task.sleep(nanoseconds: PasteDelays.betweenItems)
+    await pasteMediaItems(mediaItems, index: index + 1, promptText: promptText, hasClipboardItems: hasClipboardItems, originalClipboardState: originalClipboardState, clipboardContentCache: clipboardContentCache)
   }
   
   @MainActor
-  private func finalizeCombinedPaste(promptText: String, hasClipboardItems: Bool, originalClipboardState: Clipboard.ClipboardSnapshot) {
+  private func finalizeCombinedPaste(promptText: String, hasClipboardItems: Bool, originalClipboardState: Clipboard.ClipboardSnapshot) async {
     // Disable multi-paste mode (only if we had clipboard items)
     if hasClipboardItems {
       Clipboard.shared.setMultiPasteMode(false)
@@ -558,15 +538,15 @@ class AppState {
     AppStoreReview.ask()
     
     // Restore selections after a short delay to ensure UI is updated
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-      // Restore prompt text
-      self.promptText = promptText
-      
-      // Phase 2: Selection is handled by ContentManager
-      
-      // Update footer visibility
-      self.updateFooterItemVisibility()
-    }
+    try? await Task.sleep(nanoseconds: PasteDelays.betweenItems)
+
+    // Restore prompt text
+    self.promptText = promptText
+
+    // Phase 2: Selection is handled by ContentManager
+
+    // Update footer visibility
+    self.updateFooterItemVisibility()
   }
   
   // MARK: - Prompt chips helpers
