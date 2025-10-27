@@ -64,6 +64,7 @@ enum KeyChord: CaseIterable {
   case nextTab
   case previousTabPage
   case nextTabPage
+  case refresh
   case unknown
 
   init(_ event: NSEvent?) {
@@ -156,6 +157,8 @@ enum KeyChord: CaseIterable {
       self = .previousTabPage
     case (.rightBracket, [.command, .shift]):
       self = .nextTabPage
+    case (.r, [.command, .shift]):
+      self = .refresh
     case (_, _) where !modifierFlags.isDisjoint(with: [.command, .control, .option]):
       self = .ignored
     default:

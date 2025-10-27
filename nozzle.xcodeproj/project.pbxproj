@@ -179,6 +179,8 @@
 		F5C180392E622C8B007ED483 /* DictationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C180382E622C8B007ED483 /* DictationManager.swift */; };
 		F5C1805F2E63E4A5007ED483 /* CombinedContentBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C1805E2E63E4A5007ED483 /* CombinedContentBuilder.swift */; };
 		F5C88D252DE55BA500EF8FA3 /* PromptHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */; };
+		F5CED7032E9AD2920071DABC /* ScreenshotSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5CED7022E9AD2920071DABC /* ScreenshotSource.swift */; };
+		F5CED7072E9AD41D0071DABC /* WindowInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5CED7062E9AD41D0071DABC /* WindowInfo.swift */; };
 		F5F0C0012EE0000000000001 /* PromptChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0002EE0000000000001 /* PromptChip.swift */; };
 		F5F0C0032EE0000000000002 /* PromptChipsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0022EE0000000000002 /* PromptChipsStore.swift */; };
 		F5F0C0052EE0000000000003 /* PromptChipsBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F0C0042EE0000000000003 /* PromptChipsBarView.swift */; };
@@ -606,6 +608,8 @@
 		F5C180382E622C8B007ED483 /* DictationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationManager.swift; sourceTree = "<group>"; };
 		F5C1805E2E63E4A5007ED483 /* CombinedContentBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedContentBuilder.swift; sourceTree = "<group>"; };
 		F5C88D242DE55BA500EF8FA3 /* PromptHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptHeaderView.swift; sourceTree = "<group>"; };
+		F5CED7022E9AD2920071DABC /* ScreenshotSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotSource.swift; sourceTree = "<group>"; };
+		F5CED7062E9AD41D0071DABC /* WindowInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowInfo.swift; sourceTree = "<group>"; };
 		F5F0C0002EE0000000000001 /* PromptChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChip.swift; sourceTree = "<group>"; };
 		F5F0C0022EE0000000000002 /* PromptChipsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChipsStore.swift; sourceTree = "<group>"; };
 		F5F0C0042EE0000000000003 /* PromptChipsBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChipsBarView.swift; sourceTree = "<group>"; };
@@ -691,6 +695,7 @@
 		DA05B50F2C234C1C006980FE /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F5CED7062E9AD41D0071DABC /* WindowInfo.swift */,
 				F56CE2792E739CC0004E76C1 /* ShortcutCategory.swift */,
 				F569FB1E2E6E87F50076D784 /* PromptEnhancement.swift */,
 				F50C3E212E64EDF800420829 /* DesignConstants.swift */,
@@ -799,6 +804,7 @@
 		DA3BCB902C3EEC1000B01BC1 /* Observables */ = {
 			isa = PBXGroup;
 			children = (
+				F5CED7022E9AD2920071DABC /* ScreenshotSource.swift */,
 				F507DA002E8B781E00974B61 /* ContextualShortcutsProvider.swift */,
 				F5C180382E622C8B007ED483 /* DictationManager.swift */,
 				F55A77C92E5E37F50039E760 /* PromptsSource.swift */,
@@ -1267,8 +1273,10 @@
 				DA243D142C2F66DD0012A27F /* Storage.swift in Sources */,
 				DA5078992CF2676B00215488 /* MouseMovedViewModifer.swift in Sources */,
 				DA19690E2C3EEFA900258481 /* KeyboardShortcutView.swift in Sources */,
+				F5CED7072E9AD41D0071DABC /* WindowInfo.swift in Sources */,
 				DA243D122C2F64830012A27F /* ContentView.swift in Sources */,
 				F507DA012E8B781E00974B61 /* ContextualShortcutsProvider.swift in Sources */,
+				F5CED7032E9AD2920071DABC /* ScreenshotSource.swift in Sources */,
 				F50C3E222E64EDF800420829 /* DesignConstants.swift in Sources */,
 				DAD665662898A1C000975096 /* KeyChord.swift in Sources */,
 				DA689FC42C1CF0F00009B887 /* AppearanceSettingsPane.swift in Sources */,

@@ -15,6 +15,7 @@ struct ListItemView<Title: View>: View {
   var selectionSymbolColor: Color = .white
   var selectionBackgroundColor: Color? = nil
   var isPromptItem: Bool = false
+  var showTitleWithImage: Bool = false
   var onPlusButtonClick: (() -> Void)? = nil
   @ViewBuilder var title: () -> Title
 
@@ -101,8 +102,16 @@ struct ListItemView<Title: View>: View {
           .accessibilityIdentifier("copy-history-item")
           .padding(.trailing, 5)
           .padding(.vertical, 5)
-        // When showing a thumbnail instead of text, use a spacer to push actions right
-        Spacer()
+
+        if showTitleWithImage {
+          // Show title text next to the thumbnail
+          ListItemTitleView(attributedTitle: attributedTitle, title: title)
+            .padding(.trailing, 1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+          // When showing a thumbnail without text, use a spacer to push actions right
+          Spacer()
+        }
       } else {
         ListItemTitleView(attributedTitle: attributedTitle, title: title)
           .padding(.trailing, 1)

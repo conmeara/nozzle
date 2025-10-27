@@ -34,6 +34,8 @@
 	<string>NSApplication</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>nozzle uses on-device speech recognition to transcribe audio into text</string>
+	<key>NSScreenCaptureDescription</key>
+	<string>nozzle needs screen recording access to capture screenshots of windows and your desktop</string>
 	<key>SUEnableDownloaderService</key>
 	<true/>
 	<key>SUEnableInstallerLauncherService</key>

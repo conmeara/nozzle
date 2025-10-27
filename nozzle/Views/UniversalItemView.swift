@@ -108,6 +108,7 @@ struct UniversalItemView: View {
                         selectionSymbolColor: .white,
                         selectionBackgroundColor: (item.isExample ? .yellow : nil),
                         isPromptItem: item.base.sourceId == "prompts",
+                        showTitleWithImage: item.base.sourceType == .screenshot,
                         onPlusButtonClick: { addPromptToInput() }
                     ) { titleView() }
                     .onMouseMove {

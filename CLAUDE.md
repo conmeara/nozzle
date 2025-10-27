@@ -75,8 +75,10 @@ nozzle v3 implements a layered, protocol-oriented architecture that enables unli
                   │
 ┌─────────────────▼───────────────────────────────┐
 │             Implementation Layer               │
-│  ClipboardSource │ FileSystemSource │ Future   │
-│   (Adapter)      │  (File Monitor)  │ Sources  │
+│  ClipboardSource │ FileSystemSource │          │
+│   (Adapter)      │  (File Monitor)  │          │
+│  ScreenshotSource│    Future        │          │
+│  (Win/Display)   │    Sources       │          │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -97,24 +99,26 @@ nozzle v3 implements a layered, protocol-oriented architecture that enables unli
 #### Source Implementations
 5. **ClipboardSource.swift**: 🆕 Adapter wrapping existing clipboard functionality
 6. **FileSystemSource.swift**: 🆕 File/folder monitoring with security-scoped bookmarks
-7. **SecurityScopedBookmarks.swift**: 🆕 Persistent folder access management
+7. **ScreenshotSource.swift**: 🆕 Window/display capture via ScreenCaptureKit
+8. **SecurityScopedBookmarks.swift**: 🆕 Persistent folder access management
+9. **WindowInfo.swift**: 🆕 Window/display metadata with stable identifiers
 
 #### Universal UI Layer
-8. **UniversalItemDecorator.swift**: 🆕 Adapter for non-clipboard items
-9. **UniversalListView.swift**: 🆕 List view for non-clipboard sources
-10. **UniversalItemView.swift**: 🆕 Item view using existing ListItemView
+10. **UniversalItemDecorator.swift**: 🆕 Adapter for non-clipboard items
+11. **UniversalListView.swift**: 🆕 List view for non-clipboard sources
+12. **UniversalItemView.swift**: 🆕 Item view using existing ListItemView
 
 #### Existing Components (Enhanced)
-11. **ContentView.swift**: ⚡ Enhanced with dynamic tabs and source switching
-12. **AppState.swift**: ⚡ Enhanced with cross-source selection support
-13. **AppDelegate.swift**: ⚡ Enhanced with source registration and environment injection
+13. **ContentView.swift**: ⚡ Enhanced with dynamic tabs and source switching
+14. **AppState.swift**: ⚡ Enhanced with cross-source selection support
+15. **AppDelegate.swift**: ⚡ Enhanced with source registration and environment injection
 
 #### Unchanged Core (Backward Compatibility)
-14. **nozzleApp.swift**: Main SwiftUI app entry point
-15. **Clipboard.swift**: Core clipboard monitoring (unchanged)
-16. **History.swift**: Clipboard history management (unchanged)
-17. **HistoryListView.swift**: Clipboard-specific UI (unchanged)
-18. **HistoryItemView.swift**: Clipboard item UI (unchanged)
+16. **nozzleApp.swift**: Main SwiftUI app entry point
+17. **Clipboard.swift**: Core clipboard monitoring (unchanged)
+18. **History.swift**: Clipboard history management (unchanged)
+19. **HistoryListView.swift**: Clipboard-specific UI (unchanged)
+20. **HistoryItemView.swift**: Clipboard item UI (unchanged)
 
 ### Data Flow (v3)
 
@@ -240,6 +244,37 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
 - **Stability**: SHA256-based UUID generation for consistent file identification
 - **Performance**: Async scanning with MainActor updates
 - **Search**: File name and path content filtering
+
+#### ScreenshotSource (Window/Display Capture)
+- **Modern API**: Uses ScreenCaptureKit (macOS 12.3+) for window enumeration and capture
+- **Multi-Layered Filtering**: Comprehensive window filtering removes system UI clutter:
+  - Bundle ID filtering (most reliable for system apps like Control Center, Dock, Window Manager)
+  - Application name filtering (fallback when bundle ID unavailable)
+  - Geometry-based filtering (aspect ratio, position, size)
+  - Title pattern filtering (generic names, status windows, utility windows)
+- **Smart Caching**:
+  - 12-second grace period prevents UI flicker during macOS animations/transitions
+  - NSCache with 50-item/100MB limits for memory management
+  - Thumbnail cache pruning tracks active windows to prevent unbounded growth
+- **Thumbnail Generation**:
+  - High-quality 1200x800 resolution for high-DPI displays
+  - 2-second timeout per capture prevents UI freezes
+  - Placeholder images on failure provide consistent UX
+  - Serial processing required (SCWindow/SCDisplay not Sendable in current API)
+- **Performance Characteristics**:
+  - Auto-refresh every 5 seconds when tab is active
+  - Manual refresh via Cmd+Shift+R
+  - On-demand full screenshot capture (not pre-cached)
+  - Typical thumbnail generation: 100-200ms per window
+- **Permission Handling**:
+  - Screen recording permission required (Info.plist: NSScreenCaptureDescription)
+  - Permission state cached with invalidation on error
+  - Graceful degradation with user-friendly error states
+- **Known Limitations**:
+  - Sequential thumbnail generation can take several seconds with many windows (20+ windows)
+  - Rare false positives in filtering (e.g., legitimate apps named "Settings" or documents titled "Untitled Window")
+  - No per-window sensitivity detection (users should be cautious with sensitive content)
+  - Requires macOS 12.3+ for ScreenCaptureKit APIs
 
 #### ContentManager (Coordinator)
 ```swift
@@ -433,12 +468,14 @@ UnifiedInputFieldView(
     - `ContentSource.swift`: Universal source interface
     - `ContentItem.swift`: Unified item model
     - `ContentSourceType.swift`: Source type enum
+    - `WindowInfo.swift`: 🆕 Window/display metadata with stable identifiers
     - `HistoryItem.swift`: Existing clipboard data model
     - `HistoryItemContent.swift`: Existing clipboard content model
   - **Observables/**: State management (@Observable classes)
     - `ContentManager.swift`: 🆕 Central source coordinator
     - `ClipboardSource.swift`: 🆕 Clipboard adapter
     - `FileSystemSource.swift`: 🆕 Folder monitoring source
+    - `ScreenshotSource.swift`: 🆕 Window/display capture source
     - `UniversalItemDecorator.swift`: 🆕 Universal item wrapper
     - `AppState.swift`: ⚡ Enhanced with cross-source support
     - `History.swift`: Existing clipboard history
@@ -470,15 +507,17 @@ UnifiedInputFieldView(
 Models/
 ├── ContentSource.swift      # Universal source interface
 ├── ContentItem.swift        # Unified data model
-└── ContentSourceType.swift  # Source type enumeration
+├── ContentSourceType.swift  # Source type enumeration
+└── WindowInfo.swift         # Window/display metadata
 ```
 
-#### New Source Implementations  
+#### New Source Implementations
 ```
 Observables/
-├── ContentManager.swift        # Central coordinator
-├── ClipboardSource.swift      # Clipboard adapter
-├── FileSystemSource.swift     # File/folder source
+├── ContentManager.swift         # Central coordinator
+├── ClipboardSource.swift        # Clipboard adapter
+├── FileSystemSource.swift       # File/folder source
+├── ScreenshotSource.swift       # Window/display capture
 └── UniversalItemDecorator.swift # Universal item wrapper
 ```
 

@@ -98,13 +98,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Initialize ContentManager and register sources
     let contentManager = ContentManager.shared
-    
+
     // Register clipboard source
     contentManager.registerSource(ClipboardSource())
-    
+
     // Register Prompts source
     registerPromptsSource()
-    
+
+    // Register screenshot source
+    let screenshotSource = ScreenshotSource()
+    contentManager.registerSource(screenshotSource)
+    screenshotSource.startMonitoring() // startMonitoring() already performs initial refresh
+
     // Restore folder sources from bookmarks
     for url in Bookmarks.resolveAll() {
       // Skip and clean up bookmarks that no longer exist
@@ -114,10 +119,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       }
       let source = FileSystemSource(folderURL: url)
       contentManager.registerSource(source)
-      Task {
-        await source.refresh()
-        source.startMonitoring()
-      }
+      source.startMonitoring() // startMonitoring() already performs initial refresh
     }
 
     panel = FloatingPanel(

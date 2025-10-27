@@ -147,6 +147,8 @@ struct ContentView: View {
           contentManager.activeSourceId = newId
           if let fileSource = contentManager.sources[newId] as? FileSystemSource {
             Task { await fileSource.refreshIfNeeded() }
+          } else if let screenshotSource = contentManager.sources[newId] as? ScreenshotSource {
+            Task { await screenshotSource.refreshIfNeeded() }
           }
           if newId != "aggregated" {
             if let tabIndex = allTabs.firstIndex(where: { $0.id == newId }) {
@@ -176,6 +178,8 @@ struct ContentView: View {
           contentManager.activeSourceId = newId
           if let fileSource = contentManager.sources[newId] as? FileSystemSource {
             Task { await fileSource.refreshIfNeeded() }
+          } else if let screenshotSource = contentManager.sources[newId] as? ScreenshotSource {
+            Task { await screenshotSource.refreshIfNeeded() }
           }
           if newId != "aggregated" {
             if let tabIndex = allTabs.firstIndex(where: { $0.id == newId }) {
@@ -402,11 +406,13 @@ struct ContentView: View {
                 ) {
                   selectedTab = "aggregated"
                   contentManager.activeSourceId = "aggregated"
-                  // Refresh file sources if needed when viewing aggregated
+                  // Refresh file and screenshot sources if needed when viewing aggregated
                   Task {
                     for source in contentManager.getAllSources() {
                       if let fileSource = source as? FileSystemSource {
                         await fileSource.refreshIfNeeded()
+                      } else if let screenshotSource = source as? ScreenshotSource {
+                        await screenshotSource.refreshIfNeeded()
                       }
                     }
                   }
@@ -429,10 +435,14 @@ struct ContentView: View {
                   onTabSelect: { tabId, source in
                     selectedTab = tabId
                     contentManager.activeSourceId = tabId
-                    // For file tabs, only refresh if data is stale
+                    // For file and screenshot tabs, only refresh if data is stale
                     if let fileSource = source as? FileSystemSource {
                       Task {
                         await fileSource.refreshIfNeeded()
+                      }
+                    } else if let screenshotSource = source as? ScreenshotSource {
+                      Task {
+                        await screenshotSource.refreshIfNeeded()
                       }
                     }
                   },
@@ -1124,23 +1134,39 @@ struct TabButton: View {
               fileSystemSource.setSortOrder(.type, direction: .ascending)
             }
           }
-          
+
           Divider()
-          
+
           Button("Refresh") {
             Task {
               await fileSystemSource.refresh()
             }
           }
-          
+
           Button("Reveal in Finder") {
             NSWorkspace.shared.open(fileSystemSource.folderURL)
           }
-          
+
           Divider()
-          
+
           Button("Close Tab", role: .destructive) {
             onClose?()
+          }
+        } else if let screenshotSource = source as? ScreenshotSource {
+          // Context menu for screenshot tab
+          Button("Refresh") {
+            Task {
+              await screenshotSource.refresh()
+            }
+          }
+          .keyboardShortcut("r", modifiers: .command)
+
+          if showCloseButton {
+            Divider()
+
+            Button("Close Tab", role: .destructive) {
+              onClose?()
+            }
           }
         } else if showCloseButton {
           Button(action: { onClose?() }) {
