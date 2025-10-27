@@ -21,6 +21,12 @@ final class ScreenshotSource: ContentSource {
         }
     }
 
+    /// Invalidates the cached permission state, forcing a fresh check on next access.
+    /// Call this when permission state may have changed (e.g., user went to System Settings).
+    func invalidatePermissionCache() {
+        hasScreenRecordingPermission = nil
+    }
+
     static let sourceID = "screenshots"
     let id: String = ScreenshotSource.sourceID
     let name: String = "Screenshot"
@@ -52,6 +58,22 @@ final class ScreenshotSource: ContentSource {
     /// Thumbnail height for preview images. 800px maintains a 3:2 aspect ratio
     /// and provides good quality for most window shapes.
     private let thumbnailHeight: Int = 800
+    /// Timeout for individual thumbnail capture operations. 2 seconds prevents
+    /// UI freezes from slow window capture while allowing time for complex windows.
+    private let thumbnailCaptureTimeout: TimeInterval = 2.0
+    /// Maximum aspect ratio for windows. 15:1 filters out wide menu bar items
+    /// while allowing ultra-wide monitors and tiled window layouts.
+    private let maxAspectRatio: CGFloat = 15.0
+    /// Minimum aspect ratio for windows. 1:15 filters out tall status items
+    /// and narrow panels while allowing legitimate vertical windows.
+    private let minAspectRatio: CGFloat = 0.067  // 1/15
+    /// Maximum Y coordinate for menu bar position check. Windows within 5px
+    /// of top of screen with height < 50px are likely menu bar items.
+    private let menuBarMaxY: CGFloat = 5.0
+    /// Maximum height for menu bar items. 50px accommodates standard menu bar
+    /// (25-44px) plus some margin while filtering out menu bar extras.
+    private let menuBarMaxHeight: CGFloat = 50.0
+
     private let thumbnailCache: NSCache<NSUUID, NSData> = {
         let cache = NSCache<NSUUID, NSData>()
         cache.countLimit = 50 // Limit to 50 thumbnails
@@ -61,6 +83,41 @@ final class ScreenshotSource: ContentSource {
     private var hasScreenRecordingPermission: Bool?
     private var lastRefreshTime: Date = .distantPast
     private let refreshInterval: TimeInterval = 5.0 // Refresh every 5 seconds when tab is active
+
+    /// Placeholder thumbnail shown when capture fails. Provides consistent UX
+    /// and visual feedback that the window exists even if capture failed.
+    @ObservationIgnored
+    private lazy var placeholderThumbnail: NSData? = {
+        // Create a simple placeholder image with a camera icon
+        let size = NSSize(width: thumbnailWidth, height: thumbnailHeight)
+        let image = NSImage(size: size)
+
+        image.lockFocus()
+        // Light gray background
+        NSColor(white: 0.95, alpha: 1.0).setFill()
+        NSRect(origin: .zero, size: size).fill()
+
+        // Draw camera icon in center if available
+        if let cameraIcon = NSImage(systemSymbolName: "camera.metering.unknown", accessibilityDescription: nil) {
+            let iconSize: CGFloat = 120
+            let iconRect = NSRect(
+                x: (size.width - iconSize) / 2,
+                y: (size.height - iconSize) / 2,
+                width: iconSize,
+                height: iconSize
+            )
+            cameraIcon.draw(in: iconRect)
+        }
+        image.unlockFocus()
+
+        // Convert to PNG data
+        if let tiffData = image.tiffRepresentation,
+           let bitmapImage = NSBitmapImageRep(data: tiffData),
+           let pngData = bitmapImage.representation(using: .png, properties: [:]) {
+            return pngData as NSData
+        }
+        return nil
+    }()
 
     init() {
         if let symbolImage = NSImage(systemSymbolName: "camera.viewfinder", accessibilityDescription: "Screenshots") {
@@ -352,16 +409,16 @@ final class ScreenshotSource: ContentSource {
 
         // Filter by window aspect ratio (menu bar extras and status items)
         let aspectRatio = info.bounds.width / info.bounds.height
-        if aspectRatio > 15.0 {
+        if aspectRatio > maxAspectRatio {
             return "aspect ratio too wide (likely menu bar item)"
         }
-        if aspectRatio < 0.067 { // 1/15
+        if aspectRatio < minAspectRatio {
             return "aspect ratio too narrow (likely status item)"
         }
 
         // Filter menu bar items by position and height
         // Menu bar is at top of screen (y ≈ 0) with typical height of ~25-44 pixels
-        if info.bounds.origin.y <= 5.0 && info.bounds.height < 50.0 {
+        if info.bounds.origin.y <= menuBarMaxY && info.bounds.height < menuBarMaxHeight {
             return "menu bar position (y=\(Int(info.bounds.origin.y)), h=\(Int(info.bounds.height)))"
         }
 
@@ -439,10 +496,73 @@ final class ScreenshotSource: ContentSource {
                     filter = SCContentFilter(desktopIndependentWindow: window)
                 }
 
-                let thumbnail = try await SCScreenshotManager.captureImage(
-                    contentFilter: filter,
-                    configuration: config
-                )
+                // Capture with timeout to prevent UI freezes from slow windows
+                // Use manual timeout check to avoid Sendable issues with non-Sendable SCStreamConfiguration
+                let thumbnail: CGImage
+                let captureTask = Task {
+                    try await SCScreenshotManager.captureImage(
+                        contentFilter: filter,
+                        configuration: config
+                    )
+                }
+
+                // Wait for either completion or timeout
+                let timeoutNanos = UInt64(thumbnailCaptureTimeout * 1_000_000_000)
+                var didTimeout = false
+
+                do {
+                    thumbnail = try await withThrowingTaskGroup(of: Result<CGImage, Error>.self) { group in
+                        // Add capture task
+                        group.addTask {
+                            do {
+                                let image = try await captureTask.value
+                                return .success(image)
+                            } catch {
+                                return .failure(error)
+                            }
+                        }
+
+                        // Add timeout task
+                        group.addTask {
+                            do {
+                                try await Task.sleep(nanoseconds: timeoutNanos)
+                                return .failure(NSError(domain: "ScreenshotSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Timeout"]))
+                            } catch {
+                                // Task was cancelled, return an error
+                                return .failure(error)
+                            }
+                        }
+
+                        // Get first result
+                        guard let firstResult = try await group.next() else {
+                            throw NSError(domain: "ScreenshotSource", code: -2, userInfo: [NSLocalizedDescriptionKey: "No result"])
+                        }
+
+                        // Cancel remaining tasks
+                        group.cancelAll()
+
+                        switch firstResult {
+                        case .success(let image):
+                            return image
+                        case .failure(let error):
+                            if error.localizedDescription == "Timeout" {
+                                didTimeout = true
+                            }
+                            throw error
+                        }
+                    }
+                } catch {
+                    if didTimeout {
+                        Self.logger.warning("Thumbnail capture timed out for \(info.title) after \(self.thumbnailCaptureTimeout)s")
+                    } else {
+                        Self.logger.warning("Failed to generate thumbnail for \(info.title): \(error.localizedDescription)")
+                    }
+                    // Use placeholder thumbnail
+                    if let placeholder = placeholderThumbnail {
+                        thumbnailCache.setObject(placeholder, forKey: info.id as NSUUID, cost: placeholder.length)
+                    }
+                    continue
+                }
 
                 // Convert to PNG data
                 let nsImage = NSImage(cgImage: thumbnail, size: NSSize(width: thumbnail.width, height: thumbnail.height))
@@ -452,8 +572,11 @@ final class ScreenshotSource: ContentSource {
                     thumbnailCache.setObject(pngData as NSData, forKey: info.id as NSUUID, cost: pngData.count)
                 }
             } catch {
-                Self.logger.debug("Failed to generate thumbnail for \(info.title): \(error.localizedDescription)")
-                // Continue with other thumbnails
+                Self.logger.warning("Failed to generate thumbnail for \(info.title): \(error.localizedDescription)")
+                // Use placeholder thumbnail for failures
+                if let placeholder = placeholderThumbnail {
+                    thumbnailCache.setObject(placeholder, forKey: info.id as NSUUID, cost: placeholder.length)
+                }
             }
         }
     }
