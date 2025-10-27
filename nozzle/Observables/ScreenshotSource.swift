@@ -8,6 +8,19 @@ import OSLog
 final class ScreenshotSource: ContentSource {
     nonisolated private static let logger = Logger(subsystem: "org.conmeara.nozzle.content", category: "ScreenshotSource")
 
+    /// Shared utility to check screen recording permission
+    /// - Returns: true if permission is granted, false otherwise
+    @available(macOS 12.3, *)
+    nonisolated static func checkScreenRecordingPermission() async -> Bool {
+        // Try to get shareable content - this will fail if permission is denied
+        do {
+            _ = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
+            return true
+        } catch {
+            return false
+        }
+    }
+
     static let sourceID = "screenshots"
     let id: String = ScreenshotSource.sourceID
     let name: String = "Screenshot"
@@ -25,8 +38,20 @@ final class ScreenshotSource: ContentSource {
     private var windowRecords: [UUID: WindowRecord] = [:]
     private var orderedWindowIds: [UUID] = []
     private var thumbnailCacheKeys: Set<UUID> = []
+    /// Grace period before removing windows from the list after they disappear.
+    /// 12 seconds accommodates macOS window animation delays and prevents flickering
+    /// when windows briefly disappear during animations or workspace transitions.
     private let staleWindowGracePeriod: TimeInterval = 12.0
+    /// Minimum width/height for windows to be included in the screenshot list.
+    /// 32px filters out tiny menu bar extras and status items while allowing
+    /// legitimate small utility windows and floating palettes.
     private let minimumWindowDimension: CGFloat = 32.0
+    /// Thumbnail width for preview images. 1200px provides good quality
+    /// for high-DPI displays while maintaining reasonable memory usage.
+    private let thumbnailWidth: Int = 1200
+    /// Thumbnail height for preview images. 800px maintains a 3:2 aspect ratio
+    /// and provides good quality for most window shapes.
+    private let thumbnailHeight: Int = 800
     private let thumbnailCache: NSCache<NSUUID, NSData> = {
         let cache = NSCache<NSUUID, NSData>()
         cache.countLimit = 50 // Limit to 50 thumbnails
@@ -83,7 +108,7 @@ final class ScreenshotSource: ContentSource {
         do {
             // Check for screen recording permission (use cached value if available)
             if hasScreenRecordingPermission == nil {
-                hasScreenRecordingPermission = await checkScreenRecordingPermission()
+                hasScreenRecordingPermission = await Self.checkScreenRecordingPermission()
             }
 
             guard hasScreenRecordingPermission == true else {
@@ -155,6 +180,10 @@ final class ScreenshotSource: ContentSource {
 
             orderedWindowIds = newOrderedIds
 
+            // Prune stale thumbnails from cache to prevent unbounded memory growth
+            // thumbnailCacheKeys tracks which IDs have cached thumbnails. When a window
+            // is removed from the active set (closed or filtered), we remove its thumbnail
+            // from NSCache and update our tracking set to match the current active windows.
             let activeKeySet = Set(newOrderedIds)
             let removedKeys = thumbnailCacheKeys.subtracting(activeKeySet)
             for id in removedKeys {
@@ -274,7 +303,7 @@ final class ScreenshotSource: ContentSource {
         return true
     }
 
-    private func exclusionReason(for info: WindowInfo) -> String? {
+    internal func exclusionReason(for info: WindowInfo) -> String? {
         if info.isDesktop {
             return nil
         }
@@ -385,8 +414,8 @@ final class ScreenshotSource: ContentSource {
 
         // Generate thumbnails with good preview resolution
         let config = SCStreamConfiguration()
-        config.width = 1200
-        config.height = 800
+        config.width = thumbnailWidth
+        config.height = thumbnailHeight
         config.minimumFrameInterval = CMTime(value: 1, timescale: 1)
 
         // NOTE: Serial processing is required because SCWindow and SCDisplay are not Sendable
@@ -426,17 +455,6 @@ final class ScreenshotSource: ContentSource {
                 Self.logger.debug("Failed to generate thumbnail for \(info.title): \(error.localizedDescription)")
                 // Continue with other thumbnails
             }
-        }
-    }
-
-    @available(macOS 12.3, *)
-    private func checkScreenRecordingPermission() async -> Bool {
-        // Try to get shareable content - this will fail if permission is denied
-        do {
-            _ = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
-            return true
-        } catch {
-            return false
         }
     }
 

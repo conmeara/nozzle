@@ -108,10 +108,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Register screenshot source
     let screenshotSource = ScreenshotSource()
     contentManager.registerSource(screenshotSource)
-    Task {
-      await screenshotSource.refresh()
-      screenshotSource.startMonitoring()
-    }
+    screenshotSource.startMonitoring() // startMonitoring() already performs initial refresh
 
     // Restore folder sources from bookmarks
     for url in Bookmarks.resolveAll() {
@@ -122,10 +119,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       }
       let source = FileSystemSource(folderURL: url)
       contentManager.registerSource(source)
-      Task {
-        await source.refresh()
-        source.startMonitoring()
-      }
+      source.startMonitoring() // startMonitoring() already performs initial refresh
     }
 
     panel = FloatingPanel(

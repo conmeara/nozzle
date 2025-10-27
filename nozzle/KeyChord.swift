@@ -157,7 +157,7 @@ enum KeyChord: CaseIterable {
       self = .previousTabPage
     case (.rightBracket, [.command, .shift]):
       self = .nextTabPage
-    case (.r, [.command]):
+    case (.r, [.command, .shift]):
       self = .refresh
     case (_, _) where !modifierFlags.isDisjoint(with: [.command, .control, .option]):
       self = .ignored

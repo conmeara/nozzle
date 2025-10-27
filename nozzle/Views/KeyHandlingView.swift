@@ -364,7 +364,7 @@ struct KeyHandlingView<Content: View>: View {
           }
           return .handled
         case .refresh:
-          // Cmd+R - refresh current source
+          // Cmd+Shift+R - refresh current source
           if let activeSource = contentManager.sources[contentManager.activeSourceId] {
             Task {
               await activeSource.refresh()

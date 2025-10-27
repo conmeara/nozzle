@@ -83,19 +83,8 @@ final class OnboardingState {
 
             // Check screen recording permission for screenshot functionality
             if #available(macOS 12.3, *) {
-                hasScreenRecordingPermission = await checkScreenRecordingPermission()
+                hasScreenRecordingPermission = await ScreenshotSource.checkScreenRecordingPermission()
             }
-        }
-    }
-
-    @available(macOS 12.3, *)
-    private func checkScreenRecordingPermission() async -> Bool {
-        // Try to get shareable content - this will fail if permission is denied
-        do {
-            _ = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
-            return true
-        } catch {
-            return false
         }
     }
     
