@@ -108,12 +108,14 @@ struct UnifiedInputFieldView: View {
                 return .ignored
               }
               .onKeyPress { keyPress in
-                // Handle Cmd+Z for undo enhancement
+                // Handle Cmd+Z for undo - first check enhancement, then general undo
                 if keyPress.key == "z" && keyPress.modifiers.contains(.command) && !keyPress.modifiers.contains(.shift) {
                   if appState.canUndoEnhancement {
                     appState.undoEnhancement()
                     return .handled
                   }
+                  // No enhancement to undo, let text field handle its own undo
+                  return .ignored
                 }
                 return .ignored
               }
@@ -124,7 +126,7 @@ struct UnifiedInputFieldView: View {
             // Clear button for search mode
             if !query.isEmpty {
               Button(action: {
-                query = ""
+                appState.clearText(isSearchMode: true)
                 isFocused = true
               }) {
                 Image(systemName: "xmark.circle.fill")
@@ -202,12 +204,14 @@ struct UnifiedInputFieldView: View {
                   return .ignored
                 }
                 .onKeyPress { keyPress in
-                  // Handle Cmd+Z for undo enhancement
+                  // Handle Cmd+Z for undo - first check enhancement, then general undo
                   if keyPress.key == "z" && keyPress.modifiers.contains(.command) && !keyPress.modifiers.contains(.shift) {
                     if appState.canUndoEnhancement {
                       appState.undoEnhancement()
                       return .handled
                     }
+                    // No enhancement to undo, let text field handle its own undo
+                    return .ignored
                   }
                   return .ignored
                 }
@@ -220,7 +224,7 @@ struct UnifiedInputFieldView: View {
               if !query.isEmpty {
                 VStack {
                   Button(action: {
-                    query = ""
+                    appState.clearText(isSearchMode: false)
                     isFocused = true
                   }) {
                     Image(systemName: "xmark.circle.fill")
@@ -231,7 +235,7 @@ struct UnifiedInputFieldView: View {
                   .buttonStyle(PlainButtonStyle())
                   .help("Clear")
                   .padding(.top, 2)
-                  
+
                   Spacer()
                 }
                 .padding(.leading, 4)

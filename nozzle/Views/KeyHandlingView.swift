@@ -29,6 +29,23 @@ struct KeyHandlingView<Content: View>: View {
         if contentManager.renameActiveItemId != nil {
           return .ignored
         }
+
+        // Handle Cmd+Z for undo (check before text field processing)
+        if let event = NSApp.currentEvent {
+          let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock)
+          let isZ = event.keyCode == UInt16(Sauce.shared.keyCode(for: .z))
+
+          if modifierFlags == .command && isZ {
+            // Check if we have a text field focused first - let text fields handle their own undo
+            if !searchFocused && appState.undoManager.canUndo {
+              appState.undoManager.undo()
+              return .handled
+            }
+            // Let text fields handle their own undo
+            return .ignored
+          }
+        }
+
         // Unfortunately, key presses don't allow access to
         // key code and don't properly work with multiple inputs,
         // so pressing ⌘, on non-English layout doesn't open

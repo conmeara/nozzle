@@ -18,8 +18,8 @@ class AppState {
   var promptText: String = "" {
     didSet {
       // Clear undo buffer if user manually edits after enhancement
-      if originalPromptBeforeEnhancement != nil && 
-         promptText != originalPromptBeforeEnhancement && 
+      if originalPromptBeforeEnhancement != nil &&
+         promptText != originalPromptBeforeEnhancement &&
          !isEnhancingPrompt {
         originalPromptBeforeEnhancement = nil
       }
@@ -28,7 +28,10 @@ class AppState {
   var isSearchMode: Bool = false  // Track search mode separately
   var showingShortcuts: Bool = false  // Track keyboard shortcuts panel visibility
   private var preservedSelections: Set<UUID> = []
-  
+
+  // Undo manager for common operations
+  let undoManager = UndoManager()
+
   // Prompt enhancement state
   var isEnhancingPrompt: Bool = false
   var originalPromptBeforeEnhancement: String?
@@ -301,43 +304,137 @@ class AppState {
     if let pasteItem = footer.items.first(where: { $0.title == "paste_combined" }) {
       // Phase 2: Use centralized selection
       let hasSelected = !contentManager.selectedItems.isEmpty
-      
+
       // Show this item only if we have selected items or prompt text
       let hasChips = !promptChips.isEmpty
       let hasContent = hasSelected || hasChips || !promptText.isEmpty
       pasteItem.isVisible = hasContent
     }
   }
+
+  func clearText(isSearchMode: Bool) {
+    if isSearchMode {
+      // Clear search query
+      let previousQuery = contentManager.activeSourceId == "clipboard"
+        ? history.searchQuery
+        : (contentManager.sources[contentManager.activeSourceId]?.searchQuery ?? "")
+      let activeSource = contentManager.activeSourceId
+
+      if contentManager.activeSourceId == "clipboard" {
+        history.searchQuery = ""
+      } else {
+        contentManager.sources[contentManager.activeSourceId]?.searchQuery = ""
+      }
+
+      // Register undo
+      undoManager.registerUndo(withTarget: self) { target in
+        if activeSource == "clipboard" {
+          target.history.searchQuery = previousQuery
+        } else {
+          target.contentManager.sources[activeSource]?.searchQuery = previousQuery
+        }
+        target.undoManager.setActionName("Clear Text")
+      }
+      undoManager.setActionName("Clear Text")
+    } else {
+      // Clear prompt text
+      let previousText = promptText
+      promptText = ""
+
+      // Register undo
+      undoManager.registerUndo(withTarget: self) { target in
+        target.promptText = previousText
+        target.undoManager.setActionName("Clear Text")
+      }
+      undoManager.setActionName("Clear Text")
+    }
+  }
   
   func clearSelectionAndPrompt() {
+    // Capture state for undo
+    let previousPromptText = promptText
+    let previousPromptChips = promptChips
+    let previousActiveChipId = activePromptChipId
+    let previousSelectedItems = contentManager.selectedItems
+    let previousSearchQuery = contentManager.activeSourceId == "clipboard"
+      ? history.searchQuery
+      : (contentManager.sources[contentManager.activeSourceId]?.searchQuery ?? "")
+    let activeSource = contentManager.activeSourceId
+
     // Preserve the current hover/active selection
     let currentSelection = selection
-    
+
     // Clear all selected items across all sources
     contentManager.clearSelection()
-    
+
     // Clear preserved selections
     preservedSelections.removeAll()
-    
+
     // Clear prompt chips and text
     removeAllPromptChips()
     activePromptChipId = nil
     promptText = ""
-    
+
     // Clear search query for the active source
     if contentManager.activeSourceId == "clipboard" {
       history.searchQuery = ""
     } else {
       contentManager.sources[contentManager.activeSourceId]?.searchQuery = ""
     }
-    
+
     // Update footer visibility based on cleared state
     updateFooterItemVisibility()
-    
-    
+
+    // Register undo
+    undoManager.registerUndo(withTarget: self) { target in
+      target.restoreSelectionAndPrompt(
+        promptText: previousPromptText,
+        promptChips: previousPromptChips,
+        activeChipId: previousActiveChipId,
+        selectedItems: previousSelectedItems,
+        searchQuery: previousSearchQuery,
+        activeSource: activeSource
+      )
+    }
+    undoManager.setActionName("Clear")
+
     // Restore the hover/active selection
     if let currentSelection = currentSelection {
       selection = currentSelection
+    }
+  }
+
+  private func restoreSelectionAndPrompt(
+    promptText: String,
+    promptChips: [PromptChip],
+    activeChipId: UUID?,
+    selectedItems: [ContentItem],
+    searchQuery: String,
+    activeSource: String
+  ) {
+    // Restore prompt text and chips
+    self.promptText = promptText
+    self.promptChips = promptChips
+    self.activePromptChipId = activeChipId
+
+    // Restore selections
+    for item in selectedItems {
+      contentManager.toggleSelection(item.id)
+    }
+
+    // Restore search query
+    if activeSource == "clipboard" {
+      history.searchQuery = searchQuery
+    } else {
+      contentManager.sources[activeSource]?.searchQuery = searchQuery
+    }
+
+    // Update footer visibility
+    updateFooterItemVisibility()
+
+    // Register redo (which is just clearing again)
+    undoManager.registerUndo(withTarget: self) { target in
+      target.clearSelectionAndPrompt()
     }
   }
   
