@@ -8,8 +8,8 @@ struct ShortcutsScreen: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 14) {
-                // Wireframe placeholder for app screenshot
-                appScreenshotWireframe
+                // App screenshot
+                appScreenshotImage
                     .padding(.bottom, 8)
                 
                 ForEach(shortcutsProvider.categories) { category in
@@ -56,30 +56,13 @@ struct ShortcutsScreen: View {
         .padding(.vertical, 2)
     }
     
-    /// Wireframe placeholder for app screenshot
-    @ViewBuilder
-    private var appScreenshotWireframe: some View {
-        RoundedRectangle(cornerRadius: 15)
-            .stroke(Color.secondary.opacity(0.3), style: StrokeStyle(lineWidth: 2, dash: [8, 4]))
-            .fill(Color(NSColor.controlBackgroundColor).opacity(0.3))
-            .frame(height: 300)  // Set to 300px height
-            .overlay {
-                VStack(spacing: 12) {
-                    Image(systemName: "photo")
-                        .font(.system(size: 32))
-                        .foregroundStyle(.secondary)
-                    
-                    Text("App Screenshot")
-                        .font(.system(.body, weight: .medium))
-                        .foregroundStyle(.secondary)
-                    
-                    Text("Screenshot placeholder - will be replaced with actual app image")
-                        .font(.system(.caption))
-                        .foregroundStyle(.tertiary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
-                }
-            }
+    /// App screenshot image
+    private var appScreenshotImage: some View {
+        Image("onboarding-shortcuts")
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
     }
 }
 
