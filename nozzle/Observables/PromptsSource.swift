@@ -120,10 +120,11 @@ final class PromptsSource: ContentSource {
     }
 
     func deletePrompt(at url: URL) {
-        NSWorkspace.shared.recycle([url]) { _, _ in }
-        Task { @MainActor in 
-            ContentManager.shared.markDecoratorsNeedRefresh(for: "prompts")
-            await inner.refresh() 
+        NSWorkspace.shared.recycle([url]) { _, _ in
+            Task { @MainActor in
+                ContentManager.shared.markDecoratorsNeedRefresh(for: "prompts")
+                await self.inner.refresh()
+            }
         }
     }
 
@@ -181,17 +182,24 @@ final class PromptsSource: ContentSource {
             Task { @MainActor in
                 // First update the prompt chip URL immediately
                 AppState.shared.updatePromptChipURL(from: oldURL, to: newURL)
-                
+
                 // Mark decorators as needing refresh before refreshing the file list
                 ContentManager.shared.markDecoratorsNeedRefresh(for: "prompts")
-                
+
                 // Then refresh the file list to show the new name
                 await self.inner.refresh()
-                
+
                 // Keep focus on the renamed item
                 if let renamedItem = self.items.first(where: { $0.fileURL == newURL }) {
                     ContentManager.shared.focus(renamedItem.id)
                 }
+
+                // Register undo for the rename
+                let oldBaseName = oldURL.deletingPathExtension().lastPathComponent
+                AppState.shared.undoManager.registerUndo(withTarget: self) { target in
+                    _ = target.renamePrompt(at: newURL, to: oldBaseName)
+                }
+                AppState.shared.undoManager.setActionName("Rename")
             }
             return newURL
         } catch {

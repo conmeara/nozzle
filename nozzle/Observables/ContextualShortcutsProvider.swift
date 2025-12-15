@@ -45,7 +45,7 @@ final class ContextualShortcutsProvider {
             if hasSelection || hasInput || hasChips {
                 shortcuts.append(ContextualShortcut(
                     keys: [.modifier("⌘"), .special("⏎")],
-                    description: "Paste Current",
+                    description: "Paste Single Item",
                     priority: 95
                 ))
             }
@@ -145,7 +145,7 @@ final class ContextualShortcutsProvider {
                 ),
                 ContextualShortcut(
                     keys: [.modifier("⌘"), .special("⏎")],
-                    description: "Paste Current",
+                    description: "Paste Single Item",
                     priority: 90
                 ),
                 ContextualShortcut(
