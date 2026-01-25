@@ -9,29 +9,24 @@ final class OnboardingState {
     enum Screen: Int, CaseIterable {
         case welcomeSetup = 0
         case shortcuts = 1
-        case demo = 2
-        case getStarted = 3
-        
+        case getStarted = 2
+
         var title: String {
             switch self {
             case .welcomeSetup:
                 return "Welcome to Nozzle!"
             case .shortcuts:
                 return "Guide"
-            case .demo:
-                return "Nozzle in Action"
             case .getStarted:
                 return "Ready to go!"
             }
         }
-        
+
         var description: String {
             switch self {
             case .welcomeSetup:
                 return ""
             case .shortcuts:
-                return ""
-            case .demo:
                 return ""
             case .getStarted:
                 return ""
@@ -42,7 +37,7 @@ final class OnboardingState {
     var currentScreen: Screen = .welcomeSetup
     var hasAccessibilityPermission = false
     var hasScreenRecordingPermission = false
-    var launchAtLoginEnabled = true  // Default to ON
+    var launchAtLoginEnabled = false  // Default to OFF - requires explicit user consent per App Store guidelines
     
     // Computed properties
     var canContinue: Bool {
@@ -50,8 +45,6 @@ final class OnboardingState {
         case .welcomeSetup:
             return hasAccessibilityPermission // Require accessibility at minimum
         case .shortcuts:
-            return true
-        case .demo:
             return true
         case .getStarted:
             return false // No continue from finish

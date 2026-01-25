@@ -1,303 +1,157 @@
+<p align="center">
+  <img width="128px" src="https://nozzle.app/img/nozzle/Logo.png" alt="nozzle logo" />
+</p>
 
-<img width="128px" src="https://nozzle.app/img/nozzle/Logo.png" alt="Logo" align="left" />
+<h1 align="center">nozzle</h1>
 
-# nozzle v3 - Universal Content Aggregation Platform
+<p align="center">
+  <strong>A powerful content aggregation tool for macOS</strong>
+</p>
 
-[![Downloads](https://img.shields.io/github/downloads/conmeara/nozzle/total.svg)](https://github.com/conmeara/nozzle/releases/latest)
-[![Build Status](https://img.shields.io/bitrise/716921b669780314/master?token=3pMiCb5dpFzlO-7jTYtO3Q)](https://app.bitrise.io/app/716921b669780314)
+<p align="center">
+  <a href="https://github.com/conmeara/nozzle/releases/latest"><img src="https://img.shields.io/github/downloads/conmeara/nozzle/total.svg" alt="Downloads"></a>
+  <a href="https://github.com/conmeara/nozzle/releases/latest"><img src="https://img.shields.io/github/v/release/conmeara/nozzle" alt="Latest Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/conmeara/nozzle" alt="License"></a>
+</p>
 
-**nozzle has evolved from a clipboard manager into a universal multi-source content aggregation platform.**
+---
 
-nozzle v3 is a revolutionary content management tool for macOS that unifies clipboard history, 
-file system monitoring, and future content sources into a single, powerful interface. It maintains 
-all the beloved clipboard management features while introducing a scalable architecture for 
-unlimited content types.
+nozzle is a lightweight, keyboard-driven content manager for macOS that combines clipboard history with file system monitoring in a unified interface. Select, search, and combine content from multiple sources with ease.
 
-nozzle works on macOS Sonoma 14 or higher.
+**Requires macOS Sonoma 14.0 or later.**
 
-<!-- vim-markdown-toc GFM -->
-
-* [Features](#features)
-* [Install](#install)
-* [Usage](#usage)
-* [Advanced](#advanced)
-  * [Ignore Copied Items](#ignore-copied-items)
-  * [Ignore Custom Copy Types](#ignore-custom-copy-types)
-  * [Speed up Clipboard Check Interval](#speed-up-clipboard-check-interval)
-* [FAQ](#faq)
-  * [Why doesn't it paste when I select an item in history?](#why-doesnt-it-paste-when-i-select-an-item-in-history)
-  * [When assigning a hotkey to open nozzle, it says that this hotkey is already used in some system setting.](#when-assigning-a-hotkey-to-open-nozzle-it-says-that-this-hotkey-is-already-used-in-some-system-setting)
-  * [How to restore hidden footer?](#how-to-restore-hidden-footer)
-  * [How to ignore copies from Universal Clipboard?](#how-to-ignore-copies-from-universal-clipboard)
-* [Translations](#translations)
-* [Motivation](#motivation)
-* [License](#license)
-
-<!-- vim-markdown-toc -->
+<p align="center">
+  <img src="designs/Onboarding/AppStore-Screenshot-2880x1800.png" alt="nozzle screenshot" width="720" />
+</p>
 
 ## Features
 
-### Core Foundation
-* Lightweight and fast
-* Keyboard-first navigation
-* Secure and private
-* Native macOS UI
-
-### v3 Multi-Source Architecture
-
-* **Universal Content Sources**: Unified interface for clipboard, folders, and future content types
-* **Dynamic Source Management**: Add/remove content sources on-demand with persistent configuration
-* **Protocol-Oriented Design**: Scalable architecture supporting unlimited source types
-* **Cross-Source Operations**: Select and combine content from any source type
-* **Security-Scoped Access**: Secure folder monitoring with user-granted permissions
-
-### Enhanced UI Features
-
-* **Dynamic Tab System**: Tabs automatically appear for each registered content source
-* **Aggregated View**: Special "#" tab showing selected items from all sources
-* **Universal Item Interface**: Consistent UI for all content types
-* **Folder Integration**: Native file picker for adding monitored directories
-* **Real-time Updates**: Live content updates as files change
-
-### Advanced Selection & Operations
-
-* **Multi-select**: Select multiple items across different sources with checkboxes
-* **Prompt mode**: Type instructions to combine with selected items
-* **Combined operations**: Paste or copy multiple items with custom formatting
-* **Cross-source selection**: Mix clipboard items with files seamlessly
-* **Template system**: Customizable formatting for combined operations
-
-### Enhanced Keyboard Navigation
-
-* **Tab switching**: Navigate between different content sources
-* **Universal shortcuts**: Consistent keyboard controls across all source types
-* **Enhanced multi-select**: Tab to toggle selection, Cmd+N for nth item
-* **Quick actions**: Immediate paste, copy, and preview operations
+- **Clipboard History** — Access your copy history instantly with fuzzy search
+- **Folder Monitoring** — Watch directories and access files alongside clipboard content
+- **Multi-Select** — Select items from any source and combine them
+- **Prompt Mode** — Add instructions to combine with selected content
+- **Keyboard-First** — Navigate entirely with keyboard shortcuts
+- **Native & Fast** — Built with SwiftUI for a lightweight, responsive experience
+- **Auto-Updates** — Stay current with built-in Sparkle updates
 
 ## Install
 
-Download the latest version from the [releases](https://github.com/conmeara/nozzle/releases/latest) page, or use [Homebrew](https://brew.sh/):
+### Download
+
+Download the latest version from the [Releases](https://github.com/conmeara/nozzle/releases/latest) page.
+
+### Homebrew
 
 ```sh
 brew install nozzle
 ```
 
-## Usage
+## Quick Start
 
-### Getting Started
+1. **Open nozzle** — Press <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> or click the menu bar icon
+2. **Search** — Start typing to filter items
+3. **Select** — Press <kbd>Enter</kbd> to copy, <kbd>⌥</kbd><kbd>Enter</kbd> to paste
+4. **Multi-select** — Press <kbd>Tab</kbd> to toggle item selection
+5. **Preferences** — Press <kbd>⌘</kbd><kbd>,</kbd> to customize
 
-1. **Open nozzle**: <kbd>SHIFT (⇧)</kbd> + <kbd>COMMAND (⌘)</kbd> + <kbd>C</kbd> or click the menu bar icon
-2. **Navigate sources**: Use the dynamic tab bar to switch between clipboard, folders, and aggregated view
-3. **Add folders**: Click the "+" tab to add monitored directories via file picker
-4. **Search content**: Type to search within the active source
-5. **Customize**: Access Preferences with <kbd>COMMAND (⌘)</kbd> + <kbd>,</kbd>
+## Keyboard Shortcuts
 
-### Source Management
+| Action | Shortcut |
+|--------|----------|
+| Open nozzle | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> |
+| Copy item | <kbd>Enter</kbd> |
+| Paste item | <kbd>⌥</kbd><kbd>Enter</kbd> |
+| Paste without formatting | <kbd>⌥</kbd><kbd>⇧</kbd><kbd>Enter</kbd> |
+| Toggle selection | <kbd>Tab</kbd> |
+| Select nth item | <kbd>⌘</kbd><kbd>1-9</kbd> |
+| Clear selections | <kbd>⌘</kbd><kbd>⌫</kbd> |
+| Toggle search/prompt mode | <kbd>⌘</kbd><kbd>F</kbd> |
+| Combined paste | <kbd>⌘</kbd><kbd>V</kbd> |
+| Combined copy | <kbd>⌘</kbd><kbd>Enter</kbd> |
+| Preview | <kbd>⌥</kbd><kbd>Space</kbd> |
+| Delete item | <kbd>⌥</kbd><kbd>⌫</kbd> |
+| Open preferences | <kbd>⌘</kbd><kbd>,</kbd> |
 
-#### Clipboard Source
-- **Access**: Default "Clipboard" tab shows clipboard history
-- **Search**: Type to filter clipboard items
-- **All traditional shortcuts**: Work exactly as before for backward compatibility
+## Configuration
 
-#### Folder Sources
-- **Add folders**: Click "+" tab → select directory → automatic monitoring begins
-- **Security**: Uses security-scoped bookmarks for persistent access
-- **Updates**: Content refreshes when files change in monitored directories
-- **Remove**: Use Preferences to manage registered folders
+### Ignore Copied Items
 
-#### Aggregated View
-- **Access**: "#" tab shows selected items from all sources
-- **Cross-source**: Mix clipboard items with files seamlessly
-- **Operations**: Perform combined actions on heterogeneous content
-
-### Universal Item Operations
-
-#### Selection
-- **Toggle selection**: Click item checkbox or press <kbd>TAB</kbd> while highlighted
-- **Multi-select**: Select items across different sources
-- **Select by number**: <kbd>COMMAND (⌘)</kbd> + `n` toggles nth item selection
-- **Clear selections**: <kbd>COMMAND (⌘)</kbd> + <kbd>DELETE (⌫)</kbd>
-
-#### Actions
-- **Copy item**: Click right side of item or <kbd>ENTER</kbd> on highlighted item
-- **Paste item**: <kbd>OPTION (⌥)</kbd> + <kbd>ENTER</kbd> or <kbd>OPTION (⌥)</kbd> + click
-- **Paste without formatting**: <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>ENTER</kbd>
-- **Preview**: <kbd>OPTION (⌥)</kbd> + <kbd>SPACE</kbd> or wait for tooltip
-- **Delete** (clipboard only): <kbd>OPTION (⌥)</kbd> + <kbd>DELETE (⌫)</kbd>
-
-### Advanced Multi-Source Features
-
-#### Prompt Mode
-1. **Switch modes**: <kbd>COMMAND (⌘)</kbd> + <kbd>F</kbd> toggles search ↔ prompt mode
-2. **Type instructions**: In prompt mode, enter text to combine with selected items
-3. **Combined paste**: <kbd>COMMAND (⌘)</kbd> + <kbd>V</kbd> pastes prompt + selected content
-4. **Combined copy**: <kbd>COMMAND (⌘)</kbd> + <kbd>ENTER</kbd> copies combined content
-
-#### Cross-Source Workflows
-1. **Select from clipboard**: Toggle clipboard items in Clipboard tab
-2. **Select from folders**: Toggle files in any folder tab
-3. **View aggregated**: Switch to "#" tab to see all selections
-4. **Combined operations**: Use prompt mode to combine with instructions
-
-#### Template Customization
-Default template combines prompt with selected items:
-```
-{prompt}
-Context:
-{items}
-```
-
-Customize the template:
-```bash
-defaults write com.conmeara.nozzleai pasteTemplate "{prompt}\n\nSelected content:\n{items}"
-```
-
-## Advanced
-
-### Content Source Management
-
-#### Security-Scoped Bookmarks
-nozzle v3 uses security-scoped bookmarks to maintain persistent access to user-selected folders:
-- Bookmarks are stored securely in UserDefaults
-- Access permissions persist across app restarts
-- Folders are automatically restored on launch
-- Stale bookmarks are cleaned up automatically
-
-#### Adding Custom Sources
-The v3 architecture supports extending with new content source types:
-```swift
-// Implement the ContentSource protocol
-class CustomSource: ContentSource {
-    let id: String
-    let name: String
-    let icon: NSImage
-    let type: ContentSourceType
-    // ... implement required methods
-}
-
-// Register with ContentManager
-ContentManager.shared.registerSource(CustomSource())
-```
-
-### Clipboard Management
-
-#### Ignore Copied Items
-You can tell nozzle to ignore all copied items:
+Temporarily ignore clipboard monitoring:
 
 ```sh
-defaults write com.conmeara.nozzleai ignoreEvents true # default is false
+defaults write com.conmeara.nozzleai ignoreEvents true
 ```
 
-This is useful if you have some workflow for copying sensitive data. You can set `ignoreEvents` to true, copy the data and set `ignoreEvents` back to false.
+Or click the menu icon with <kbd>⌥</kbd> pressed. Use <kbd>⌥</kbd><kbd>⇧</kbd> to ignore only the next copy.
 
-You can also click the menu icon with <kbd>OPTION (⌥)</kbd> pressed. To ignore only the next copy, click with <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> pressed.
+### Clipboard Check Interval
 
-### Ignore Custom Copy Types
-
-By default nozzle will ignore certain copy types that are considered to be confidential
-or temporary. The default list always include the following types:
-
-* `org.nspasteboard.TransientType`
-* `org.nspasteboard.ConcealedType`
-* `org.nspasteboard.AutoGeneratedType`
-
-Also, default configuration includes the following types but they can be removed
-or overwritten:
-
-* `com.agilebits.onepassword`
-* `com.typeit4me.clipping`
-* `de.petermaurer.TransientPasteboardType`
-* `Pasteboard generator type`
-* `net.antelle.keeweb`
-
-You can add additional custom types using settings.
-To find what custom types are used by an application, you can use
-free application [Pasteboard-Viewer](https://github.com/sindresorhus/Pasteboard-Viewer).
-Simply download the application, open it, copy something from the application you
-want to ignore and look for any custom types in the left sidebar. [Here is an example
-of using this approach to ignore Adobe InDesign](https://github.com/conmeara/nozzle/issues/125).
-
-### Speed up Clipboard Check Interval
-
-By default, nozzle checks clipboard every 500 ms, which should be enough for most users. If you want
-to speed it up, you can change it with `defaults`:
+Adjust how frequently nozzle checks the clipboard (default: 500ms):
 
 ```sh
-defaults write com.conmeara.nozzleai clipboardCheckInterval 0.1 # 100 ms
+defaults write com.conmeara.nozzleai clipboardCheckInterval 0.1
 ```
+
+### Paste Template
+
+Customize how combined content is formatted:
+
+```sh
+defaults write com.conmeara.nozzleai pasteTemplate "{prompt}\n\nContent:\n{items}"
+```
+
+### Ignored Pasteboard Types
+
+nozzle automatically ignores sensitive content types. Add custom types in Preferences → Ignore → Pasteboard Types.
+
+Use [Pasteboard-Viewer](https://github.com/sindresorhus/Pasteboard-Viewer) to discover custom types from specific applications.
 
 ## FAQ
 
-### Why doesn't it paste when I select an item in history?
+**Why doesn't it paste automatically?**
+1. Enable "Paste automatically" in Preferences
+2. Add nozzle to System Settings → Privacy & Security → Accessibility
 
-1. Make sure you have "Paste automatically" enabled in Preferences.
-2. Make sure "nozzle" is added to System Settings -> Privacy & Security -> Accessibility.
-
-### When assigning a hotkey to open nozzle, it says that this hotkey is already used in some system setting.
-
-1. Open System settings -> Keyboard -> Keyboard Shortcuts.
-2. Find where that hotkey is used. For example, "Convert text to simplified Chinese" is under Services -> Text.
-3. Disable that hotkey or remove assigned combination ([screenshot](https://github.com/conmeara/nozzle/assets/576152/446719e6-c3e5-4eb0-95fb-5a811066487f)).
-4. Restart nozzle.
-5. Assign hotkey in nozzle settings.
-
-### How to restore hidden footer?
-
-1. Open nozzle window.
-2. Press <kbd>COMMAND (⌘)</kbd> + <kbd>,</kbd> to open preferences.
-3. Enable footer in Appearance section.
-
-If for some reason it doesn't work, run the following command in Terminal.app:
-
+**How do I restore the hidden footer?**
 ```sh
 defaults write com.conmeara.nozzleai showFooter 1
 ```
 
-### How to ignore copies from [Universal Clipboard](https://support.apple.com/en-us/102430)?
+**How do I ignore Universal Clipboard?**
 
-1. Open Preferences -> Ignore -> Pasteboard Types.
-2. Add `com.apple.is-remote-clipboard`.
+Add `com.apple.is-remote-clipboard` to Preferences → Ignore → Pasteboard Types.
 
-## Translations
+## Contributing
 
-The translations are hosted in [Weblate](https://hosted.weblate.org/engage/nozzle/).
-You can use it to suggest changes in translations and localize the application to a new language.
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Development
+
+```sh
+# Clone the repository
+git clone https://github.com/conmeara/nozzle.git
+cd nozzle
+
+# Open in Xcode
+open nozzle.xcodeproj
+
+# Build
+xcodebuild -project nozzle.xcodeproj -scheme nozzle build
+
+# Run tests
+xcodebuild -project nozzle.xcodeproj -scheme nozzle test
+```
+
+### Translations
+
+Translations are managed via [Weblate](https://hosted.weblate.org/engage/nozzle/). Contributions to localization are appreciated.
 
 [![Translation status](https://hosted.weblate.org/widget/nozzle/multi-auto.svg)](https://hosted.weblate.org/engage/nozzle/)
 
-## Motivation
+## Acknowledgments
 
-### The Evolution to v3
-
-nozzle began as an advanced clipboard manager, adding multi-select and prompt capabilities to clipboard management. As users' content workflows grew more complex, it became clear that clipboard-only tooling was limiting.
-
-**Why Multi-Source Architecture?**
-
-Modern content workflows involve more than just clipboard history:
-- Developers need quick access to code snippets stored in files
-- Writers want to reference documents and notes alongside clipboard content
-- Designers work with assets scattered across different locations
-- Teams share content through various mediums
-
-### The Universal Content Vision
-
-nozzle v3 introduces a revolutionary approach: **treat all content sources equally**. Whether content comes from:
-- Clipboard history
-- File system directories  
-- Future sources (notes, screenshots, cloud services)
-
-They all use the same interface, selection system, and operations. This creates a truly unified content management experience that scales beyond traditional clipboard limitations.
-
-### Technical Excellence
-
-The v3 architecture showcases modern macOS development:
-- Protocol-oriented design for infinite extensibility
-- Swift 6 with @Observable for reactive UI
-- Security-scoped bookmarks for persistent access
-- MainActor isolation for thread safety
-- SwiftUI + AppKit hybrid approach
-
+nozzle is a fork of [Maccy](https://github.com/p0deje/Maccy) by [p0deje](https://github.com/p0deje). Thank you for creating such a solid foundation for clipboard management on macOS.
 
 ## License
 
-Proprietary software. All rights reserved. © Conor O'Meara.
+[MIT](LICENSE) — see the [LICENSE](LICENSE) file for details.

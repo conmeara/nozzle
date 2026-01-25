@@ -49,8 +49,6 @@ struct OnboardingView: View {
             WelcomeSetupScreen()
         case .shortcuts:
             ShortcutsScreen()
-        case .demo:
-            DemoScreen()
         case .getStarted:
             GetStartedScreen()
         }
