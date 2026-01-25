@@ -8,8 +8,7 @@ on:
 env:
   SCHEME: nozzle
   PROJECT: nozzle.xcodeproj
-  ARCHIVE_PATH: build/nozzle.xcarchive
-  EXPORT_PATH: build/export
+  BUILD_PATH: build/Build/Products/Release
   APP_NAME: nozzle.app
   ZIP_NAME: nozzle.app.zip
 
@@ -39,105 +38,38 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Install Apple certificate
-        env:
-          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ github.run_id }}
-        run: |
-          # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-
-          # Decode certificate
-          echo -n "$APPLE_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
-
-          # Create temporary keychain
-          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
-          # Import certificate to keychain
-          security import $CERTIFICATE_PATH -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
-
       - name: Resolve Swift packages
         run: |
           xcodebuild -resolvePackageDependencies \
             -project "$PROJECT" \
             -scheme "$SCHEME"
 
-      - name: Build archive
+      - name: Build (unsigned)
         run: |
-          xcodebuild archive \
+          xcodebuild build \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
             -configuration Release \
-            -archivePath "$ARCHIVE_PATH" \
-            CODE_SIGN_STYLE=Manual \
-            "CODE_SIGN_IDENTITY=Developer ID Application: Conor O'Meara (${{ secrets.APPLE_TEAM_ID }})" \
-            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
-            OTHER_CODE_SIGN_FLAGS="--timestamp --options=runtime"
-
-      - name: Export archive
-        run: |
-          # Create export options plist
-          cat > ExportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>developer-id</string>
-              <key>teamID</key>
-              <string>${{ secrets.APPLE_TEAM_ID }}</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>signingCertificate</key>
-              <string>Developer ID Application</string>
-          </dict>
-          </plist>
-          EOF
-
-          xcodebuild -exportArchive \
-            -archivePath "$ARCHIVE_PATH" \
-            -exportOptionsPlist ExportOptions.plist \
-            -exportPath "$EXPORT_PATH"
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Create release zip
         run: |
-          cd "$EXPORT_PATH"
+          cd "$BUILD_PATH"
           ditto -c -k --keepParent "$APP_NAME" "$ZIP_NAME"
 
-      # TODO: Re-enable notarization once Apple entitlements issue is resolved
-      # - name: Notarize app
-      #   env:
-      #     APPLE_ID: ${{ secrets.APPLE_ID }}
-      #     APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-      #     APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      #   run: |
-      #     # Submit for notarization
-      #     xcrun notarytool submit "$EXPORT_PATH/$ZIP_NAME" \
-      #       --apple-id "$APPLE_ID" \
-      #       --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-      #       --team-id "$APPLE_TEAM_ID" \
-      #       --wait
-      #
-      #     # Staple the notarization ticket
-      #     xcrun stapler staple "$EXPORT_PATH/$APP_NAME"
-      #
-      #     # Re-create zip with stapled app
-      #     rm "$EXPORT_PATH/$ZIP_NAME"
-      #     cd "$EXPORT_PATH"
-      #     ditto -c -k --keepParent "$APP_NAME" "$ZIP_NAME"
+      # TODO: Re-enable signing and notarization once Apple entitlements issue is resolved
+      # Required secrets: APPLE_CERTIFICATE_BASE64, APPLE_CERTIFICATE_PASSWORD, APPLE_TEAM_ID
+      # For notarization: APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD
 
       - name: Get build number and version
         id: build_info
         run: |
           # Extract from Info.plist in the built app
-          BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$EXPORT_PATH/$APP_NAME/Contents/Info.plist")
-          SHORT_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$EXPORT_PATH/$APP_NAME/Contents/Info.plist")
+          BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$BUILD_PATH/$APP_NAME/Contents/Info.plist")
+          SHORT_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$BUILD_PATH/$APP_NAME/Contents/Info.plist")
           echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
           echo "short_version=$SHORT_VERSION" >> $GITHUB_OUTPUT
           echo "Built version: $SHORT_VERSION ($BUILD_NUMBER)"
@@ -162,6 +94,8 @@ jobs:
 
           ---
 
+          **Note:** This is an unsigned build. To open, right-click the app and select "Open".
+
           **Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_TAG...${{ steps.version.outputs.tag }}
           EOF
 
@@ -174,7 +108,7 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           # Get file size
-          FILE_SIZE=$(stat -f%z "$EXPORT_PATH/$ZIP_NAME")
+          FILE_SIZE=$(stat -f%z "$BUILD_PATH/$ZIP_NAME")
 
           # Get current date
           PUB_DATE=$(date +"%Y-%m-%d")
@@ -229,7 +163,7 @@ jobs:
           name: "nozzle ${{ steps.version.outputs.version }}"
           body_path: release_notes.md
           files: |
-            ${{ env.EXPORT_PATH }}/${{ env.ZIP_NAME }}
+            ${{ env.BUILD_PATH }}/${{ env.ZIP_NAME }}
           draft: false
           prerelease: false
         env:
@@ -248,8 +182,3 @@ jobs:
           git add appcast.xml
           git commit -m "Update appcast.xml for version ${{ steps.version.outputs.version }}"
           git push origin main
-
-      - name: Cleanup keychain
-        if: always()
-        run: |
-          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
