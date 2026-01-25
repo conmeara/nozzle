@@ -16,3 +16,6 @@
 "Regex" = "Vanlig uttrykk";
 "Mixed" = "Blandet";
 "NotificationsAndSounds" = "Varsler og lyder";
+"Updates" = "Updates:";
+"CheckForUpdates" = "Check for updates automatically";
+"CheckNow" = "Check now";

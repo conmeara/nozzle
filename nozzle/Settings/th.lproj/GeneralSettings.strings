@@ -16,3 +16,6 @@
 "Regex" = "นิพจน์ทั่วไป";
 "Mixed" = "ผสม";
 "NotificationsAndSounds" = "การแจ้งเตือนและเสียง";
+"Updates" = "Updates:";
+"CheckForUpdates" = "Check for updates automatically";
+"CheckNow" = "Check now";

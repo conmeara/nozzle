@@ -16,3 +16,6 @@
 "Regex" = "Düzenli ifadeler";
 "Mixed" = "Karışık";
 "NotificationsAndSounds" = "Bildirimler ve sesler";
+"Updates" = "Updates:";
+"CheckForUpdates" = "Check for updates automatically";
+"CheckNow" = "Check now";

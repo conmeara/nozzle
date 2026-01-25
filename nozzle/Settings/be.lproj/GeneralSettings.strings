@@ -16,3 +16,6 @@
 "OpenTooltip" = "Глабальная гарачая клавіша для адкрыцця дадатку.\nПадставова: ⇧⌘C.";
 "Search" = "Пошук:";
 "Pin" = "Замацаваць";
+"Updates" = "Updates:";
+"CheckForUpdates" = "Check for updates automatically";
+"CheckNow" = "Check now";

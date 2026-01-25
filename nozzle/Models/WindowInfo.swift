@@ -67,7 +67,7 @@ public struct WindowInfo: Identifiable, Hashable, Sendable {
 
         let trimmedAppName = app.applicationName.trimmingCharacters(in: .whitespacesAndNewlines)
         let appName = trimmedAppName.isEmpty
-            ? (app.bundleIdentifier ?? "Unknown Application")
+            ? (app.bundleIdentifier.isEmpty ? "Unknown Application" : app.bundleIdentifier)
             : trimmedAppName
 
         // Handle both nil and empty string titles

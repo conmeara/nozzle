@@ -16,3 +16,6 @@
 "Regex" = "Regulārās izteiksmes";
 "Mixed" = "Jaukti";
 "NotificationsAndSounds" = "Paziņojumi un skaņas";
+"Updates" = "Updates:";
+"CheckForUpdates" = "Check for updates automatically";
+"CheckNow" = "Check now";

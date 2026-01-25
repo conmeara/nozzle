@@ -16,3 +16,6 @@
 "Title" = "Ogólne";
 "LaunchAtLogin" = "Uruchom przy logowaniu";
 "Open" = "Otwórz:";
+"Updates" = "Updates:";
+"CheckForUpdates" = "Check for updates automatically";
+"CheckNow" = "Check now";

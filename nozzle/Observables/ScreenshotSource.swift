@@ -480,103 +480,95 @@ final class ScreenshotSource: ContentSource {
         // Future optimization: When ScreenCaptureKit types become Sendable, use TaskGroup for
         // concurrent thumbnail generation to improve performance.
         for info in windowInfos {
-            do {
-                let filter: SCContentFilter
+            let filter: SCContentFilter
 
-                if info.isDesktop {
-                    guard let display = content.displays.first(where: { $0.displayID == info.displayID }) else {
-                        continue
-                    }
-                    filter = SCContentFilter(display: display, excludingWindows: [])
-                } else {
-                    guard let windowID = info.windowID,
-                          let window = content.windows.first(where: { $0.windowID == windowID }) else {
-                        continue
-                    }
-                    filter = SCContentFilter(desktopIndependentWindow: window)
-                }
-
-                // Capture with timeout to prevent UI freezes from slow windows
-                // Use manual timeout check to avoid Sendable issues with non-Sendable SCStreamConfiguration
-                let thumbnail: CGImage
-                let captureTask = Task {
-                    try await SCScreenshotManager.captureImage(
-                        contentFilter: filter,
-                        configuration: config
-                    )
-                }
-
-                // Wait for either completion or timeout
-                let timeoutNanos = UInt64(thumbnailCaptureTimeout * 1_000_000_000)
-                var didTimeout = false
-
-                do {
-                    thumbnail = try await withThrowingTaskGroup(of: Result<CGImage, Error>.self) { group in
-                        // Add capture task
-                        group.addTask {
-                            do {
-                                let image = try await captureTask.value
-                                return .success(image)
-                            } catch {
-                                return .failure(error)
-                            }
-                        }
-
-                        // Add timeout task
-                        group.addTask {
-                            do {
-                                try await Task.sleep(nanoseconds: timeoutNanos)
-                                return .failure(NSError(domain: "ScreenshotSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Timeout"]))
-                            } catch {
-                                // Task was cancelled, return an error
-                                return .failure(error)
-                            }
-                        }
-
-                        // Get first result
-                        guard let firstResult = try await group.next() else {
-                            throw NSError(domain: "ScreenshotSource", code: -2, userInfo: [NSLocalizedDescriptionKey: "No result"])
-                        }
-
-                        // Cancel remaining tasks
-                        group.cancelAll()
-
-                        switch firstResult {
-                        case .success(let image):
-                            return image
-                        case .failure(let error):
-                            if error.localizedDescription == "Timeout" {
-                                didTimeout = true
-                            }
-                            throw error
-                        }
-                    }
-                } catch {
-                    if didTimeout {
-                        Self.logger.warning("Thumbnail capture timed out for \(info.title) after \(self.thumbnailCaptureTimeout)s")
-                    } else {
-                        Self.logger.warning("Failed to generate thumbnail for \(info.title): \(error.localizedDescription)")
-                    }
-                    // Use placeholder thumbnail
-                    if let placeholder = placeholderThumbnail {
-                        thumbnailCache.setObject(placeholder, forKey: info.id as NSUUID, cost: placeholder.length)
-                    }
+            if info.isDesktop {
+                guard let display = content.displays.first(where: { $0.displayID == info.displayID }) else {
                     continue
                 }
+                filter = SCContentFilter(display: display, excludingWindows: [])
+            } else {
+                guard let windowID = info.windowID,
+                      let window = content.windows.first(where: { $0.windowID == windowID }) else {
+                    continue
+                }
+                filter = SCContentFilter(desktopIndependentWindow: window)
+            }
 
-                // Convert to PNG data
-                let nsImage = NSImage(cgImage: thumbnail, size: NSSize(width: thumbnail.width, height: thumbnail.height))
-                if let tiffData = nsImage.tiffRepresentation,
-                   let bitmapImage = NSBitmapImageRep(data: tiffData),
-                   let pngData = bitmapImage.representation(using: .png, properties: [:]) {
-                    thumbnailCache.setObject(pngData as NSData, forKey: info.id as NSUUID, cost: pngData.count)
+            // Capture with timeout to prevent UI freezes from slow windows
+            // Use manual timeout check to avoid Sendable issues with non-Sendable SCStreamConfiguration
+            let thumbnail: CGImage
+            let captureTask = Task {
+                try await SCScreenshotManager.captureImage(
+                    contentFilter: filter,
+                    configuration: config
+                )
+            }
+
+            // Wait for either completion or timeout
+            let timeoutNanos = UInt64(thumbnailCaptureTimeout * 1_000_000_000)
+            var didTimeout = false
+
+            do {
+                thumbnail = try await withThrowingTaskGroup(of: Result<CGImage, Error>.self) { group in
+                    // Add capture task
+                    group.addTask {
+                        do {
+                            let image = try await captureTask.value
+                            return .success(image)
+                        } catch {
+                            return .failure(error)
+                        }
+                    }
+
+                    // Add timeout task
+                    group.addTask {
+                        do {
+                            try await Task.sleep(nanoseconds: timeoutNanos)
+                            return .failure(NSError(domain: "ScreenshotSource", code: -1, userInfo: [NSLocalizedDescriptionKey: "Timeout"]))
+                        } catch {
+                            // Task was cancelled, return an error
+                            return .failure(error)
+                        }
+                    }
+
+                    // Get first result
+                    guard let firstResult = try await group.next() else {
+                        throw NSError(domain: "ScreenshotSource", code: -2, userInfo: [NSLocalizedDescriptionKey: "No result"])
+                    }
+
+                    // Cancel remaining tasks
+                    group.cancelAll()
+
+                    switch firstResult {
+                    case .success(let image):
+                        return image
+                    case .failure(let error):
+                        if error.localizedDescription == "Timeout" {
+                            didTimeout = true
+                        }
+                        throw error
+                    }
                 }
             } catch {
-                Self.logger.warning("Failed to generate thumbnail for \(info.title): \(error.localizedDescription)")
-                // Use placeholder thumbnail for failures
+                if didTimeout {
+                    Self.logger.warning("Thumbnail capture timed out for \(info.title) after \(self.thumbnailCaptureTimeout)s")
+                } else {
+                    Self.logger.warning("Failed to generate thumbnail for \(info.title): \(error.localizedDescription)")
+                }
+                // Use placeholder thumbnail
                 if let placeholder = placeholderThumbnail {
                     thumbnailCache.setObject(placeholder, forKey: info.id as NSUUID, cost: placeholder.length)
                 }
+                continue
+            }
+
+            // Convert to PNG data
+            let nsImage = NSImage(cgImage: thumbnail, size: NSSize(width: thumbnail.width, height: thumbnail.height))
+            if let tiffData = nsImage.tiffRepresentation,
+               let bitmapImage = NSBitmapImageRep(data: tiffData),
+               let pngData = bitmapImage.representation(using: .png, properties: [:]) {
+                thumbnailCache.setObject(pngData as NSData, forKey: info.id as NSUUID, cost: pngData.count)
             }
         }
     }

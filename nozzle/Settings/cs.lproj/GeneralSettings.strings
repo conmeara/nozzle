@@ -15,4 +15,6 @@
 "Fuzzy" = "Přibližné";
 "Regex" = "Regulární výrazy";
 "Mixed" = "Smíšené";
-"NotificationsAndSounds" = "Notifikace a zvuky";
+"NotificationsAndSounds" = "Notifikace a zvuky";"Updates" = "Updates:";
+"CheckForUpdates" = "Check for updates automatically";
+"CheckNow" = "Check now";

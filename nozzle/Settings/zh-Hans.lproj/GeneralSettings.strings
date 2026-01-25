@@ -16,3 +16,6 @@
 "Regex" = "正则表达式";
 "Mixed" = "混合";
 "NotificationsAndSounds" = "通知和声音";
+"Updates" = "Updates:";
+"CheckForUpdates" = "Check for updates automatically";
+"CheckNow" = "Check now";

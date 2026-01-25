@@ -16,3 +16,6 @@
 "Search" = "Iskanje:";
 "Title" = "Splošno";
 "Modifiers" = "Prilagodite vedenje pri izbiri predmeta:\n• Izberite s pritisnjenim %@, da kopirate element.\n• Izberite s pritisnjenim %@, da kopirate in prilepite element.\n• Izberite s pritisnjenim %@, da kopirate, počistite oblikovanje in prilepite element.";
+"Updates" = "Updates:";
+"CheckForUpdates" = "Check for updates automatically";
+"CheckNow" = "Check now";

@@ -1,5 +1,6 @@
 import Defaults
 import KeyboardShortcuts
+import Sparkle
 import SwiftUI
 
 @MainActor
@@ -95,6 +96,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   func applicationDidFinishLaunching(_ aNotification: Notification) {
     migrateUserDefaults()
     disableUnusedGlobalHotkeys()
+
+    // Initialize software updater (Sparkle)
+    _ = SoftwareUpdater.shared
 
     // Initialize ContentManager and register sources
     let contentManager = ContentManager.shared
@@ -202,8 +206,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     guard contents.isEmpty else { return }
 
     // Copy default prompts from bundle
-    guard let bundle = Bundle.main.resourceURL else { return }
-    let defaultPromptsPath = bundle.appendingPathComponent("DefaultPrompts")
+    guard Bundle.main.resourceURL != nil else { return }
 
     let defaultPrompts = [
       ("Grammar Genie", """
@@ -323,7 +326,15 @@ Keep code snippets small and illustrative. Focus on architecture, not full imple
     feedbackItem.keyEquivalentModifierMask = [.option]
     feedbackItem.target = self
     menu.addItem(feedbackItem)
-    
+
+    let checkForUpdatesItem = NSMenuItem(
+      title: NSLocalizedString("Check for Updates...", comment: ""),
+      action: #selector(checkForUpdatesFromMenu),
+      keyEquivalent: ""
+    )
+    checkForUpdatesItem.target = self
+    menu.addItem(checkForUpdatesItem)
+
     menu.addItem(NSMenuItem.separator())
     
     let quitItem = NSMenuItem(
@@ -375,7 +386,12 @@ Keep code snippets small and illustrative. Focus on architecture, not full imple
       NSWorkspace.shared.open(mailtoURL)
     }
   }
-  
+
+  @objc
+  private func checkForUpdatesFromMenu() {
+    SoftwareUpdater.shared.checkForUpdates()
+  }
+
   @objc
   private func quitFromMenu() {
     AppState.shared.quit()

@@ -16,3 +16,6 @@
 "Regex" = "Muntazam ifodalar";
 "Mixed" = "Aralash";
 "NotificationsAndSounds" = "Bildirishnomalar va tovushlar";
+"Updates" = "Updates:";
+"CheckForUpdates" = "Check for updates automatically";
+"CheckNow" = "Check now";

@@ -16,3 +16,6 @@
 "Regex" = "Reguliere expressies";
 "Mixed" = "Mixed";
 "NotificationsAndSounds" = "Meldingen en geluiden";
+"Updates" = "Updates:";
+"CheckForUpdates" = "Check for updates automatically";
+"CheckNow" = "Check now";
