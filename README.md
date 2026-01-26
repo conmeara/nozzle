@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="128px" src="https://nozzle.app/img/nozzle/Logo.png" alt="nozzle logo" />
+  <img width="128px" src="designs/icons/app-icon-128.png" alt="nozzle logo" />
 </p>
 
 <h1 align="center">nozzle</h1>
