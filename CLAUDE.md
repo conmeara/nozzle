@@ -47,6 +47,58 @@ xcodebuild -project nozzle.xcodeproj -scheme nozzle test -only-testing:nozzleUIT
 xcodebuild -project nozzle.xcodeproj -scheme nozzle archive -archivePath ./build/nozzle.xcarchive
 ```
 
+### Creating a Release
+
+Releases are automated via GitHub Actions. The workflow builds an unsigned app, creates a GitHub Release, and updates the Sparkle appcast.
+
+#### Steps to Release
+1. **Update version** in Xcode project settings:
+   - `MARKETING_VERSION` (e.g., 3.1.0)
+   - `CURRENT_PROJECT_VERSION` (build number, e.g., 58)
+
+2. **Commit and push** the version change:
+   ```bash
+   git add nozzle.xcodeproj/project.pbxproj
+   git commit -m "Bump version to 3.1.0"
+   git push
+   ```
+
+3. **Create and push a tag**:
+   ```bash
+   git tag v3.1.0
+   git push origin v3.1.0
+   ```
+
+4. The workflow automatically:
+   - Builds on `macos-26` runner with Xcode 26
+   - Creates unsigned release build
+   - Uploads `nozzle.app.zip` to GitHub Releases
+   - Updates `appcast.xml` for Sparkle auto-updates
+   - Generates release notes from commit history
+
+#### Workflow Configuration
+- **File**: `.github/workflows/release.yml`
+- **Trigger**: Push tags matching `v*`
+- **Runner**: `macos-26` (required for Xcode 26 / macOS 26 SDK)
+- **Build**: Unsigned (notarization pending Apple entitlements resolution)
+
+#### Sparkle Auto-Updates
+- **Feed URL**: `https://raw.githubusercontent.com/conmeara/nozzle/main/appcast.xml`
+- **Service**: `SoftwareUpdater.swift` wraps Sparkle's `SPUUpdater`
+- **UI**: Settings pane toggle + "Check for Updates" menu item
+
+#### Important Notes
+- **Unsigned builds**: Users must right-click → Open on first launch
+- **Version sync**: Keep `MARKETING_VERSION` in sync with git tag (e.g., 3.1.0 = v3.1.0)
+- **macOS 26 requirement**: Project uses `FoundationModels` framework (conditionally imported for CI compatibility)
+- **Re-triggering**: To re-run a release, delete and recreate the tag:
+  ```bash
+  git tag -d v3.1.0
+  git push origin :refs/tags/v3.1.0
+  git tag v3.1.0
+  git push origin v3.1.0
+  ```
+
 ## Architecture
 
 ### v3 Multi-Source Architecture Overview
