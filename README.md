@@ -40,6 +40,14 @@ nozzle is a lightweight, keyboard-driven content manager for macOS that combines
 
 Download the latest version from the [Releases](https://github.com/conmeara/nozzle/releases/latest) page.
 
+**Note:** The app is currently unsigned. After downloading, you'll need to remove the quarantine attribute:
+
+```bash
+xattr -cr /Applications/nozzle.app
+```
+
+Then open the app normally. Alternatively, right-click the app and select "Open" to bypass Gatekeeper.
+
 ### Homebrew
 
 ```sh
