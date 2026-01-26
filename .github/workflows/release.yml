@@ -121,39 +121,32 @@ jobs:
             COMMITS_HTML=$(git log --pretty=format:"<li>%s</li>" -10 --no-merges)
           fi
 
-          # Create new item entry
-          NEW_ITEM="    <item>
-            <title>$SHORT_VERSION</title>
-            <description>
-              <![CDATA[
-                <ul>
-                  $COMMITS_HTML
-                </ul>
-              ]]>
-            </description>
-            <pubDate>$PUB_DATE</pubDate>
-            <releaseNotesLink>https://github.com/${{ github.repository }}/releases/tag/$TAG</releaseNotesLink>
-            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <enclosure
-              url=\"https://github.com/${{ github.repository }}/releases/download/$TAG/$ZIP_NAME\"
-              sparkle:version=\"$BUILD_NUMBER\"
-              sparkle:shortVersionString=\"$SHORT_VERSION\"
-              length=\"$FILE_SIZE\"
-              type=\"application/octet-stream\"
-            />
-          </item>"
+          # Create new item entry in a temp file
+          cat > /tmp/new_item.xml << ITEMEOF
+              <item>
+                <title>$SHORT_VERSION</title>
+                <description>
+                  <![CDATA[
+                    <ul>
+                      $COMMITS_HTML
+                    </ul>
+                  ]]>
+                </description>
+                <pubDate>$PUB_DATE</pubDate>
+                <releaseNotesLink>https://github.com/${{ github.repository }}/releases/tag/$TAG</releaseNotesLink>
+                <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+                <enclosure
+                  url="https://github.com/${{ github.repository }}/releases/download/$TAG/$ZIP_NAME"
+                  sparkle:version="$BUILD_NUMBER"
+                  sparkle:shortVersionString="$SHORT_VERSION"
+                  length="$FILE_SIZE"
+                  type="application/octet-stream"
+                />
+              </item>
+          ITEMEOF
 
-          # Insert new item after <language>en</language> line
-          awk -v new_item="$NEW_ITEM" '
-            /<language>en<\/language>/ {
-              print
-              print new_item
-              next
-            }
-            { print }
-          ' appcast.xml > appcast_new.xml
-
-          mv appcast_new.xml appcast.xml
+          # Insert new item after <language>en</language> line using sed
+          sed -i '' '/<language>en<\/language>/r /tmp/new_item.xml' appcast.xml
 
           echo "Updated appcast.xml with new entry"
 
