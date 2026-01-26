@@ -6,20 +6,14 @@
     <description>Most recent changes with links to updates.</description>
     <language>en</language>
     <item>
-      <title>3.1.0</title>
+      <title>3.0.0</title>
       <description>
         <![CDATA[
           <ul>
-            <li>Fix appcast.xml update script multiline handling</li>
-<li>Use macos-26 runner for Xcode 26 compatibility</li>
-<li>Make FoundationModels import conditional for CI compatibility</li>
-<li>Use unsigned build for GitHub releases temporarily</li>
-<li>Add Sparkle auto-updates and GitHub release workflow</li>
-<li>Simplify onboarding and update README</li>
-<li>Replace shortcuts placeholder with actual screenshot image</li>
-<li>Add undo support for clear and rename operations</li>
-<li>Add onboarding shortcut design assets</li>
-<li>Add Screenshot capture and multi-source content management (#71)</li>
+            <li>Add Screenshot capture and multi-source content management</li>
+            <li>Add Sparkle auto-updates and GitHub release workflow</li>
+            <li>Simplify onboarding flow</li>
+            <li>Add undo support for clear and rename operations</li>
           </ul>
         ]]>
       </description>
@@ -29,7 +23,7 @@
       <enclosure
         url="https://github.com/conmeara/nozzle/releases/download/v3.0.0/nozzle.app.zip"
         sparkle:version="57"
-        sparkle:shortVersionString="3.1.0"
+        sparkle:shortVersionString="3.0.0"
         length="11111366"
         type="application/octet-stream"
       />
