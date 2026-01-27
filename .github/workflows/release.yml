@@ -55,6 +55,13 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Ad-hoc sign app
+        run: |
+          # Ad-hoc sign to create a valid signature structure
+          codesign --force --deep --sign - "$BUILD_PATH/$APP_NAME"
+          # Verify the signature
+          codesign --verify --deep --strict "$BUILD_PATH/$APP_NAME"
+
       - name: Create release zip
         run: |
           cd "$BUILD_PATH"
