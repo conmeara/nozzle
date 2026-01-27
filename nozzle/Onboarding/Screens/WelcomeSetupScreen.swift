@@ -48,13 +48,13 @@ struct WelcomeSetupScreen: View {
             }
             
             VStack(spacing: 8) {
-                // Accessibility Permission (required)
+                // Accessibility Permission (recommended for full functionality)
                 permissionRow(
                     icon: "accessibility",
                     title: "Accessibility Access",
-                    description: "Required for clipboard monitoring and keyboard shortcuts",
+                    description: "Enables clipboard monitoring and paste functionality",
                     isGranted: onboardingState.hasAccessibilityPermission,
-                    isRequired: true
+                    isRequired: false
                 ) {
                     onboardingState.requestAccessibilityPermission()
                 }
@@ -63,13 +63,20 @@ struct WelcomeSetupScreen: View {
                 permissionRow(
                     icon: "camera.viewfinder",
                     title: "Screen Recording",
-                    description: "Optional - enables screenshot capture functionality",
+                    description: "Enables screenshot capture of windows and displays",
                     isGranted: onboardingState.hasScreenRecordingPermission,
                     isRequired: false
                 ) {
                     onboardingState.requestScreenRecordingPermission()
                 }
             }
+
+            // Note about unsigned builds
+            Text("Note: If you previously had Nozzle from the App Store, you may need to re-add this version in System Settings.")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.top, 8)
         }
     }
     

@@ -45,7 +45,10 @@ final class OnboardingState {
     var canContinue: Bool {
         switch currentScreen {
         case .welcomeSetup:
-            return hasAccessibilityPermission // Require accessibility at minimum
+            // Don't block users - permissions are recommended but not required
+            // Important for unsigned builds where permission detection may fail
+            // due to code signature differences from App Store version
+            return true
         case .shortcuts:
             return true
         case .getStarted:
