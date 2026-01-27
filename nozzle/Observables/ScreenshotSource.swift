@@ -12,7 +12,7 @@ final class ScreenshotSource: ContentSource {
     /// Check screen recording permission WITHOUT triggering a prompt
     /// Uses CGPreflightScreenCaptureAccess which is safe to call repeatedly
     /// - Returns: true if permission is granted, false otherwise
-    nonisolated static func checkScreenRecordingPermission() async -> Bool {
+    nonisolated static func checkScreenRecordingPermission() -> Bool {
         // CGPreflightScreenCaptureAccess checks permission without triggering a prompt
         // This is safe to call repeatedly (e.g., in a timer)
         return CGPreflightScreenCaptureAccess()
@@ -180,7 +180,7 @@ final class ScreenshotSource: ContentSource {
         do {
             // Check for screen recording permission (use cached value if available)
             if hasScreenRecordingPermission == nil {
-                hasScreenRecordingPermission = await Self.checkScreenRecordingPermission()
+                hasScreenRecordingPermission = Self.checkScreenRecordingPermission()
             }
 
             guard hasScreenRecordingPermission == true else {

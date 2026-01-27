@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreGraphics
 import Defaults
 @preconcurrency import AppKit
 @preconcurrency import ApplicationServices
@@ -61,23 +62,28 @@ final class OnboardingState {
     }
     
     init() {
-        checkPermissions()
-        
-        // Set up permission monitoring
+        updatePermissionStatus()
+
+        // Set up permission monitoring - check every second
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.checkPermissions()
+            DispatchQueue.main.async {
+                self?.updatePermissionStatus()
             }
         }
     }
-    
-    nonisolated func checkPermissions() {
-        Task { @MainActor in
-            hasAccessibilityPermission = AXIsProcessTrustedWithOptions(nil)
 
-            // Check screen recording permission for screenshot functionality
-            // Uses CGPreflightScreenCaptureAccess which doesn't trigger a prompt
-            hasScreenRecordingPermission = await ScreenshotSource.checkScreenRecordingPermission()
+    /// Update permission status - called on main thread
+    private func updatePermissionStatus() {
+        // Check accessibility permission (synchronous)
+        let newAccessibility = AXIsProcessTrustedWithOptions(nil)
+        if newAccessibility != hasAccessibilityPermission {
+            hasAccessibilityPermission = newAccessibility
+        }
+
+        // Check screen recording permission (synchronous, doesn't trigger prompt)
+        let newScreenRecording = CGPreflightScreenCaptureAccess()
+        if newScreenRecording != hasScreenRecordingPermission {
+            hasScreenRecordingPermission = newScreenRecording
         }
     }
     
