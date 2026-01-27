@@ -1,6 +1,5 @@
 import Defaults
 import KeyboardShortcuts
-import Sparkle
 import SwiftUI
 
 @MainActor
@@ -96,9 +95,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   func applicationDidFinishLaunching(_ aNotification: Notification) {
     migrateUserDefaults()
     disableUnusedGlobalHotkeys()
-
-    // Initialize software updater (Sparkle)
-    _ = SoftwareUpdater.shared
 
     // Initialize ContentManager and register sources
     let contentManager = ContentManager.shared
@@ -342,14 +338,6 @@ Keep code snippets small and illustrative. Focus on architecture, not full imple
     feedbackItem.target = self
     menu.addItem(feedbackItem)
 
-    let checkForUpdatesItem = NSMenuItem(
-      title: NSLocalizedString("Check for Updates...", comment: ""),
-      action: #selector(checkForUpdatesFromMenu),
-      keyEquivalent: ""
-    )
-    checkForUpdatesItem.target = self
-    menu.addItem(checkForUpdatesItem)
-
     menu.addItem(NSMenuItem.separator())
     
     let quitItem = NSMenuItem(
@@ -400,11 +388,6 @@ Keep code snippets small and illustrative. Focus on architecture, not full imple
     if let mailtoURL = URL(string: mailtoString) {
       NSWorkspace.shared.open(mailtoURL)
     }
-  }
-
-  @objc
-  private func checkForUpdatesFromMenu() {
-    SoftwareUpdater.shared.checkForUpdates()
   }
 
   @objc

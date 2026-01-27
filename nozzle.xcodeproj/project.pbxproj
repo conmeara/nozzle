@@ -15,8 +15,6 @@
 		2F8B9DE62C5D6E5D0046EF69 /* NSPoint+DefaultsSerializable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F8B9DE52C5D6E5D0046EF69 /* NSPoint+DefaultsSerializable.swift */; };
 		2FB5BCA02CD8F73F008B33F4 /* ApplicationImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB5BC9F2CD8F73C008B33F4 /* ApplicationImage.swift */; };
 		4762D6972467226100B3A2BA /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4762D6992467226100B3A2BA /* Localizable.strings */; };
-		8236C3BF5B6196E973D7C22E /* SoftwareUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8236C3BF5B6196E973D7C22D /* SoftwareUpdater.swift */; };
-		DA009931256411F90030E697 /* appcast.xml in Resources */ = {isa = PBXBuildFile; fileRef = DA00992C256411F90030E697 /* appcast.xml */; };
 		DA009932256411F90030E697 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = DA00992D256411F90030E697 /* README.md */; };
 		DA009947256414800030E697 /* SwiftHEXColors in Frameworks */ = {isa = PBXBuildFile; productRef = DA009946256414800030E697 /* SwiftHEXColors */; };
 		DA009955256414E60030E697 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = DA009954256414E60030E697 /* KeyboardShortcuts */; };
@@ -175,7 +173,6 @@
 		F5758AFF2E5D176C00FC0F19 /* QuickLookPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758AFE2E5D176C00FC0F19 /* QuickLookPreview.swift */; };
 		F5758B012E5D228200FC0F19 /* FolderExpansionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758B002E5D228200FC0F19 /* FolderExpansionState.swift */; };
 		F5758B032E5D228F00FC0F19 /* FolderTreeItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5758B022E5D228F00FC0F19 /* FolderTreeItemView.swift */; };
-		F59FE3282F20592A00B96C11 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = F59FE3272F20592A00B96C11 /* Sparkle */; };
 		F5A0B0012EE1AAAA00AAA001 /* SelectedItemsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5A0B0002EE1AAAA00AAA001 /* SelectedItemsView.swift */; };
 		F5C180392E622C8B007ED483 /* DictationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C180382E622C8B007ED483 /* DictationManager.swift */; };
 		F5C1805F2E63E4A5007ED483 /* CombinedContentBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C1805E2E63E4A5007ED483 /* CombinedContentBuilder.swift */; };
@@ -234,7 +231,6 @@
 		4762D69A2467226400B3A2BA /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4DC4D112252713D700FE5FAC /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7CEEFDF124F41F8500ECAD2A /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		8236C3BF5B6196E973D7C22D /* SoftwareUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoftwareUpdater.swift; sourceTree = "<group>"; };
 		84DA6AE6669645AEB14775D8 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/ShortcutsSettings.strings; sourceTree = "<group>"; };
 		ABC72863283A9053001EE086 /* th */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = th; path = th.lproj/Localizable.strings; sourceTree = "<group>"; };
 		CD1B48C134654A3AAFFB9743 /* ShortcutsSettingsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsSettingsPane.swift; sourceTree = "<group>"; };
@@ -644,7 +640,6 @@
 				DA5F46512020E9FB00425C11 /* Carbon.framework in Frameworks */,
 				DA13D7D02C19F8C300FA9E23 /* Defaults in Frameworks */,
 				DA009947256414800030E697 /* SwiftHEXColors in Frameworks */,
-				F59FE3282F20592A00B96C11 /* Sparkle in Frameworks */,
 				DA5154D82564102900C01004 /* Sauce in Frameworks */,
 				2F39CB0A2AD9AE1F00B749FD /* Settings in Frameworks */,
 				DA13D7CA2C19F52B00FA9E23 /* LaunchAtLogin in Frameworks */,
@@ -945,7 +940,6 @@
 			isa = PBXGroup;
 			children = (
 				F569FB1B2E6E87E90076D784 /* PromptEnhancer.swift */,
-				8236C3BF5B6196E973D7C22D /* SoftwareUpdater.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1095,7 +1089,6 @@
 				DA13D7CF2C19F8C300FA9E23 /* Defaults */,
 				DAC0CA3D2C88E7A4003BF498 /* Fuse */,
 				DAF7C5C22D51A10000A1B2C3 /* Collections */,
-				F59FE3272F20592A00B96C11 /* Sparkle */,
 			);
 			productName = nozzle;
 			productReference = DAEE38431E3DBEB100DD2966 /* nozzle.app */;
@@ -1176,7 +1169,6 @@
 				DA13D7CE2C19F8C300FA9E23 /* XCRemoteSwiftPackageReference "Defaults" */,
 				DAC0CA3C2C88E7A4003BF498 /* XCRemoteSwiftPackageReference "fuse-swift" */,
 				DAF7C5C12D51A10000A1B2C3 /* XCRemoteSwiftPackageReference "swift-collections" */,
-				F59FE3262F20592A00B96C11 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			productRefGroup = DAEE38441E3DBEB100DD2966 /* Products */;
 			projectDirPath = "";
@@ -1217,7 +1209,6 @@
 				DA689FCF2C1DEE570009B887 /* AppearanceSettings.strings in Resources */,
 				4762D6972467226100B3A2BA /* Localizable.strings in Resources */,
 				DA20FA742B082E0100056DD5 /* Knock.caf in Resources */,
-				DA009931256411F90030E697 /* appcast.xml in Resources */,
 				DAA5ACB52C1B803000B58513 /* GeneralSettings.strings in Resources */,
 				F51ACB992E7D016C00A96387 /* Grammar Genie.txt in Resources */,
 				F51ACB9A2E7D016C00A96387 /* Code Architect.txt in Resources */,
@@ -1292,7 +1283,6 @@
 				F57274732E57C00B003A9299 /* TextFileFormatter.swift in Sources */,
 				F57274742E57C00B003A9299 /* FileTypeBadgeCache.swift in Sources */,
 				F569FB1D2E6E87E90076D784 /* PromptEnhancer.swift in Sources */,
-				8236C3BF5B6196E973D7C22E /* SoftwareUpdater.swift in Sources */,
 				DA1969182C3F327500258481 /* SearchFieldView.swift in Sources */,
 				DA1969192CF327500258481 /* UnifiedInputFieldView.swift in Sources */,
 				DAE8F5D42C43262B00851CA9 /* Popup.swift in Sources */,
@@ -2130,14 +2120,6 @@
 				minimumVersion = 1.0.4;
 			};
 		};
-		F59FE3262F20592A00B96C11 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.8.1;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -2180,11 +2162,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DAF7C5C12D51A10000A1B2C3 /* XCRemoteSwiftPackageReference "swift-collections" */;
 			productName = Collections;
-		};
-		F59FE3272F20592A00B96C11 /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = F59FE3262F20592A00B96C11 /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

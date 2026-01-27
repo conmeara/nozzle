@@ -11,7 +11,6 @@ struct GeneralSettingsPane: View {
 
   @Default(.searchMode) private var searchMode
 
-  @State private var updater = SoftwareUpdater.shared
   @State private var copyModifier = HistoryItemAction.copy.modifierFlags.description
   @State private var pasteModifier = HistoryItemAction.paste.modifierFlags.description
   @State private var pasteWithoutFormatting = HistoryItemAction.pasteWithoutFormatting.modifierFlags.description
@@ -28,22 +27,6 @@ struct GeneralSettingsPane: View {
           OnboardingWindow.show()
         }
         .help("Re-run the welcome screen and setup process")
-      }
-
-      Settings.Section(
-        bottomDivider: true,
-        label: { Text("Updates", tableName: "GeneralSettings") }
-      ) {
-        Toggle(isOn: $updater.automaticallyChecksForUpdates) {
-          Text("CheckForUpdates", tableName: "GeneralSettings")
-        }
-
-        Button {
-          updater.checkForUpdates()
-        } label: {
-          Text("CheckNow", tableName: "GeneralSettings")
-        }
-        .disabled(!updater.canCheckForUpdates)
       }
 
       Settings.Section(
