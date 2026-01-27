@@ -11,6 +11,8 @@ struct GeneralSettingsPane: View {
 
   @Default(.searchMode) private var searchMode
 
+  // Use local state for launch at login to ensure explicit user consent
+  @State private var launchAtLoginEnabled = LaunchAtLogin.isEnabled
   @State private var copyModifier = HistoryItemAction.copy.modifierFlags.description
   @State private var pasteModifier = HistoryItemAction.paste.modifierFlags.description
   @State private var pasteWithoutFormatting = HistoryItemAction.pasteWithoutFormatting.modifierFlags.description
@@ -19,10 +21,14 @@ struct GeneralSettingsPane: View {
   var body: some View {
     Settings.Container(contentWidth: 450) {
       Settings.Section(title: "", bottomDivider: true) {
-        LaunchAtLogin.Toggle {
+        // Manual toggle to ensure explicit user consent per App Store guidelines
+        Toggle(isOn: $launchAtLoginEnabled) {
           Text("LaunchAtLogin", tableName: "GeneralSettings")
         }
-        
+        .onChange(of: launchAtLoginEnabled) { _, newValue in
+          LaunchAtLogin.isEnabled = newValue
+        }
+
         Button("Show Welcome Screen") {
           OnboardingWindow.show()
         }
