@@ -127,10 +127,11 @@ final class OnboardingState {
         // Save launch at login preference
         // Note: This may fail in some environments (e.g., sandboxed or development builds)
         LaunchAtLogin.isEnabled = launchAtLoginEnabled
-        
+
         // Mark onboarding as completed
+        // Version 2 = nozzle v3.x onboarding with multi-source architecture
         Defaults[.hasCompletedOnboarding] = true
-        Defaults[.onboardingVersion] = 1
+        Defaults[.onboardingVersion] = 2
         
         // Close onboarding window
         OnboardingWindow.shared?.close()

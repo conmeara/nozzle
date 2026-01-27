@@ -641,34 +641,35 @@ struct ContentView: View {
               if let screenshotSource = contentManager.sources[ScreenshotSource.sourceID] as? ScreenshotSource,
                  screenshotSource.permissionState == false {
                 // Show permission required UI
-                VStack(spacing: 20) {
+                VStack(spacing: 16) {
                   Spacer()
 
                   Image(systemName: "camera.viewfinder")
-                    .font(.system(size: 48))
+                    .font(.system(size: 40))
                     .foregroundColor(.secondary)
 
                   Text("Screen Recording Permission Required")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.primary)
 
-                  Text("nozzle needs screen recording permission to capture screenshots of windows and displays.")
-                    .font(.system(size: 13))
+                  Text("Grant permission in System Settings to capture screenshots of windows and displays.")
+                    .font(.system(size: 12))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
-                    .frame(maxWidth: 300)
+                    .frame(maxWidth: 280)
 
                   Button("Open System Settings") {
                     screenshotSource.openScreenRecordingSettings()
                   }
                   .buttonStyle(.borderedProminent)
-                  .controlSize(.large)
+                  .controlSize(.regular)
 
-                  Text("After granting permission, return here and refresh (⌘R)")
+                  Text("Then return here and press ⌘R to refresh")
                     .font(.system(size: 11))
-                    .foregroundColor(Color.secondary.opacity(0.7))
+                    .foregroundColor(Color.secondary.opacity(0.6))
 
                   Spacer()
+                    .frame(height: 40) // Space for shortcuts bar
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .contentShape(Rectangle())

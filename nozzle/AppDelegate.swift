@@ -109,10 +109,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Register Prompts source
     registerPromptsSource()
 
-    // Register screenshot source
+    // Register screenshot source (but don't start monitoring yet - will start after onboarding or delay)
     let screenshotSource = ScreenshotSource()
     contentManager.registerSource(screenshotSource)
-    screenshotSource.startMonitoring() // startMonitoring() already performs initial refresh
 
     // Restore folder sources from bookmarks
     for url in Bookmarks.resolveAll() {
@@ -133,13 +132,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     ) {
       ContentView()
     }
-    
-    // Show onboarding if this is the first launch
-    if !Defaults[.hasCompletedOnboarding] {
+
+    // Check if onboarding should be shown
+    // Show for: new users OR existing users who haven't seen v3 onboarding (version < 2)
+    let shouldShowOnboarding = !Defaults[.hasCompletedOnboarding] || Defaults[.onboardingVersion] < 2
+
+    if shouldShowOnboarding {
+      // Reset onboarding state for existing users upgrading to v3
+      if Defaults[.hasCompletedOnboarding] && Defaults[.onboardingVersion] < 2 {
+        Defaults[.hasCompletedOnboarding] = false
+      }
+
       // Delay slightly to ensure app is fully initialized
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         OnboardingWindow.showIfNeeded()
       }
+
+      // Start screenshot monitoring after onboarding delay (user will grant permission in onboarding)
+      DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        screenshotSource.startMonitoring()
+      }
+    } else {
+      // User has completed onboarding, start screenshot monitoring immediately
+      screenshotSource.startMonitoring()
     }
   }
 
