@@ -76,9 +76,8 @@ final class OnboardingState {
             hasAccessibilityPermission = AXIsProcessTrustedWithOptions(nil)
 
             // Check screen recording permission for screenshot functionality
-            if #available(macOS 12.3, *) {
-                hasScreenRecordingPermission = await ScreenshotSource.checkScreenRecordingPermission()
-            }
+            // Uses CGPreflightScreenCaptureAccess which doesn't trigger a prompt
+            hasScreenRecordingPermission = await ScreenshotSource.checkScreenRecordingPermission()
         }
     }
     
@@ -97,10 +96,10 @@ final class OnboardingState {
     }
 
     func requestScreenRecordingPermission() {
-        // Open System Settings to Screen Recording privacy pane
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-            NSWorkspace.shared.open(url)
-        }
+        // Use CGRequestScreenCaptureAccess to trigger the system permission prompt
+        // This shows a dialog with "Open System Settings" and "Deny" buttons
+        // The user can grant permission from there
+        ScreenshotSource.requestScreenRecordingPermission()
     }
     
     func nextScreen() {

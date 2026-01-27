@@ -1,4 +1,5 @@
 import AppKit
+import CoreGraphics
 import Foundation
 import Observation
 import ScreenCaptureKit
@@ -8,17 +9,21 @@ import OSLog
 final class ScreenshotSource: ContentSource {
     nonisolated private static let logger = Logger(subsystem: "org.conmeara.nozzle.content", category: "ScreenshotSource")
 
-    /// Shared utility to check screen recording permission
+    /// Check screen recording permission WITHOUT triggering a prompt
+    /// Uses CGPreflightScreenCaptureAccess which is safe to call repeatedly
     /// - Returns: true if permission is granted, false otherwise
-    @available(macOS 12.3, *)
     nonisolated static func checkScreenRecordingPermission() async -> Bool {
-        // Try to get shareable content - this will fail if permission is denied
-        do {
-            _ = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
-            return true
-        } catch {
-            return false
-        }
+        // CGPreflightScreenCaptureAccess checks permission without triggering a prompt
+        // This is safe to call repeatedly (e.g., in a timer)
+        return CGPreflightScreenCaptureAccess()
+    }
+
+    /// Request screen recording permission (will trigger the system prompt)
+    /// Only call this when user explicitly requests it (e.g., clicking "Grant" button)
+    nonisolated static func requestScreenRecordingPermission() {
+        // CGRequestScreenCaptureAccess triggers the system permission prompt
+        // Only call this once when user explicitly requests permission
+        _ = CGRequestScreenCaptureAccess()
     }
 
     /// Invalidates the cached permission state, forcing a fresh check on next access.
