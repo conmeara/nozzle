@@ -636,10 +636,60 @@ struct ContentView: View {
                   .frame(minWidth: 300)
                   .layoutPriority(1)
               }
+            } else if contentManager.activeSourceId == ScreenshotSource.sourceID {
+              // Screenshot source - check for permission state
+              if let screenshotSource = contentManager.sources[ScreenshotSource.sourceID] as? ScreenshotSource,
+                 screenshotSource.permissionState == false {
+                // Show permission required UI
+                VStack(spacing: 20) {
+                  Spacer()
+
+                  Image(systemName: "camera.viewfinder")
+                    .font(.system(size: 48))
+                    .foregroundColor(.secondary)
+
+                  Text("Screen Recording Permission Required")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.primary)
+
+                  Text("nozzle needs screen recording permission to capture screenshots of windows and displays.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 300)
+
+                  Button("Open System Settings") {
+                    screenshotSource.openScreenRecordingSettings()
+                  }
+                  .buttonStyle(.borderedProminent)
+                  .controlSize(.large)
+
+                  Text("After granting permission, return here and refresh (⌘R)")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color.secondary.opacity(0.7))
+
+                  Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .contextMenu {
+                  Button("Refresh") {
+                    screenshotSource.invalidatePermissionCache()
+                    Task { await screenshotSource.refresh() }
+                  }
+                  .keyboardShortcut("r", modifiers: .command)
+                }
+              } else {
+                // Show screenshot items
+                let items = contentManager.getDecorators(for: contentManager.activeSourceId)
+                ListView(universalItems: items)
+                  .frame(minWidth: 300)
+                  .layoutPriority(1)
+              }
             } else {
               // Non-clipboard sources use unified ListView with cached decorators
               let items = contentManager.getDecorators(for: contentManager.activeSourceId)
-              
+
               if contentManager.activeSourceId == "prompts" {
                 // Wrap entire prompts view in a container with consistent context menu
                 ZStack {

@@ -81,6 +81,16 @@ final class ScreenshotSource: ContentSource {
         return cache
     }()
     private var hasScreenRecordingPermission: Bool?
+
+    /// Public accessor for permission state - true if granted, false if denied, nil if unknown
+    var permissionState: Bool? { hasScreenRecordingPermission }
+
+    /// Opens System Settings to the Screen Recording privacy pane
+    func openScreenRecordingSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+            NSWorkspace.shared.open(url)
+        }
+    }
     private var lastRefreshTime: Date = .distantPast
     private let refreshInterval: TimeInterval = 5.0 // Refresh every 5 seconds when tab is active
 

@@ -1,6 +1,7 @@
 import SwiftUI
 import Defaults
 @preconcurrency import AppKit
+@preconcurrency import ApplicationServices
 import LaunchAtLogin
 import ScreenCaptureKit
 
@@ -82,10 +83,17 @@ final class OnboardingState {
     }
     
     func requestAccessibilityPermission() {
-        // Open System Settings to Accessibility privacy pane
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-            NSWorkspace.shared.open(url)
-        }
+        // Trigger the system accessibility permission prompt
+        // This will show the macOS dialog asking user to grant permission
+        Self.promptForAccessibilityPermission()
+    }
+
+    /// Prompt for accessibility permission using the system dialog.
+    /// nonisolated to safely access the kAXTrustedCheckOptionPrompt global constant.
+    nonisolated private static func promptForAccessibilityPermission() {
+        let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+        let options = [promptKey: true] as CFDictionary
+        _ = AXIsProcessTrustedWithOptions(options)
     }
 
     func requestScreenRecordingPermission() {

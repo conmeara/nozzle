@@ -74,14 +74,12 @@ class OnboardingWindow: NSWindowController {
 
 extension OnboardingWindow: NSWindowDelegate {
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        // Allow closing but mark onboarding as completed
-        Defaults[.hasCompletedOnboarding] = true
-        Defaults[.onboardingVersion] = 1
-        
+        // Allow closing without marking as completed - user can see onboarding again next launch
+        // Onboarding is only marked complete when user explicitly finishes via completeOnboarding()
         OnboardingWindow.shared = nil
         return true
     }
-    
+
     func windowWillClose(_ notification: Notification) {
         OnboardingWindow.shared = nil
     }
