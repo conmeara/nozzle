@@ -18,7 +18,7 @@
 
 nozzle is a lightweight, keyboard-driven content manager for macOS that combines clipboard history with file system monitoring in a unified interface. Select, search, and combine content from multiple sources with ease.
 
-**Requires macOS Sonoma 14.0 or later.**
+**Requires macOS 26.0 or later.**
 
 <p align="center">
   <img src="designs/Onboarding/AppStore-Screenshot-2880x1800.png" alt="nozzle screenshot" width="720" />
@@ -36,8 +36,6 @@ nozzle is a lightweight, keyboard-driven content manager for macOS that combines
 
 ## Install
 
-### Download
-
 Download the latest version from the [Releases](https://github.com/conmeara/nozzle/releases/latest) page.
 
 **Note:** The app is currently unsigned. After downloading, you'll need to remove the quarantine attribute:
@@ -47,12 +45,6 @@ xattr -cr /Applications/nozzle.app
 ```
 
 Then open the app normally. Alternatively, right-click the app and select "Open" to bypass Gatekeeper.
-
-### Homebrew
-
-```sh
-brew install nozzle
-```
 
 ## Quick Start
 
@@ -80,54 +72,11 @@ brew install nozzle
 | Delete item | <kbd>⌥</kbd><kbd>⌫</kbd> |
 | Open preferences | <kbd>⌘</kbd><kbd>,</kbd> |
 
-## Configuration
-
-### Ignore Copied Items
-
-Temporarily ignore clipboard monitoring:
-
-```sh
-defaults write com.conmeara.nozzleai ignoreEvents true
-```
-
-Or click the menu icon with <kbd>⌥</kbd> pressed. Use <kbd>⌥</kbd><kbd>⇧</kbd> to ignore only the next copy.
-
-### Clipboard Check Interval
-
-Adjust how frequently nozzle checks the clipboard (default: 500ms):
-
-```sh
-defaults write com.conmeara.nozzleai clipboardCheckInterval 0.1
-```
-
-### Paste Template
-
-Customize how combined content is formatted:
-
-```sh
-defaults write com.conmeara.nozzleai pasteTemplate "{prompt}\n\nContent:\n{items}"
-```
-
-### Ignored Pasteboard Types
-
-nozzle automatically ignores sensitive content types. Add custom types in Preferences → Ignore → Pasteboard Types.
-
-Use [Pasteboard-Viewer](https://github.com/sindresorhus/Pasteboard-Viewer) to discover custom types from specific applications.
-
 ## FAQ
 
 **Why doesn't it paste automatically?**
 1. Enable "Paste automatically" in Preferences
 2. Add nozzle to System Settings → Privacy & Security → Accessibility
-
-**How do I restore the hidden footer?**
-```sh
-defaults write com.conmeara.nozzleai showFooter 1
-```
-
-**How do I ignore Universal Clipboard?**
-
-Add `com.apple.is-remote-clipboard` to Preferences → Ignore → Pasteboard Types.
 
 ## Contributing
 
@@ -149,12 +98,6 @@ xcodebuild -project nozzle.xcodeproj -scheme nozzle build
 # Run tests
 xcodebuild -project nozzle.xcodeproj -scheme nozzle test
 ```
-
-### Translations
-
-Translations are managed via [Weblate](https://hosted.weblate.org/engage/nozzle/). Contributions to localization are appreciated.
-
-[![Translation status](https://hosted.weblate.org/widget/nozzle/multi-auto.svg)](https://hosted.weblate.org/engage/nozzle/)
 
 ## Acknowledgments
 
