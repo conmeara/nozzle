@@ -10,6 +10,35 @@
       <description>
         <![CDATA[
           <ul>
+            <li>Add ad-hoc signing step to fix 'damaged app' error</li>
+<li>Add installation instructions for unsigned builds</li>
+<li>Fix README logo by using local app icon</li>
+<li>Document release workflow in CLAUDE.md</li>
+<li>Clean up duplicate appcast.xml entries</li>
+<li>Update appcast.xml for version 3.0.0</li>
+<li>Sync version to 3.0.0</li>
+<li>Update appcast.xml for version 3.0.0</li>
+<li>Fix appcast.xml update script multiline handling</li>
+<li>Use macos-26 runner for Xcode 26 compatibility</li>
+          </ul>
+        ]]>
+      </description>
+      <pubDate>2026-01-27</pubDate>
+      <releaseNotesLink>https://github.com/conmeara/nozzle/releases/tag/v3.0.0</releaseNotesLink>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/conmeara/nozzle/releases/download/v3.0.0/nozzle.app.zip"
+        sparkle:version="57"
+        sparkle:shortVersionString="3.0.0"
+        length="11044870"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
+      <title>3.0.0</title>
+      <description>
+        <![CDATA[
+          <ul>
             <li>Add Screenshot capture and multi-source content management</li>
             <li>Add Sparkle auto-updates and GitHub release workflow</li>
             <li>Simplify onboarding flow</li>
