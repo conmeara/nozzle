@@ -174,11 +174,22 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Fetch and checkout main branch
-          git fetch origin main
-          git checkout main
+          # Create a temporary directory for the main branch
+          TEMP_DIR=$(mktemp -d)
 
-          # Stage and commit appcast.xml
+          # Clone just the main branch (shallow)
+          git clone --depth 1 --branch main "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "$TEMP_DIR"
+
+          # Copy updated appcast.xml to the clone
+          cp appcast.xml "$TEMP_DIR/appcast.xml"
+
+          # Commit and push from the clone
+          cd "$TEMP_DIR"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add appcast.xml
           git commit -m "Update appcast.xml for version ${{ steps.version.outputs.version }}"
           git push origin main
+
+          # Cleanup
+          rm -rf "$TEMP_DIR"
