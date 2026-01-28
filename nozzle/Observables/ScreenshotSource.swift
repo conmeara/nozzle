@@ -178,12 +178,13 @@ final class ScreenshotSource: ContentSource {
         }
 
         do {
-            // Check for screen recording permission (use cached value if available)
-            if hasScreenRecordingPermission == nil {
-                hasScreenRecordingPermission = Self.checkScreenRecordingPermission()
+            // Check for screen recording permission (safe to call repeatedly)
+            let permissionGranted = Self.checkScreenRecordingPermission()
+            if permissionGranted != hasScreenRecordingPermission {
+                hasScreenRecordingPermission = permissionGranted
             }
 
-            guard hasScreenRecordingPermission == true else {
+            guard permissionGranted else {
                 Self.logger.warning("Screen recording permission not granted")
                 cachedItems = [createPermissionRequiredItem()]
                 return

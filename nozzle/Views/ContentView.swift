@@ -664,9 +664,15 @@ struct ContentView: View {
                   .buttonStyle(.borderedProminent)
                   .controlSize(.regular)
 
-                  Text("Then return here and press ⌘R to refresh")
+                  Text("Then return here and press ⌘⇧R to refresh")
                     .font(.system(size: 11))
                     .foregroundColor(Color.secondary.opacity(0.6))
+
+                  Button("Refresh") {
+                    Task { await screenshotSource.refresh() }
+                  }
+                  .buttonStyle(.bordered)
+                  .controlSize(.small)
 
                   Spacer()
                     .frame(height: 40) // Space for shortcuts bar

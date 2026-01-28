@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   
   var panel: FloatingPanel<ContentView>!
   private var menuBarTooltip: MenuBarTooltip?
+  private var appActiveObserver: NSObjectProtocol?
 
   @objc
   private lazy var statusItem: NSStatusItem = {
@@ -151,6 +152,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     } else {
       // User has completed onboarding, start screenshot monitoring immediately
       screenshotSource.startMonitoring()
+    }
+
+    // Refresh screenshot source when returning from System Settings or app re-activation.
+    appActiveObserver = NotificationCenter.default.addObserver(
+      forName: NSApplication.didBecomeActiveNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      self?.handleDidBecomeActive()
+    }
+  }
+
+  @MainActor
+  private func handleDidBecomeActive() {
+    let contentManager = ContentManager.shared
+    guard let screenshotSource = contentManager.sources[ScreenshotSource.sourceID] as? ScreenshotSource else { return }
+
+    // If permission was previously denied, refresh immediately to re-check.
+    if screenshotSource.permissionState == false {
+      Task { await screenshotSource.refresh() }
+      return
+    }
+
+    // When viewing the Screenshot tab, keep content fresh on activation.
+    if contentManager.activeSourceId == ScreenshotSource.sourceID {
+      Task { await screenshotSource.refreshIfNeeded() }
     }
   }
 
