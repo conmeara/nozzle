@@ -104,12 +104,32 @@ jobs:
           cd "$BUILD_PATH"
           ditto -c -k --keepParent "$APP_NAME" "notarize.zip"
 
-          # Submit for notarization
-          xcrun notarytool submit "notarize.zip" \
+          # Submit for notarization and capture output
+          SUBMIT_OUTPUT=$(xcrun notarytool submit "notarize.zip" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_APP_SPECIFIC_PASSWORD" \
             --team-id "$DEVELOPER_TEAM_ID" \
-            --wait
+            --wait 2>&1) || true
+
+          echo "$SUBMIT_OUTPUT"
+
+          # Extract submission ID
+          SUBMISSION_ID=$(echo "$SUBMIT_OUTPUT" | grep "id:" | head -1 | awk '{print $2}')
+          echo "Submission ID: $SUBMISSION_ID"
+
+          # Check if notarization succeeded
+          if echo "$SUBMIT_OUTPUT" | grep -q "status: Accepted"; then
+            echo "Notarization successful!"
+          else
+            echo "Notarization failed. Fetching log..."
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+              --team-id "$DEVELOPER_TEAM_ID" \
+              notarization_log.json || true
+            cat notarization_log.json
+            exit 1
+          fi
 
           # Staple the ticket to the app
           xcrun stapler staple "$APP_NAME"
