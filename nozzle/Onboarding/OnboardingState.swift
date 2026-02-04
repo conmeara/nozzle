@@ -100,9 +100,16 @@ final class OnboardingState {
     }
     
     func requestAccessibilityPermission() {
-        // Open System Settings directly to the Accessibility privacy pane
-        // This is more reliable for Developer ID apps than the system prompt
-        Self.openAccessibilitySettings()
+        // Trigger the system prompt which auto-adds the app to the Accessibility list (toggled OFF).
+        // This is better UX than just opening System Settings where the app isn't listed.
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+        let trusted = AXIsProcessTrustedWithOptions(options)
+        if trusted {
+            hasAccessibilityPermission = true
+        } else {
+            // Also open System Settings so the user can toggle the switch ON
+            Self.openAccessibilitySettings()
+        }
     }
 
     /// Opens System Settings to the Accessibility privacy pane

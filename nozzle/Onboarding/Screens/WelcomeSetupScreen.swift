@@ -82,12 +82,6 @@ struct WelcomeSetupScreen: View {
                 }
             }
 
-            // Note about unsigned builds
-            Text("Note: If you previously had Nozzle from the App Store, you may need to re-add this version in System Settings.")
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.top, 8)
         }
     }
     
