@@ -6,6 +6,28 @@
     <description>Most recent changes with links to updates.</description>
     <language>en</language>
     <item>
+      <title>3.0.10</title>
+      <description>
+        <![CDATA[
+          <ul>
+            <li>Fix onboarding permissions, window persistence, and UI issues</li>
+<li>Update appcast.xml for version 3.0.9</li>
+          </ul>
+        ]]>
+      </description>
+      <pubDate>2026-02-04</pubDate>
+      <releaseNotesLink>https://github.com/conmeara/nozzle/releases/tag/v3.0.10</releaseNotesLink>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/conmeara/nozzle/releases/download/v3.0.10/nozzle.app.zip"
+        sparkle:version="67"
+        sparkle:shortVersionString="3.0.10"
+        sparkle:edSignature="sparkle:edSignature="csH/vemTtzxS0r8xeWJ1n30r04rPD7KRy9lETvd+yRCqAwweIUHJ0GyPN9eFQuKysya0BMtO+stSrUD2R/1qAA==" length="11128597""
+        length="11128597"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>3.0.9</title>
       <description>
         <![CDATA[
