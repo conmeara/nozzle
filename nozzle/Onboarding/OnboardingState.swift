@@ -133,8 +133,16 @@ final class OnboardingState {
     
     func completeOnboarding() {
         // Save launch at login preference
-        // Note: This may fail in some environments (e.g., sandboxed or development builds)
+        // Only attempt to set launch at login if the app is properly installed
+        // (not running from Xcode's DerivedData or other non-standard locations)
+        #if !DEBUG
         LaunchAtLogin.isEnabled = launchAtLoginEnabled
+        #else
+        // In debug builds, only set if explicitly enabled to avoid noisy errors
+        if launchAtLoginEnabled {
+            LaunchAtLogin.isEnabled = true
+        }
+        #endif
 
         // Mark onboarding as completed
         // Version 2 = nozzle v3.x onboarding with multi-source architecture

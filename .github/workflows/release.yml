@@ -38,38 +38,89 @@ jobs:
         with:
           xcode-version: latest-stable
 
+      - name: Import Developer ID certificate
+        env:
+          DEVELOPER_ID_CERTIFICATE_BASE64: ${{ secrets.DEVELOPER_ID_CERTIFICATE_BASE64 }}
+          DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          echo "$DEVELOPER_ID_CERTIFICATE_BASE64" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          security import $RUNNER_TEMP/certificate.p12 \
+            -P "$DEVELOPER_ID_CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+
+          # Set key partition list for codesigning
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Add keychain to search list
+          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain
+
+          # Verify certificate is available
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
       - name: Resolve Swift packages
         run: |
           xcodebuild -resolvePackageDependencies \
             -project "$PROJECT" \
             -scheme "$SCHEME"
 
-      - name: Build (unsigned)
+      - name: Build and sign
+        env:
+          DEVELOPER_TEAM_ID: ${{ secrets.DEVELOPER_TEAM_ID }}
         run: |
           xcodebuild build \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
             -configuration Release \
             -derivedDataPath build \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            DEVELOPMENT_TEAM="$DEVELOPER_TEAM_ID"
 
-      - name: Ad-hoc sign app
+      - name: Verify code signature
         run: |
-          # Ad-hoc sign to create a valid signature structure
-          codesign --force --deep --sign - "$BUILD_PATH/$APP_NAME"
-          # Verify the signature
-          codesign --verify --deep --strict "$BUILD_PATH/$APP_NAME"
+          codesign --verify --deep --strict --verbose=2 "$BUILD_PATH/$APP_NAME"
+          # Display signing info
+          codesign -dv --verbose=4 "$BUILD_PATH/$APP_NAME"
+
+      - name: Notarize app
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          DEVELOPER_TEAM_ID: ${{ secrets.DEVELOPER_TEAM_ID }}
+        run: |
+          # Create zip for notarization
+          cd "$BUILD_PATH"
+          ditto -c -k --keepParent "$APP_NAME" "notarize.zip"
+
+          # Submit for notarization
+          xcrun notarytool submit "notarize.zip" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$DEVELOPER_TEAM_ID" \
+            --wait
+
+          # Staple the ticket to the app
+          xcrun stapler staple "$APP_NAME"
+
+          # Clean up notarization zip
+          rm "notarize.zip"
 
       - name: Create release zip
         run: |
           cd "$BUILD_PATH"
           ditto -c -k --keepParent "$APP_NAME" "$ZIP_NAME"
-
-      # TODO: Re-enable signing and notarization once Apple entitlements issue is resolved
-      # Required secrets: APPLE_CERTIFICATE_BASE64, APPLE_CERTIFICATE_PASSWORD, APPLE_TEAM_ID
-      # For notarization: APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD
 
       - name: Get build number and version
         id: build_info
@@ -101,18 +152,36 @@ jobs:
 
           ---
 
-          **Note:** This is an unsigned build. To open, right-click the app and select "Open".
-
           **Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_TAG...${{ steps.version.outputs.tag }}
           EOF
 
           echo "Generated release notes"
+
+      - name: Sign update with EdDSA key
+        id: sign_update
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          # Find sign_update tool from Sparkle package
+          SIGN_UPDATE=$(find build -name "sign_update" -type f | head -1)
+
+          if [ -z "$SIGN_UPDATE" ]; then
+            echo "sign_update tool not found, downloading Sparkle..."
+            curl -sL https://github.com/sparkle-project/Sparkle/releases/latest/download/Sparkle-2.6.4.tar.xz | tar xJ -C /tmp
+            SIGN_UPDATE="/tmp/Sparkle.framework/Versions/B/bin/sign_update"
+          fi
+
+          # Sign the update archive
+          SIGNATURE=$("$SIGN_UPDATE" "$BUILD_PATH/$ZIP_NAME" --ed-key-file <(echo "$SPARKLE_PRIVATE_KEY"))
+          echo "signature=$SIGNATURE" >> $GITHUB_OUTPUT
+          echo "Generated EdDSA signature for update"
 
       - name: Update appcast.xml
         env:
           SHORT_VERSION: ${{ steps.build_info.outputs.short_version }}
           BUILD_NUMBER: ${{ steps.build_info.outputs.build_number }}
           TAG: ${{ steps.version.outputs.tag }}
+          ED_SIGNATURE: ${{ steps.sign_update.outputs.signature }}
         run: |
           # Get file size
           FILE_SIZE=$(stat -f%z "$BUILD_PATH/$ZIP_NAME")
@@ -146,6 +215,7 @@ jobs:
                   url="https://github.com/${{ github.repository }}/releases/download/$TAG/$ZIP_NAME"
                   sparkle:version="$BUILD_NUMBER"
                   sparkle:shortVersionString="$SHORT_VERSION"
+                  sparkle:edSignature="$ED_SIGNATURE"
                   length="$FILE_SIZE"
                   type="application/octet-stream"
                 />
@@ -155,7 +225,7 @@ jobs:
           # Insert new item after <language>en</language> line using sed
           sed -i '' '/<language>en<\/language>/r /tmp/new_item.xml' appcast.xml
 
-          echo "Updated appcast.xml with new entry"
+          echo "Updated appcast.xml with new entry and EdDSA signature"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -193,3 +263,10 @@ jobs:
 
           # Cleanup
           rm -rf "$TEMP_DIR"
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+          rm -f $RUNNER_TEMP/certificate.p12 2>/dev/null || true

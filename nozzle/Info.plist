@@ -42,5 +42,7 @@
 	<true/>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/conmeara/nozzle/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>G2ny96jy+ro3eNAa91HoezNlk6gxunUHReS4Le+6TVk=</string>
 </dict>
 </plist>

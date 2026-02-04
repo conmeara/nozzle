@@ -482,7 +482,11 @@ final class ScreenshotSource: ContentSource {
 
     @available(macOS 12.3, *)
     private func generateThumbnails(for windowInfos: [WindowInfo], content: SCShareableContent) async {
-        guard !windowInfos.isEmpty else { return }
+        guard !windowInfos.isEmpty else {
+            Self.logger.debug("generateThumbnails called with empty windowInfos array")
+            return
+        }
+        Self.logger.info("Generating thumbnails for \(windowInfos.count) windows")
 
         // Generate thumbnails with good preview resolution
         let config = SCStreamConfiguration()
@@ -495,16 +499,19 @@ final class ScreenshotSource: ContentSource {
         // Future optimization: When ScreenCaptureKit types become Sendable, use TaskGroup for
         // concurrent thumbnail generation to improve performance.
         for info in windowInfos {
+            Self.logger.debug("Generating thumbnail for: \(info.title)")
             let filter: SCContentFilter
 
             if info.isDesktop {
                 guard let display = content.displays.first(where: { $0.displayID == info.displayID }) else {
+                    Self.logger.warning("Display not found for thumbnail: \(info.title)")
                     continue
                 }
                 filter = SCContentFilter(display: display, excludingWindows: [])
             } else {
                 guard let windowID = info.windowID,
                       let window = content.windows.first(where: { $0.windowID == windowID }) else {
+                    Self.logger.warning("Window not found for thumbnail: \(info.title)")
                     continue
                 }
                 filter = SCContentFilter(desktopIndependentWindow: window)
@@ -584,6 +591,9 @@ final class ScreenshotSource: ContentSource {
                let bitmapImage = NSBitmapImageRep(data: tiffData),
                let pngData = bitmapImage.representation(using: .png, properties: [:]) {
                 thumbnailCache.setObject(pngData as NSData, forKey: info.id as NSUUID, cost: pngData.count)
+                Self.logger.debug("Cached thumbnail for \(info.title) (\(pngData.count) bytes)")
+            } else {
+                Self.logger.warning("Failed to convert thumbnail to PNG for \(info.title)")
             }
         }
     }
