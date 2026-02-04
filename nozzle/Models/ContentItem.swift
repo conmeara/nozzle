@@ -53,6 +53,7 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
     
     // App icon support for clipboard items
     public let applicationBundleId: String?
+    public let universalClipboard: Bool
     
     // UI state (kept here so Universal views don't mutate external state)
     public var isSelected: Bool = false
@@ -76,6 +77,7 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
         depth: Int = 0,
         parentPath: String? = nil,
         applicationBundleId: String? = nil,
+        universalClipboard: Bool = false,
         isSelected: Bool = false,
         isVisible: Bool = true
     ) {
@@ -96,6 +98,7 @@ public struct ContentItem: Identifiable, Hashable, Sendable {
         self.depth = depth
         self.parentPath = parentPath
         self.applicationBundleId = applicationBundleId
+        self.universalClipboard = universalClipboard
         self.isSelected = isSelected
         self.isVisible = isVisible
     }

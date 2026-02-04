@@ -69,6 +69,17 @@ struct WelcomeSetupScreen: View {
                 ) {
                     onboardingState.requestScreenRecordingPermission()
                 }
+
+                // Microphone Permission (optional, for voice dictation)
+                permissionRow(
+                    icon: "mic.fill",
+                    title: "Microphone",
+                    description: "Enables voice dictation for prompt input",
+                    isGranted: onboardingState.hasMicrophonePermission,
+                    isRequired: false
+                ) {
+                    onboardingState.requestMicrophonePermission()
+                }
             }
 
             // Note about unsigned builds

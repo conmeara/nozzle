@@ -52,24 +52,35 @@ final class UniversalItemDecorator: ListItemDecorator {
     // App icon for clipboard items
     var clipboardAppIcon: ApplicationImage? {
         if _appIcon == nil, base.sourceType == .clipboard {
-            // Derive effective bundle identifier, with heuristics for common sources like CleanShot
-            var effectiveBundleId = base.applicationBundleId
-            if let nozzleId = Bundle.main.bundleIdentifier, effectiveBundleId == nozzleId,
-               let url = base.fileURL, let guess = ScreenshotSourceHeuristics.guessBundleId(for: url) {
-                effectiveBundleId = guess
-            }
-            if effectiveBundleId == nil, let url = base.fileURL,
-               let guess = ScreenshotSourceHeuristics.guessBundleId(for: url) {
-                effectiveBundleId = guess
-            }
-
-            if let bundleId = effectiveBundleId {
+            // For universal clipboard items (iCloud), show the iCloud icon
+            if base.universalClipboard {
                 Task {
                     let appIcon = await ApplicationImageCache.shared.getImage(
-                        universalClipboard: false,
-                        application: bundleId
+                        universalClipboard: true,
+                        application: nil
                     )
                     await MainActor.run { self._appIcon = appIcon }
+                }
+            } else {
+                // Derive effective bundle identifier, with heuristics for common sources like CleanShot
+                var effectiveBundleId = base.applicationBundleId
+                if let nozzleId = Bundle.main.bundleIdentifier, effectiveBundleId == nozzleId,
+                   let url = base.fileURL, let guess = ScreenshotSourceHeuristics.guessBundleId(for: url) {
+                    effectiveBundleId = guess
+                }
+                if effectiveBundleId == nil, let url = base.fileURL,
+                   let guess = ScreenshotSourceHeuristics.guessBundleId(for: url) {
+                    effectiveBundleId = guess
+                }
+
+                if let bundleId = effectiveBundleId {
+                    Task {
+                        let appIcon = await ApplicationImageCache.shared.getImage(
+                            universalClipboard: false,
+                            application: bundleId
+                        )
+                        await MainActor.run { self._appIcon = appIcon }
+                    }
                 }
             }
         }
@@ -119,14 +130,26 @@ final class UniversalItemDecorator: ListItemDecorator {
         self.isVisible = item.isVisible
         
         // Initialize app icon for clipboard items
-        if item.sourceType == .clipboard, let bundleId = item.applicationBundleId {
-            Task {
-                let appIcon = await ApplicationImageCache.shared.getImage(
-                    universalClipboard: false, 
-                    application: bundleId
-                )
-                await MainActor.run {
-                    self._appIcon = appIcon
+        if item.sourceType == .clipboard {
+            if item.universalClipboard {
+                Task {
+                    let appIcon = await ApplicationImageCache.shared.getImage(
+                        universalClipboard: true,
+                        application: nil
+                    )
+                    await MainActor.run {
+                        self._appIcon = appIcon
+                    }
+                }
+            } else if let bundleId = item.applicationBundleId {
+                Task {
+                    let appIcon = await ApplicationImageCache.shared.getImage(
+                        universalClipboard: false,
+                        application: bundleId
+                    )
+                    await MainActor.run {
+                        self._appIcon = appIcon
+                    }
                 }
             }
         }
@@ -152,14 +175,26 @@ final class UniversalItemDecorator: ListItemDecorator {
         isVisible = newItem.isVisible
         
         // Re-initialize app icon for clipboard items if needed
-        if newItem.sourceType == .clipboard, let bundleId = newItem.applicationBundleId, _appIcon == nil {
-            Task {
-                let appIcon = await ApplicationImageCache.shared.getImage(
-                    universalClipboard: false, 
-                    application: bundleId
-                )
-                await MainActor.run {
-                    self._appIcon = appIcon
+        if newItem.sourceType == .clipboard, _appIcon == nil {
+            if newItem.universalClipboard {
+                Task {
+                    let appIcon = await ApplicationImageCache.shared.getImage(
+                        universalClipboard: true,
+                        application: nil
+                    )
+                    await MainActor.run {
+                        self._appIcon = appIcon
+                    }
+                }
+            } else if let bundleId = newItem.applicationBundleId {
+                Task {
+                    let appIcon = await ApplicationImageCache.shared.getImage(
+                        universalClipboard: false,
+                        application: bundleId
+                    )
+                    await MainActor.run {
+                        self._appIcon = appIcon
+                    }
                 }
             }
         }

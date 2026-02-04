@@ -691,6 +691,16 @@ class AppState {
     }
   }
   
+  // Show an alert for prompt enhancement errors
+  private static func showEnhancementError(_ error: Error) {
+    let alert = NSAlert()
+    alert.messageText = "Enhance Prompt"
+    alert.informativeText = error.localizedDescription
+    alert.alertStyle = .informational
+    alert.addButton(withTitle: "OK")
+    alert.runModal()
+  }
+
   // Enhance the current prompt using AI
   func performEnhancePrompt() {
     guard !isEnhancingPrompt else { return }
@@ -728,8 +738,8 @@ class AppState {
           promptText = enhanced
         }
       } catch {
-        // Handle error - could show alert or tooltip
-        print("Enhancement error: \(error.localizedDescription)")
+        // Show alert for enhancement errors
+        Self.showEnhancementError(error)
       }
       isEnhancingPrompt = false
       // Reset the flag

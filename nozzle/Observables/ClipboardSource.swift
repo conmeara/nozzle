@@ -44,6 +44,7 @@ final class ClipboardSource: ContentSource {
                     plainText: decorator.item.text,
                     uniformTypeIdentifier: uniformTypeIdentifier,
                     applicationBundleId: decorator.item.application,
+                    universalClipboard: decorator.item.universalClipboard,
                     isSelected: decorator.isSelected,
                     isVisible: decorator.isVisible
                 )

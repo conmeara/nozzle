@@ -3,6 +3,7 @@ import CoreGraphics
 import Defaults
 @preconcurrency import AppKit
 @preconcurrency import ApplicationServices
+import AVFoundation
 import LaunchAtLogin
 import ScreenCaptureKit
 
@@ -39,6 +40,7 @@ final class OnboardingState {
     var currentScreen: Screen = .welcomeSetup
     var hasAccessibilityPermission = false
     var hasScreenRecordingPermission = false
+    var hasMicrophonePermission = false
     var launchAtLoginEnabled = false  // Default to OFF - requires explicit user consent per App Store guidelines
     
     // Computed properties
@@ -88,20 +90,25 @@ final class OnboardingState {
         if newScreenRecording != hasScreenRecordingPermission {
             hasScreenRecordingPermission = newScreenRecording
         }
+
+        // Check microphone permission (synchronous)
+        let newMicrophone = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+        if newMicrophone != hasMicrophonePermission {
+            hasMicrophonePermission = newMicrophone
+        }
     }
     
     func requestAccessibilityPermission() {
-        // Trigger the system accessibility permission prompt
-        // This will show the macOS dialog asking user to grant permission
-        Self.promptForAccessibilityPermission()
+        // Open System Settings directly to the Accessibility privacy pane
+        // This is more reliable for Developer ID apps than the system prompt
+        Self.openAccessibilitySettings()
     }
 
-    /// Prompt for accessibility permission using the system dialog.
-    /// nonisolated to safely access the kAXTrustedCheckOptionPrompt global constant.
-    nonisolated private static func promptForAccessibilityPermission() {
-        let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
-        let options = [promptKey: true] as CFDictionary
-        _ = AXIsProcessTrustedWithOptions(options)
+    /// Opens System Settings to the Accessibility privacy pane
+    nonisolated private static func openAccessibilitySettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     func requestScreenRecordingPermission() {
@@ -109,6 +116,25 @@ final class OnboardingState {
         // This shows a dialog with "Open System Settings" and "Deny" buttons
         // The user can grant permission from there
         ScreenshotSource.requestScreenRecordingPermission()
+    }
+
+    func requestMicrophonePermission() {
+        // Request microphone access - will show system dialog or open settings
+        Task {
+            let status = AVCaptureDevice.authorizationStatus(for: .audio)
+            if status == .notDetermined {
+                // Request access - shows system prompt
+                let granted = await AVCaptureDevice.requestAccess(for: .audio)
+                await MainActor.run {
+                    hasMicrophonePermission = granted
+                }
+            } else if status == .denied || status == .restricted {
+                // Open System Settings to the Microphone privacy pane
+                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+        }
     }
     
     func nextScreen() {

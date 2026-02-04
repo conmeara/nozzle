@@ -28,8 +28,6 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
 
     self.statusBarButton = statusBarButton
     self.identifier = NSUserInterfaceItemIdentifier(identifier)
-
-    Defaults[.windowSize] = contentRect.size
     delegate = self
 
     animationBehavior = .none
@@ -75,7 +73,9 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
   }
 
   func open(height: CGFloat, at popupPosition: PopupPosition = Defaults[.popupPosition]) {
-    setContentSize(NSSize(width: frame.width, height: min(height, Defaults[.windowSize].height)))
+    // Use saved window size for both width and height
+    let savedSize = Defaults[.windowSize]
+    setContentSize(NSSize(width: savedSize.width, height: min(height, savedSize.height)))
     setFrameOrigin(popupPosition.origin(size: frame.size, statusBarButton: statusBarButton))
     orderFrontRegardless()
     makeKey()
