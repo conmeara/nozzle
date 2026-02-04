@@ -11,6 +11,7 @@ env:
   BUILD_PATH: build/Build/Products/Release
   APP_NAME: nozzle.app
   ZIP_NAME: nozzle.app.zip
+  DMG_NAME: nozzle.dmg
 
 jobs:
   build-and-release:
@@ -68,6 +69,9 @@ jobs:
 
           # Verify certificate is available
           security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+      - name: Install create-dmg
+        run: brew install create-dmg
 
       - name: Resolve Swift packages
         run: |
@@ -171,6 +175,63 @@ jobs:
         run: |
           cd "$BUILD_PATH"
           ditto -c -k --keepParent "$APP_NAME" "$ZIP_NAME"
+
+      - name: Create DMG installer
+        run: |
+          cd "$BUILD_PATH"
+          create-dmg \
+            --volname "nozzle" \
+            --volicon "$APP_NAME/Contents/Resources/AppIcon.icns" \
+            --window-pos 200 120 \
+            --window-size 660 400 \
+            --icon-size 160 \
+            --icon "$APP_NAME" 180 170 \
+            --hide-extension "$APP_NAME" \
+            --app-drop-link 480 170 \
+            --no-internet-enable \
+            "$DMG_NAME" \
+            "$APP_NAME" || test $? -eq 2
+
+      - name: Sign DMG
+        run: |
+          codesign --force --sign "Developer ID Application" --timestamp "$BUILD_PATH/$DMG_NAME"
+          codesign --verify --verbose=2 "$BUILD_PATH/$DMG_NAME"
+
+      - name: Notarize DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          DEVELOPER_TEAM_ID: ${{ secrets.DEVELOPER_TEAM_ID }}
+        run: |
+          # Submit DMG for notarization
+          SUBMIT_OUTPUT=$(xcrun notarytool submit "$BUILD_PATH/$DMG_NAME" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$DEVELOPER_TEAM_ID" \
+            --wait 2>&1) || true
+
+          echo "$SUBMIT_OUTPUT"
+
+          # Extract submission ID
+          SUBMISSION_ID=$(echo "$SUBMIT_OUTPUT" | grep "id:" | head -1 | awk '{print $2}')
+          echo "Submission ID: $SUBMISSION_ID"
+
+          # Check if notarization succeeded
+          if echo "$SUBMIT_OUTPUT" | grep -q "status: Accepted"; then
+            echo "DMG notarization successful!"
+          else
+            echo "DMG notarization failed. Fetching log..."
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+              --team-id "$DEVELOPER_TEAM_ID" \
+              dmg_notarization_log.json || true
+            cat dmg_notarization_log.json
+            exit 1
+          fi
+
+          # Staple the ticket to the DMG
+          xcrun stapler staple "$BUILD_PATH/$DMG_NAME"
 
       - name: Get build number and version
         id: build_info
@@ -287,6 +348,7 @@ jobs:
           body_path: release_notes.md
           files: |
             ${{ env.BUILD_PATH }}/${{ env.ZIP_NAME }}
+            ${{ env.BUILD_PATH }}/${{ env.DMG_NAME }}
           draft: false
           prerelease: false
         env:
