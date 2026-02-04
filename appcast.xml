@@ -6,6 +6,32 @@
     <description>Most recent changes with links to updates.</description>
     <language>en</language>
     <item>
+      <title>3.0.12</title>
+      <description>
+        <![CDATA[
+          <ul>
+            <li>DMG background, taller window, and accessibility onboarding for v3.0.12</li>
+<li>Update appcast.xml for version 3.0.12</li>
+<li>Fix DMG volicon quoting for icon names with spaces</li>
+<li>Fix DMG volicon: discover .icns dynamically from asset catalog</li>
+<li>Add DMG installer with drag-to-Applications to release workflow</li>
+<li>Update appcast.xml for version 3.0.11</li>
+          </ul>
+        ]]>
+      </description>
+      <pubDate>2026-02-04</pubDate>
+      <releaseNotesLink>https://github.com/conmeara/nozzle/releases/tag/v3.0.12</releaseNotesLink>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/conmeara/nozzle/releases/download/v3.0.12/nozzle.app.zip"
+        sparkle:version="69"
+        sparkle:shortVersionString="3.0.12"
+        sparkle:edSignature="N7Lv3xWIs/FwdmwZ8pF9LeuUSyf2H/fkIk+2dij3a/Q8R860tn4yEtohJkecvWnr0QWzcXI6tyel4l7YafpeBw=="
+        length="11130677"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>3.0.11</title>
       <description>
         <![CDATA[
