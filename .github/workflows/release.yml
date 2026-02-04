@@ -86,13 +86,43 @@ jobs:
             -derivedDataPath build \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Developer ID Application" \
-            DEVELOPMENT_TEAM="$DEVELOPER_TEAM_ID"
+            DEVELOPMENT_TEAM="$DEVELOPER_TEAM_ID" \
+            CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO \
+            OTHER_CODE_SIGN_FLAGS="--timestamp"
+
+      - name: Re-sign Sparkle framework for notarization
+        run: |
+          # Re-sign all Sparkle components with Developer ID and timestamp
+          SPARKLE_PATH="$BUILD_PATH/$APP_NAME/Contents/Frameworks/Sparkle.framework"
+
+          # Sign nested XPC services first
+          for xpc in "$SPARKLE_PATH/Versions/B/XPCServices"/*.xpc; do
+            codesign --force --sign "Developer ID Application" --timestamp --options runtime "$xpc"
+          done
+
+          # Sign Autoupdate
+          codesign --force --sign "Developer ID Application" --timestamp --options runtime "$SPARKLE_PATH/Versions/B/Autoupdate"
+
+          # Sign Updater.app
+          codesign --force --sign "Developer ID Application" --timestamp --options runtime "$SPARKLE_PATH/Versions/B/Updater.app"
+
+          # Sign the framework itself
+          codesign --force --sign "Developer ID Application" --timestamp --options runtime "$SPARKLE_PATH"
+
+          # Re-sign the main app bundle to update seal
+          codesign --force --sign "Developer ID Application" --timestamp --options runtime --entitlements nozzle/nozzle.entitlements "$BUILD_PATH/$APP_NAME"
 
       - name: Verify code signature
         run: |
           codesign --verify --deep --strict --verbose=2 "$BUILD_PATH/$APP_NAME"
           # Display signing info
           codesign -dv --verbose=4 "$BUILD_PATH/$APP_NAME"
+          # Check for get-task-allow (should not be present)
+          if codesign -d --entitlements - "$BUILD_PATH/$APP_NAME" 2>&1 | grep -q "get-task-allow"; then
+            echo "ERROR: get-task-allow entitlement found in release build!"
+            exit 1
+          fi
+          echo "No get-task-allow entitlement - good for notarization"
 
       - name: Notarize app
         env:
