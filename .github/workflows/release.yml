@@ -179,9 +179,17 @@ jobs:
       - name: Create DMG installer
         run: |
           cd "$BUILD_PATH"
+
+          # Find the app icon (asset catalog name has spaces, so discover it dynamically)
+          VOLICON_FLAG=""
+          VOLICON=$(find "$APP_NAME/Contents/Resources" -maxdepth 1 -name "*.icns" | head -1)
+          if [ -n "$VOLICON" ]; then
+            VOLICON_FLAG="--volicon $VOLICON"
+          fi
+
           create-dmg \
             --volname "nozzle" \
-            --volicon "$APP_NAME/Contents/Resources/AppIcon.icns" \
+            $VOLICON_FLAG \
             --window-pos 200 120 \
             --window-size 660 400 \
             --icon-size 160 \
