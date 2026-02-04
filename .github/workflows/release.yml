@@ -180,16 +180,16 @@ jobs:
         run: |
           cd "$BUILD_PATH"
 
-          # Find the app icon (asset catalog name has spaces, so discover it dynamically)
-          VOLICON_FLAG=""
+          # Build volicon args as array (icon name has spaces from asset catalog)
+          VOLICON_ARGS=()
           VOLICON=$(find "$APP_NAME/Contents/Resources" -maxdepth 1 -name "*.icns" | head -1)
           if [ -n "$VOLICON" ]; then
-            VOLICON_FLAG="--volicon $VOLICON"
+            VOLICON_ARGS=(--volicon "$VOLICON")
           fi
 
           create-dmg \
             --volname "nozzle" \
-            $VOLICON_FLAG \
+            "${VOLICON_ARGS[@]}" \
             --window-pos 200 120 \
             --window-size 660 400 \
             --icon-size 160 \
