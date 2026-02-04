@@ -6,6 +6,27 @@
     <description>Most recent changes with links to updates.</description>
     <language>en</language>
     <item>
+      <title>3.0.9</title>
+      <description>
+        <![CDATA[
+          <ul>
+            <li>Fix notarization: re-sign Sparkle, add timestamps, remove debug entitlement</li>
+          </ul>
+        ]]>
+      </description>
+      <pubDate>2026-02-04</pubDate>
+      <releaseNotesLink>https://github.com/conmeara/nozzle/releases/tag/v3.0.9</releaseNotesLink>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/conmeara/nozzle/releases/download/v3.0.9/nozzle.app.zip"
+        sparkle:version="66"
+        sparkle:shortVersionString="3.0.9"
+        sparkle:edSignature="sparkle:edSignature="YOwWglMEnkHmiAiuJColY9oSiPtCz7e1zIbYH+hO3xNYIv3A15s1WI9B6evJLj7rkgRR5LLA752Bj1fMgnB7BQ==" length="11124687""
+        length="11124687"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>3.0.5</title>
       <description>
         <![CDATA[
