@@ -42,6 +42,7 @@ final class OnboardingState {
     var hasScreenRecordingPermission = false
     var hasMicrophonePermission = false
     var launchAtLoginEnabled = false  // Default to OFF - requires explicit user consent per App Store guidelines
+    var automaticUpdatesEnabled = true  // Default to ON - most users want automatic updates
     
     // Computed properties
     var canContinue: Bool {
@@ -112,10 +113,12 @@ final class OnboardingState {
     }
 
     func requestScreenRecordingPermission() {
-        // Use CGRequestScreenCaptureAccess to trigger the system permission prompt
-        // This shows a dialog with "Open System Settings" and "Deny" buttons
-        // The user can grant permission from there
-        ScreenshotSource.requestScreenRecordingPermission()
+        // Open System Settings directly to the Screen Recording privacy pane
+        // This is more reliable and consistent with other permissions
+        // CGRequestScreenCaptureAccess just shows a prompt telling user to go to settings anyway
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     func requestMicrophonePermission() {
@@ -169,6 +172,9 @@ final class OnboardingState {
             LaunchAtLogin.isEnabled = true
         }
         #endif
+
+        // Save automatic updates preference
+        SoftwareUpdater.shared.automaticallyChecksForUpdates = automaticUpdatesEnabled
 
         // Mark onboarding as completed
         // Version 2 = nozzle v3.x onboarding with multi-source architecture

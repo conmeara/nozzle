@@ -149,34 +149,61 @@ struct WelcomeSetupScreen: View {
     private var launchAtLoginSection: some View {
         VStack(spacing: 14) {
             HStack {
-                Text("Launch Settings")
+                Text("Settings")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.primary)
                 Spacer()
             }
-            
+
             // Launch at login toggle
             HStack(spacing: 16) {
                 Image(systemName: "power")
                     .font(.system(size: 20))
                     .foregroundColor(.secondary)
                     .frame(width: 30)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Launch at Login")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.primary)
-                    
+
                     Text("Start Nozzle automatically when you log in")
                         .font(.system(size: 14))
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 Toggle("", isOn: Binding(
                     get: { onboardingState.launchAtLoginEnabled },
                     set: { onboardingState.launchAtLoginEnabled = $0 }
+                ))
+                    .toggleStyle(SwitchToggleStyle(tint: Color(NSColor.controlAccentColor)))
+            }
+            .padding(.vertical, 6)
+
+            // Automatic updates toggle
+            HStack(spacing: 16) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 20))
+                    .foregroundColor(.secondary)
+                    .frame(width: 30)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Automatic Updates")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.primary)
+
+                    Text("Check for updates automatically in the background")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Toggle("", isOn: Binding(
+                    get: { onboardingState.automaticUpdatesEnabled },
+                    set: { onboardingState.automaticUpdatesEnabled = $0 }
                 ))
                     .toggleStyle(SwitchToggleStyle(tint: Color(NSColor.controlAccentColor)))
             }

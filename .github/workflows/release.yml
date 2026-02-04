@@ -221,8 +221,11 @@ jobs:
             SIGN_UPDATE="/tmp/Sparkle.framework/Versions/B/bin/sign_update"
           fi
 
-          # Sign the update archive
-          SIGNATURE=$("$SIGN_UPDATE" "$BUILD_PATH/$ZIP_NAME" --ed-key-file <(echo "$SPARKLE_PRIVATE_KEY"))
+          # Sign the update archive - sign_update outputs: sparkle:edSignature="..." length="..."
+          # We need to extract just the signature value
+          FULL_OUTPUT=$("$SIGN_UPDATE" "$BUILD_PATH/$ZIP_NAME" --ed-key-file <(echo "$SPARKLE_PRIVATE_KEY"))
+          # Extract just the base64 signature from between the quotes
+          SIGNATURE=$(echo "$FULL_OUTPUT" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')
           echo "signature=$SIGNATURE" >> $GITHUB_OUTPUT
           echo "Generated EdDSA signature for update"
 
