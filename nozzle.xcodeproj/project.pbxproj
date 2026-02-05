@@ -16,6 +16,7 @@
 		2FB5BCA02CD8F73F008B33F4 /* ApplicationImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB5BC9F2CD8F73C008B33F4 /* ApplicationImage.swift */; };
 		4762D6972467226100B3A2BA /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4762D6992467226100B3A2BA /* Localizable.strings */; };
 		8236C3BF5B6196E973D7C22E /* SoftwareUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8236C3BF5B6196E973D7C22D /* SoftwareUpdater.swift */; };
+		F5E7A1B52F0D1A2B0033AA11 /* SparkleUpdaterDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E7A1B42F0D1A2B0033AA11 /* SparkleUpdaterDelegate.swift */; };
 		DA009931256411F90030E697 /* appcast.xml in Resources */ = {isa = PBXBuildFile; fileRef = DA00992C256411F90030E697 /* appcast.xml */; };
 		DA009932256411F90030E697 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = DA00992D256411F90030E697 /* README.md */; };
 		DA009947256414800030E697 /* SwiftHEXColors in Frameworks */ = {isa = PBXBuildFile; productRef = DA009946256414800030E697 /* SwiftHEXColors */; };
@@ -235,6 +236,7 @@
 		4DC4D112252713D700FE5FAC /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7CEEFDF124F41F8500ECAD2A /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		8236C3BF5B6196E973D7C22D /* SoftwareUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoftwareUpdater.swift; sourceTree = "<group>"; };
+		F5E7A1B42F0D1A2B0033AA11 /* SparkleUpdaterDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparkleUpdaterDelegate.swift; sourceTree = "<group>"; };
 		84DA6AE6669645AEB14775D8 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/ShortcutsSettings.strings; sourceTree = "<group>"; };
 		ABC72863283A9053001EE086 /* th */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = th; path = th.lproj/Localizable.strings; sourceTree = "<group>"; };
 		CD1B48C134654A3AAFFB9743 /* ShortcutsSettingsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsSettingsPane.swift; sourceTree = "<group>"; };
@@ -945,6 +947,7 @@
 			isa = PBXGroup;
 			children = (
 				F569FB1B2E6E87E90076D784 /* PromptEnhancer.swift */,
+				F5E7A1B42F0D1A2B0033AA11 /* SparkleUpdaterDelegate.swift */,
 				8236C3BF5B6196E973D7C22D /* SoftwareUpdater.swift */,
 			);
 			path = Services;
@@ -1293,6 +1296,7 @@
 				F57274742E57C00B003A9299 /* FileTypeBadgeCache.swift in Sources */,
 				F569FB1D2E6E87E90076D784 /* PromptEnhancer.swift in Sources */,
 				8236C3BF5B6196E973D7C22E /* SoftwareUpdater.swift in Sources */,
+				F5E7A1B52F0D1A2B0033AA11 /* SparkleUpdaterDelegate.swift in Sources */,
 				DA1969182C3F327500258481 /* SearchFieldView.swift in Sources */,
 				DA1969192CF327500258481 /* UnifiedInputFieldView.swift in Sources */,
 				DAE8F5D42C43262B00851CA9 /* Popup.swift in Sources */,
@@ -1956,7 +1960,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 71;
+				CURRENT_PROJECT_VERSION = 72;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6TNDG45H72;
 				ENABLE_APP_SANDBOX = YES;
@@ -1975,7 +1979,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 3.0.14;
+				MARKETING_VERSION = 3.0.15;
 				PRODUCT_BUNDLE_IDENTIFIER = com.conmeara.nozzleai;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1997,7 +2001,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 71;
+				CURRENT_PROJECT_VERSION = 72;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6TNDG45H72;
 				ENABLE_APP_SANDBOX = YES;
@@ -2016,7 +2020,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 3.0.14;
+				MARKETING_VERSION = 3.0.15;
 				PRODUCT_BUNDLE_IDENTIFIER = com.conmeara.nozzleai;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

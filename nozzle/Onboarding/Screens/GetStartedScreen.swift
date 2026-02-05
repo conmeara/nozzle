@@ -35,7 +35,7 @@ struct GetStartedScreen: View {
                     .font(.system(size: 42))
                     .foregroundColor(.green)
             }
-            Text("Ready to go!")
+            Text(verbatim: OnboardingStrings.finishTitle)
                 .font(.system(size: 22, weight: .bold))
                 .foregroundColor(.primary)
             Text("You can access the app through the menu bar icon or by ⌥ + V.")
@@ -51,7 +51,7 @@ struct GetStartedScreen: View {
     private var resourcesTiles: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Resources")
+                Text(verbatim: OnboardingStrings.resourcesTitle)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.primary)
                 Spacer()

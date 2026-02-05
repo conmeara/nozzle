@@ -9,6 +9,8 @@ import ScreenCaptureKit
 
 @Observable @MainActor
 final class OnboardingState {
+    private var permissionTimer: Timer?
+
     enum Screen: Int, CaseIterable {
         case welcomeSetup = 0
         case shortcuts = 1
@@ -17,11 +19,11 @@ final class OnboardingState {
         var title: String {
             switch self {
             case .welcomeSetup:
-                return "Welcome to Nozzle!"
+                return OnboardingStrings.welcomeTitle
             case .shortcuts:
-                return "Guide"
+                return OnboardingStrings.shortcutsTitle
             case .getStarted:
-                return "Ready to go!"
+                return OnboardingStrings.finishTitle
             }
         }
 
@@ -41,8 +43,9 @@ final class OnboardingState {
     var hasAccessibilityPermission = false
     var hasScreenRecordingPermission = false
     var hasMicrophonePermission = false
-    var launchAtLoginEnabled = false  // Default to OFF - requires explicit user consent per App Store guidelines
-    var automaticUpdatesEnabled = true  // Default to ON - most users want automatic updates
+    // Defaults are used before init syncs from current preferences.
+    var launchAtLoginEnabled = false  // Requires explicit user consent per App Store guidelines
+    var automaticUpdatesEnabled = true  // Initial value before sync
     
     // Computed properties
     var canContinue: Bool {
@@ -68,14 +71,22 @@ final class OnboardingState {
     }
     
     init() {
+        // Sync initial toggle values from existing preferences.
+        launchAtLoginEnabled = LaunchAtLogin.isEnabled
+        automaticUpdatesEnabled = SoftwareUpdater.shared.automaticallyChecksForUpdates
+
         updatePermissionStatus()
 
         // Set up permission monitoring - check every second
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async {
+        permissionTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
                 self?.updatePermissionStatus()
             }
         }
+    }
+    
+    deinit {
+        permissionTimer?.invalidate()
     }
 
     /// Update permission status - called on main thread

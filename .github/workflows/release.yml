@@ -180,26 +180,28 @@ jobs:
         run: |
           cd "$BUILD_PATH"
 
-          # Build a staging directory with the app and a Finder alias to
-          # /Applications. Finder aliases always display the target's icon,
-          # unlike symlinks which show a blank outline on recent macOS.
+          # Build a staging directory with the app.
           DMG_STAGING="/tmp/dmg_staging"
           rm -rf "$DMG_STAGING"
           mkdir -p "$DMG_STAGING"
           cp -R "$APP_NAME" "$DMG_STAGING/"
 
+          # Create a Finder alias file for /Applications to add into the DMG.
+          ALIAS_FILE="/tmp/Applications.alias"
+          rm -f "$ALIAS_FILE"
           cat > /tmp/make_alias.swift << 'SWIFT'
-          import Cocoa
+          import Foundation
           let target = URL(fileURLWithPath: "/Applications")
-          let alias = URL(fileURLWithPath: "/tmp/dmg_staging/Applications")
-          let data = try! target.bookmarkData(
+          let alias = URL(fileURLWithPath: CommandLine.arguments[1])
+          let data = try target.bookmarkData(
               options: .suitableForBookmarkFile,
               includingResourceValuesForKeys: nil,
               relativeTo: nil
           )
-          try! URL.writeBookmarkData(data, to: alias)
+          try URL.writeBookmarkData(data, to: alias)
           SWIFT
-          swift /tmp/make_alias.swift
+          swift /tmp/make_alias.swift "$ALIAS_FILE"
+
 
           # Build volicon args as array (icon name has spaces from asset catalog)
           VOLICON_ARGS=()
@@ -213,15 +215,17 @@ jobs:
             "${VOLICON_ARGS[@]}" \
             --window-pos 200 120 \
             --window-size 660 400 \
-            --icon-size 160 \
-            --icon "$APP_NAME" 180 170 \
+            --background "$GITHUB_WORKSPACE/designs/dmg/nozzle-dmg-background.png" \
+            --icon-size 128 \
+            --icon "$APP_NAME" 170 190 \
             --hide-extension "$APP_NAME" \
-            --icon "Applications" 480 170 \
+            --add-file "Applications" "$ALIAS_FILE" 490 190 \
             --no-internet-enable \
             "$DMG_NAME" \
             "$DMG_STAGING" || test $? -eq 2
 
           rm -rf "$DMG_STAGING"
+          rm -f "$ALIAS_FILE"
 
       - name: Sign DMG
         run: |

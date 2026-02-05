@@ -32,8 +32,13 @@ struct WelcomeSetupScreen: View {
                 .frame(width: 96, height: 96)
                 .clipShape(RoundedRectangle(cornerRadius: 15))
 
-            Text("Welcome to Nozzle!")
+            Text(verbatim: OnboardingStrings.welcomeTitle)
                 .font(.system(size: 22, weight: .bold))
+            Text(verbatim: OnboardingStrings.welcomeSubtitle)
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 360)
         }
     }
 
@@ -41,7 +46,7 @@ struct WelcomeSetupScreen: View {
     private var permissionsSection: some View {
         VStack(spacing: 14) {
             HStack {
-                Text("Permissions")
+                Text(verbatim: OnboardingStrings.permissionsTitle)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.primary)
                 Spacer()

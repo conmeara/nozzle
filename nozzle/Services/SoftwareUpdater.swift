@@ -19,6 +19,7 @@ final class SoftwareUpdater {
     /// Shared singleton instance.
     static let shared = SoftwareUpdater()
 
+    private let updaterDelegate = SparkleUpdaterDelegate()
     private let updaterController: SPUStandardUpdaterController
     private var updater: SPUUpdater { updaterController.updater }
 
@@ -33,7 +34,7 @@ final class SoftwareUpdater {
         // startingUpdater: true - starts the updater automatically
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
-            updaterDelegate: nil,
+            updaterDelegate: updaterDelegate,
             userDriverDelegate: nil
         )
 
