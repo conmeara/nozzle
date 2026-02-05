@@ -6,6 +6,29 @@
     <description>Most recent changes with links to updates.</description>
     <language>en</language>
     <item>
+      <title>3.0.14</title>
+      <description>
+        <![CDATA[
+          <ul>
+            <li>Fix DMG Applications folder icon using Finder alias for v3.0.14</li>
+<li>Remove DMG background image for clean installer look</li>
+<li>Update appcast.xml for version 3.0.13</li>
+          </ul>
+        ]]>
+      </description>
+      <pubDate>2026-02-05</pubDate>
+      <releaseNotesLink>https://github.com/conmeara/nozzle/releases/tag/v3.0.14</releaseNotesLink>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/conmeara/nozzle/releases/download/v3.0.14/nozzle.app.zip"
+        sparkle:version="71"
+        sparkle:shortVersionString="3.0.14"
+        sparkle:edSignature="kyCc+cWKE+F4RXwcvzYTWgOBvjWLc/RIN4fUB8EHTqRtg0+af7tVa9hHTnblzw6mJvj7wetR55Gcq48eYlVPDg=="
+        length="11131318"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>3.0.13</title>
       <description>
         <![CDATA[
