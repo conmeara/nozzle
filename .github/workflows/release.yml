@@ -180,6 +180,27 @@ jobs:
         run: |
           cd "$BUILD_PATH"
 
+          # Build a staging directory with the app and a Finder alias to
+          # /Applications. Finder aliases always display the target's icon,
+          # unlike symlinks which show a blank outline on recent macOS.
+          DMG_STAGING="/tmp/dmg_staging"
+          rm -rf "$DMG_STAGING"
+          mkdir -p "$DMG_STAGING"
+          cp -R "$APP_NAME" "$DMG_STAGING/"
+
+          cat > /tmp/make_alias.swift << 'SWIFT'
+          import Cocoa
+          let target = URL(fileURLWithPath: "/Applications")
+          let alias = URL(fileURLWithPath: "/tmp/dmg_staging/Applications")
+          let data = try! target.bookmarkData(
+              options: .suitableForBookmarkFile,
+              includingResourceValuesForKeys: nil,
+              relativeTo: nil
+          )
+          try! URL.writeBookmarkData(data, to: alias)
+          SWIFT
+          swift /tmp/make_alias.swift
+
           # Build volicon args as array (icon name has spaces from asset catalog)
           VOLICON_ARGS=()
           VOLICON=$(find "$APP_NAME/Contents/Resources" -maxdepth 1 -name "*.icns" | head -1)
@@ -195,10 +216,12 @@ jobs:
             --icon-size 160 \
             --icon "$APP_NAME" 180 170 \
             --hide-extension "$APP_NAME" \
-            --app-drop-link 480 170 \
+            --icon "Applications" 480 170 \
             --no-internet-enable \
             "$DMG_NAME" \
-            "$APP_NAME" || test $? -eq 2
+            "$DMG_STAGING" || test $? -eq 2
+
+          rm -rf "$DMG_STAGING"
 
       - name: Sign DMG
         run: |
