@@ -6,6 +6,29 @@
     <description>Most recent changes with links to updates.</description>
     <language>en</language>
     <item>
+      <title>3.0.15</title>
+      <description>
+        <![CDATA[
+          <ul>
+            <li>Fix CI build: add OnboardingStrings to Xcode project and fix strict concurrency</li>
+<li>DMG background, Sparkle error logging, and onboarding fixes for v3.0.15</li>
+<li>Update appcast.xml for version 3.0.14</li>
+          </ul>
+        ]]>
+      </description>
+      <pubDate>2026-02-05</pubDate>
+      <releaseNotesLink>https://github.com/conmeara/nozzle/releases/tag/v3.0.15</releaseNotesLink>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/conmeara/nozzle/releases/download/v3.0.15/nozzle.app.zip"
+        sparkle:version="72"
+        sparkle:shortVersionString="3.0.15"
+        sparkle:edSignature="sKQMzi5xejdXFI8PQKDuU6/ChCFqmkbwDV45HPeoyoPRABNjWN6alDPW5Ynsm7Ns/7Gf/gboYueGiImUP5pNDw=="
+        length="11139846"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>3.0.14</title>
       <description>
         <![CDATA[
