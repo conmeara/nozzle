@@ -6,6 +6,28 @@
     <description>Most recent changes with links to updates.</description>
     <language>en</language>
     <item>
+      <title>3.0.13</title>
+      <description>
+        <![CDATA[
+          <ul>
+            <li>Fix onboarding re-showing and remove stale appcast entry for v3.0.13</li>
+<li>Update appcast.xml for version 3.0.12</li>
+          </ul>
+        ]]>
+      </description>
+      <pubDate>2026-02-05</pubDate>
+      <releaseNotesLink>https://github.com/conmeara/nozzle/releases/tag/v3.0.13</releaseNotesLink>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/conmeara/nozzle/releases/download/v3.0.13/nozzle.app.zip"
+        sparkle:version="70"
+        sparkle:shortVersionString="3.0.13"
+        sparkle:edSignature="03Mlhakels4r6los2Fo8fHtbf7ZDVg5wfEdtQIP/cUVFeKc1/wRr9GPXFWnZB/wunUcVTv4G5It64vLclF/PCw=="
+        length="11131195"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>3.0.12</title>
       <description>
         <![CDATA[
