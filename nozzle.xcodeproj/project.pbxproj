@@ -145,6 +145,7 @@
 		F569FB1F2E6E87F50076D784 /* PromptEnhancement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB1E2E6E87F50076D784 /* PromptEnhancement.swift */; };
 		F569FB2B2E6FBCE50076D784 /* ShortcutsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB232E6FBCE50076D784 /* ShortcutsScreen.swift */; };
 		F569FB2C2E6FBCE50076D784 /* OnboardingState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB262E6FBCE50076D784 /* OnboardingState.swift */; };
+		F5E7A1B62F0D1A3C0033AA11 /* OnboardingStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E7A1B72F0D1A3C0033AA11 /* OnboardingStrings.swift */; };
 		F569FB302E6FBCE50076D784 /* OnboardingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB282E6FBCE50076D784 /* OnboardingWindow.swift */; };
 		F569FB312E6FBCE50076D784 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB272E6FBCE50076D784 /* OnboardingView.swift */; };
 		F56CE2722E733999004E76C1 /* WelcomeSetupScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2712E733999004E76C1 /* WelcomeSetupScreen.swift */; };
@@ -576,6 +577,7 @@
 		F569FB1E2E6E87F50076D784 /* PromptEnhancement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptEnhancement.swift; sourceTree = "<group>"; };
 		F569FB232E6FBCE50076D784 /* ShortcutsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsScreen.swift; sourceTree = "<group>"; };
 		F569FB262E6FBCE50076D784 /* OnboardingState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingState.swift; sourceTree = "<group>"; };
+		F5E7A1B72F0D1A3C0033AA11 /* OnboardingStrings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStrings.swift; sourceTree = "<group>"; };
 		F569FB272E6FBCE50076D784 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		F569FB282E6FBCE50076D784 /* OnboardingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindow.swift; sourceTree = "<group>"; };
 		F56CE2702E733999004E76C1 /* GetStartedScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetStartedScreen.swift; sourceTree = "<group>"; };
@@ -969,6 +971,7 @@
 				F56E49292E70F6A1003D6538 /* MenuBarTooltip.swift */,
 				F569FB252E6FBCE50076D784 /* Screens */,
 				F569FB262E6FBCE50076D784 /* OnboardingState.swift */,
+				F5E7A1B72F0D1A3C0033AA11 /* OnboardingStrings.swift */,
 				F569FB272E6FBCE50076D784 /* OnboardingView.swift */,
 				F569FB282E6FBCE50076D784 /* OnboardingWindow.swift */,
 			);
@@ -1320,6 +1323,7 @@
 				DAC929D7297A0E8B00814F19 /* NSPasteboard.PasteboardType+Types.swift in Sources */,
 				F569FB2B2E6FBCE50076D784 /* ShortcutsScreen.swift in Sources */,
 				F569FB2C2E6FBCE50076D784 /* OnboardingState.swift in Sources */,
+				F5E7A1B62F0D1A3C0033AA11 /* OnboardingStrings.swift in Sources */,
 				F569FB302E6FBCE50076D784 /* OnboardingWindow.swift in Sources */,
 				F569FB312E6FBCE50076D784 /* OnboardingView.swift in Sources */,
 				F56CE27A2E739CC0004E76C1 /* ShortcutCategory.swift in Sources */,

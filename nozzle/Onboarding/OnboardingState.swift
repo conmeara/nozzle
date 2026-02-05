@@ -9,7 +9,7 @@ import ScreenCaptureKit
 
 @Observable @MainActor
 final class OnboardingState {
-    private var permissionTimer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var permissionTimer: Timer?
 
     enum Screen: Int, CaseIterable {
         case welcomeSetup = 0

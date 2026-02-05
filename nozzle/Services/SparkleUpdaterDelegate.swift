@@ -2,7 +2,6 @@ import Foundation
 import OSLog
 import Sparkle
 
-@MainActor
 final class SparkleUpdaterDelegate: NSObject, SPUUpdaterDelegate {
     private let logger = Logger(subsystem: "org.conmeara.nozzle.updater", category: "Sparkle")
 
