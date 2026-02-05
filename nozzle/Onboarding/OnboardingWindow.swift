@@ -74,13 +74,18 @@ class OnboardingWindow: NSWindowController {
 
 extension OnboardingWindow: NSWindowDelegate {
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        // Allow closing without marking as completed - user can see onboarding again next launch
-        // Onboarding is only marked complete when user explicitly finishes via completeOnboarding()
-        OnboardingWindow.shared = nil
         return true
     }
 
     func windowWillClose(_ notification: Notification) {
+        // Mark onboarding as completed when window closes for any reason.
+        // This handles: user clicking X, macOS restarting the app after
+        // Accessibility toggle, or any other close. Users can re-show
+        // onboarding from Settings > General > "Show Welcome Screen".
+        if !Defaults[.hasCompletedOnboarding] {
+            Defaults[.hasCompletedOnboarding] = true
+            Defaults[.onboardingVersion] = 2
+        }
         OnboardingWindow.shared = nil
     }
 }

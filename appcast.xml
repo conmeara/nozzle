@@ -36,30 +36,6 @@
       <description>
         <![CDATA[
           <ul>
-            <li>Fix DMG volicon quoting for icon names with spaces</li>
-<li>Fix DMG volicon: discover .icns dynamically from asset catalog</li>
-<li>Add DMG installer with drag-to-Applications to release workflow</li>
-<li>Update appcast.xml for version 3.0.11</li>
-          </ul>
-        ]]>
-      </description>
-      <pubDate>2026-02-04</pubDate>
-      <releaseNotesLink>https://github.com/conmeara/nozzle/releases/tag/v3.0.12</releaseNotesLink>
-      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <enclosure
-        url="https://github.com/conmeara/nozzle/releases/download/v3.0.12/nozzle.app.zip"
-        sparkle:version="68"
-        sparkle:shortVersionString="3.0.11"
-        sparkle:edSignature="QkksSHT/TH8h3hpK50UnUdqG+Z9aApgDf2T258Ry7sczjqaxN4hXXeyevhjfgtqUsrKZPV0tX3bff5zPwWz9AA=="
-        length="11131493"
-        type="application/octet-stream"
-      />
-    </item>
-    <item>
-      <title>3.0.11</title>
-      <description>
-        <![CDATA[
-          <ul>
             <li>Fix Sparkle update feed and improve onboarding</li>
 <li>Update appcast.xml for version 3.0.10</li>
           </ul>
