@@ -87,6 +87,18 @@ Releases are automated via GitHub Actions. The workflow builds an unsigned app, 
 - **Service**: `SoftwareUpdater.swift` wraps Sparkle's `SPUUpdater`
 - **UI**: Settings pane toggle + "Check for Updates" menu item
 
+#### Sparkle Lessons Learned (v3.0.15-v3.0.18)
+- A signed app can still fail in Sparkle install phase if mach-lookup entitlements contain unresolved placeholders (eg `$(PRODUCT_BUNDLE_IDENTIFIER)-spks`).
+- For sandboxed Sparkle updates, use concrete values in `nozzle/nozzle.entitlements`:
+  - `com.conmeara.nozzleai-spks`
+  - `com.conmeara.nozzleai-spki`
+- Keep release guardrails in `.github/workflows/release.yml` that fail if signed entitlements contain unresolved `$(...)` variables.
+- Verify every published tag with:
+  ```bash
+  ./scripts/verify_sparkle_release.sh vX.Y.Z
+  ```
+- If a broken updater ships, the recovery path is: one manual install to the fixed version, then validate auto-update on the next tag (eg `3.0.17 -> 3.0.18`).
+
 #### Important Notes
 - **Unsigned builds**: Users must right-click → Open on first launch
 - **Version sync**: Keep `MARKETING_VERSION` in sync with git tag (e.g., 3.1.0 = v3.1.0)
