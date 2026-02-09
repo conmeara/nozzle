@@ -29,6 +29,9 @@ final class SoftwareUpdater {
     @ObservationIgnored
     private var canCheckForUpdatesObservation: NSKeyValueObservation?
 
+    @ObservationIgnored
+    private var pendingManualUpdateCheck = false
+
     private init() {
         // Initialize the updater controller with default settings
         // startingUpdater: true - starts the updater automatically
@@ -57,13 +60,27 @@ final class SoftwareUpdater {
         ) { [weak self] _, change in
             let newValue = change.newValue ?? false
             Task { @MainActor [weak self] in
-                self?.canCheckForUpdates = newValue
+                guard let self else { return }
+                self.canCheckForUpdates = newValue
+
+                // If user requested an update check before Sparkle was ready,
+                // run it as soon as canCheckForUpdates flips to true.
+                if newValue, self.pendingManualUpdateCheck {
+                    self.pendingManualUpdateCheck = false
+                    self.updater.checkForUpdates()
+                }
             }
         }
     }
 
     /// Manually trigger an update check.
     func checkForUpdates() {
+        guard updater.canCheckForUpdates else {
+            pendingManualUpdateCheck = true
+            return
+        }
+
+        pendingManualUpdateCheck = false
         updater.checkForUpdates()
     }
 }
