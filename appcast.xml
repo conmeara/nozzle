@@ -6,6 +6,29 @@
     <description>Most recent changes with links to updates.</description>
     <language>en</language>
     <item>
+      <title>3.0.19</title>
+      <description>
+        <![CDATA[
+          <ul>
+            <li>Fix screenshot permission false negatives and cut 3.0.19</li>
+<li>Document Sparkle updater lessons learned</li>
+<li>Update appcast.xml for version 3.0.18</li>
+          </ul>
+        ]]>
+      </description>
+      <pubDate>2026-02-09</pubDate>
+      <releaseNotesLink>https://github.com/conmeara/nozzle/releases/tag/v3.0.19</releaseNotesLink>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/conmeara/nozzle/releases/download/v3.0.19/nozzle.app.zip"
+        sparkle:version="76"
+        sparkle:shortVersionString="3.0.19"
+        sparkle:edSignature="/0h9i6Ubu3k6s4YtlYYCGfe+i+oc7Qx2ZQb9g3b/gXBO3ulsCQy5wQfNL5TtEsNcBi0wkkahpiwh2g7plmxtCA=="
+        length="11147812"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>3.0.18</title>
       <description>
         <![CDATA[
