@@ -1,6 +1,8 @@
 import SwiftUI
+import OSLog
 
 class ApplicationImage: @unchecked Sendable {
+  private static let logger = Logger(subsystem: "org.conmeara.nozzle", category: "ApplicationImage")
   fileprivate static let fallbackImage = NSImage(
     systemSymbolName: "questionmark.app.dashed",
     accessibilityDescription: nil
@@ -44,8 +46,7 @@ class ApplicationImage: @unchecked Sendable {
       let descriptor = open(appURL.path, O_EVTONLY)
       if descriptor == -1 {
         let errorCode = errno
-        print("Error code: \(errorCode)")
-        print("Error message: \(String(cString: strerror(errorCode)))")
+        Self.logger.warning("Failed to open file descriptor: errno=\(errorCode, privacy: .public) \(String(cString: strerror(errorCode)), privacy: .public)")
       } else if descriptor > 0 {
         let source = DispatchSource.makeFileSystemObjectSource(
           fileDescriptor: descriptor,
@@ -58,12 +59,12 @@ class ApplicationImage: @unchecked Sendable {
             let event = source.data
             if event.contains(.delete) {
               // File was deleted.
-              print("Deleted", appURL.path)
+              Self.logger.debug("Application deleted: \(appURL.path, privacy: .public)")
               source.cancel()
               self.image = nil
             } else if event.contains(.write) {
               // File was modified. Fetch new icon
-              print("Modified", appURL.path)
+              Self.logger.debug("Application modified: \(appURL.path, privacy: .public)")
               self.image = NSWorkspace.shared.icon(forFile: appURL.path)
             }
           }

@@ -262,42 +262,48 @@ struct UniversalItemView: View {
                 }
             } else if !item.base.isFolder, let url = item.base.fileURL {
                 // Context menu for regular files
-                Button("Copy") {
+                Button(NSLocalizedString("context_menu_copy", tableName: nil, value: "Copy", comment: "")) {
                     item.copyToClipboard()
                 }
-                
-                Button("Copy Path") {
+
+                Button(NSLocalizedString("context_menu_copy_path", tableName: nil, value: "Copy Path", comment: "")) {
                     let pasteboard = NSPasteboard.general
                     pasteboard.clearContents()
                     pasteboard.setString(url.path, forType: .string)
                 }
-                
-                Button("Open") {
+
+                Button(NSLocalizedString("context_menu_open", tableName: nil, value: "Open", comment: "")) {
                     NSWorkspace.shared.open(url)
                 }
-                
+
                 Divider()
-                
+
                 // Put Context above Example
-                Button(contentManager.isSelected(item.id) ? "Remove as Context" : "Mark as Context") {
+                Button(contentManager.isSelected(item.id)
+                       ? NSLocalizedString("context_menu_remove_context", tableName: nil, value: "Remove as Context", comment: "")
+                       : NSLocalizedString("context_menu_mark_context", tableName: nil, value: "Mark as Context", comment: "")) {
                     contentManager.toggleSelection(item.id)
                     appState.updateFooterItemVisibility()
                 }
                 .keyboardShortcut(.tab)
-                
-                Button(contentManager.isExample(item.id) ? "Remove as Example" : "Mark as Example") {
+
+                Button(contentManager.isExample(item.id)
+                       ? NSLocalizedString("context_menu_remove_example", tableName: nil, value: "Remove as Example", comment: "")
+                       : NSLocalizedString("context_menu_mark_example", tableName: nil, value: "Mark as Example", comment: "")) {
                     contentManager.toggleExample(item.id)
                 }
-                
+
                 Divider()
 
-                Button("Reveal in Finder") {
+                Button(NSLocalizedString("context_menu_reveal_in_finder", tableName: nil, value: "Reveal in Finder", comment: "")) {
                     NSWorkspace.shared.activateFileViewerSelecting([url])
                 }
 
                 Divider()
 
-                Button(Defaults[.showShortcutsBar] ? "Hide Shortcuts Bar" : "Show Shortcuts Bar") {
+                Button(Defaults[.showShortcutsBar]
+                       ? NSLocalizedString("context_menu_hide_shortcuts", tableName: nil, value: "Hide Shortcuts Bar", comment: "")
+                       : NSLocalizedString("context_menu_show_shortcuts", tableName: nil, value: "Show Shortcuts Bar", comment: "")) {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         Defaults[.showShortcutsBar].toggle()
                     }

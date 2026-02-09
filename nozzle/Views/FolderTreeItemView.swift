@@ -152,40 +152,44 @@ struct FolderTreeItemView: View {
             )
             .contextMenu {
                 if let url = item.base.fileURL {
-                    Button("Copy Path") {
+                    Button(NSLocalizedString("context_menu_copy_path", tableName: nil, value: "Copy Path", comment: "")) {
                         let pasteboard = NSPasteboard.general
                         pasteboard.clearContents()
                         pasteboard.setString(url.path, forType: .string)
                     }
-                    
-                    Button("Open in Finder") {
+
+                    Button(NSLocalizedString("context_menu_open_in_finder", tableName: nil, value: "Open in Finder", comment: "")) {
                         NSWorkspace.shared.open(url)
                     }
-                    
+
                     Divider()
-                    
-                    Button(isExpanded ? "Collapse" : "Expand") {
+
+                    Button(isExpanded
+                           ? NSLocalizedString("context_menu_collapse", tableName: nil, value: "Collapse", comment: "")
+                           : NSLocalizedString("context_menu_expand", tableName: nil, value: "Expand", comment: "")) {
                         toggleExpansion()
                     }
-                    
+
                     Divider()
-                    
+
                     let folderSelectionState = contentManager.getFolderSelectionState(item.id)
                     if folderSelectionState == .none {
-                        Button("Select All Contents") {
+                        Button(NSLocalizedString("context_menu_select_all", tableName: nil, value: "Select All Contents", comment: "")) {
                             contentManager.selectFolderChildren(item.id)
                             appState.updateFooterItemVisibility()
                         }
                     } else {
-                        Button("Deselect All Contents") {
+                        Button(NSLocalizedString("context_menu_deselect_all", tableName: nil, value: "Deselect All Contents", comment: "")) {
                             contentManager.deselectFolderChildren(item.id)
                             appState.updateFooterItemVisibility()
                         }
                     }
-                    
+
                     Divider()
 
-                    Button(Defaults[.showShortcutsBar] ? "Hide Shortcuts Bar" : "Show Shortcuts Bar") {
+                    Button(Defaults[.showShortcutsBar]
+                           ? NSLocalizedString("context_menu_hide_shortcuts", tableName: nil, value: "Hide Shortcuts Bar", comment: "")
+                           : NSLocalizedString("context_menu_show_shortcuts", tableName: nil, value: "Show Shortcuts Bar", comment: "")) {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             Defaults[.showShortcutsBar].toggle()
                         }
@@ -193,7 +197,7 @@ struct FolderTreeItemView: View {
 
                     Divider()
 
-                    Button("Remove from Sources", role: .destructive) {
+                    Button(NSLocalizedString("context_menu_remove_source", tableName: nil, value: "Remove from Sources", comment: ""), role: .destructive) {
                         contentManager.removeSource(item.sourceId)
                     }
                 }

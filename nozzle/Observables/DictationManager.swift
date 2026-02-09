@@ -2,11 +2,13 @@ import Foundation
 @preconcurrency import Speech
 @preconcurrency import AVFoundation
 import SwiftUI
+import OSLog
 
 @Observable
 final class DictationManager {
     static let shared = DictationManager()
-    
+    private static let logger = Logger(subsystem: "org.conmeara.nozzle", category: "DictationManager")
+
     private var transcriber: SpeechTranscriber?
     private var analyzer: SpeechAnalyzer?
     // Keep a single engine instance like the sample; never set to nil.
@@ -185,7 +187,7 @@ final class DictationManager {
                     }
                 }
             } catch {
-                print("Speech recognition failed: \(error)")
+                Self.logger.error("Speech recognition failed: \(error.localizedDescription, privacy: .public)")
             }
         }
         

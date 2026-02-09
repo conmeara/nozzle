@@ -35,6 +35,24 @@
 "system_preferences_name" = "System Preferences";
 "system_preferences_pane" = "Security & Privacy preferences";
 
+// Context menus
+"context_menu_copy" = "Copy";
+"context_menu_copy_path" = "Copy Path";
+"context_menu_open" = "Open";
+"context_menu_open_in_finder" = "Open in Finder";
+"context_menu_reveal_in_finder" = "Reveal in Finder";
+"context_menu_collapse" = "Collapse";
+"context_menu_expand" = "Expand";
+"context_menu_select_all" = "Select All Contents";
+"context_menu_deselect_all" = "Deselect All Contents";
+"context_menu_mark_context" = "Mark as Context";
+"context_menu_remove_context" = "Remove as Context";
+"context_menu_mark_example" = "Mark as Example";
+"context_menu_remove_example" = "Remove as Example";
+"context_menu_show_shortcuts" = "Show Shortcuts Bar";
+"context_menu_hide_shortcuts" = "Hide Shortcuts Bar";
+"context_menu_remove_source" = "Remove from Sources";
+
 // Onboarding
 "onboarding_welcome_title" = "Welcome to Nozzle!";
 "onboarding_welcome_subtitle" = "Your universal content management platform";

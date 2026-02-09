@@ -1,5 +1,6 @@
 import Foundation
 import CoreServices
+import OSLog
 
 /// Get the current FSEvents event ID
 func FSEventStreamGetCurrentEventId() -> FSEventStreamEventId {
@@ -23,6 +24,7 @@ final class FSEventsStream {
         let flags: FSEventStreamEventFlags
     }
     
+    private static let logger = Logger(subsystem: "org.conmeara.nozzle", category: "FSEventsStream")
     private var stream: FSEventStreamRef?
     private let config: Config
     private let handler: ([Event]) -> Void
@@ -38,7 +40,7 @@ final class FSEventsStream {
         // Validate that the root path exists and is accessible
         guard config.root.hasDirectoryPath,
               FileManager.default.fileExists(atPath: config.root.path) else {
-            print("FSEventsStream: Root path does not exist or is not accessible: \(config.root.path)")
+            Self.logger.warning("Root path does not exist or is not accessible: \(self.config.root.path, privacy: .public)")
             return
         }
         
@@ -63,22 +65,24 @@ final class FSEventsStream {
                 
                 let stream = Unmanaged<FSEventsStream>.fromOpaque(info).takeUnretainedValue()
                 
-                // Convert the paths CFArray to Swift array
-                let pathsArray = unsafeBitCast(eventPaths, to: NSArray.self) as! [String]
+                // Convert the paths CFArray to Swift array safely (no force-unwrap)
+                guard let pathsArray = unsafeBitCast(eventPaths, to: NSArray.self) as? [String] else {
+                    return
+                }
                 let flagsBuffer = UnsafeBufferPointer(start: eventFlags, count: Int(numEvents))
                 let idsBuffer = UnsafeBufferPointer(start: eventIds, count: Int(numEvents))
-                
+
                 var events: [Event] = []
                 events.reserveCapacity(Int(numEvents))
-                
+
                 for i in 0..<Int(numEvents) {
                     // Bounds checking
                     guard i < pathsArray.count,
                           i < flagsBuffer.count,
-                          i < idsBuffer.count else { 
-                        continue 
+                          i < idsBuffer.count else {
+                        continue
                     }
-                    
+
                     let path = pathsArray[i]
                     
                     events.append(Event(
