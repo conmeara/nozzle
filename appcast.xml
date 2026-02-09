@@ -6,6 +6,28 @@
     <description>Most recent changes with links to updates.</description>
     <language>en</language>
     <item>
+      <title>3.0.17</title>
+      <description>
+        <![CDATA[
+          <ul>
+            <li>Fix Sparkle updater mach entitlements and add release guardrails</li>
+<li>Update appcast.xml for version 3.0.16</li>
+          </ul>
+        ]]>
+      </description>
+      <pubDate>2026-02-09</pubDate>
+      <releaseNotesLink>https://github.com/conmeara/nozzle/releases/tag/v3.0.17</releaseNotesLink>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/conmeara/nozzle/releases/download/v3.0.17/nozzle.app.zip"
+        sparkle:version="74"
+        sparkle:shortVersionString="3.0.17"
+        sparkle:edSignature="t7CHAZhAL9h2m0vS5lFL8szPBPugjQhuc/SP0zpLFbhR+azS2LxHZacu+ydi4VUu1I4Hh+gy8uSS9w6V/YGtAQ=="
+        length="11143878"
+        type="application/octet-stream"
+      />
+    </item>
+    <item>
       <title>3.0.16</title>
       <description>
         <![CDATA[
