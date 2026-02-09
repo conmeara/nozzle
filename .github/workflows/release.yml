@@ -121,9 +121,25 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$BUILD_PATH/$APP_NAME"
           # Display signing info
           codesign -dv --verbose=4 "$BUILD_PATH/$APP_NAME"
+          ENTITLEMENTS=$(codesign -d --entitlements - "$BUILD_PATH/$APP_NAME" 2>&1)
           # Check for get-task-allow (should not be present)
-          if codesign -d --entitlements - "$BUILD_PATH/$APP_NAME" 2>&1 | grep -q "get-task-allow"; then
+          if echo "$ENTITLEMENTS" | grep -q "get-task-allow"; then
             echo "ERROR: get-task-allow entitlement found in release build!"
+            exit 1
+          fi
+          # Ensure entitlement placeholders are fully expanded in signed artifacts.
+          if echo "$ENTITLEMENTS" | grep -q '\$('; then
+            echo "ERROR: unresolved build variable found in signed entitlements!"
+            echo "$ENTITLEMENTS"
+            exit 1
+          fi
+          # Sparkle sandbox services must match the app's bundle id.
+          if ! echo "$ENTITLEMENTS" | grep -q "com.conmeara.nozzleai-spks"; then
+            echo "ERROR: missing Sparkle mach service entitlement com.conmeara.nozzleai-spks"
+            exit 1
+          fi
+          if ! echo "$ENTITLEMENTS" | grep -q "com.conmeara.nozzleai-spki"; then
+            echo "ERROR: missing Sparkle mach service entitlement com.conmeara.nozzleai-spki"
             exit 1
           fi
           echo "No get-task-allow entitlement - good for notarization"
