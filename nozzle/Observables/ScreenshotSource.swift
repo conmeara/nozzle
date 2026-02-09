@@ -9,6 +9,10 @@ import OSLog
 final class ScreenshotSource: ContentSource {
     nonisolated private static let logger = Logger(subsystem: "org.conmeara.nozzle.content", category: "ScreenshotSource")
 
+    enum ScreenRecordingAccessError: Error {
+        case permissionDenied(underlying: Error)
+    }
+
     /// Check screen recording permission WITHOUT triggering a prompt
     /// Uses CGPreflightScreenCaptureAccess which is safe to call repeatedly
     /// - Returns: true if permission is granted, false otherwise
@@ -163,10 +167,39 @@ final class ScreenshotSource: ContentSource {
     }
 
     func refreshIfNeeded() async {
+        // If permission was previously denied, force a new check immediately.
+        // This allows fast recovery after users grant permission in System Settings.
+        if hasScreenRecordingPermission == false {
+            await refresh()
+            return
+        }
+
         // Only refresh if data is stale (older than refreshInterval)
         let timeSinceLastRefresh = Date().timeIntervalSince(lastRefreshTime)
         if timeSinceLastRefresh > refreshInterval {
             await refresh()
+        }
+    }
+
+    internal func withVerifiedScreenRecordingPermission<T>(
+        preflightCheck: () -> Bool = ScreenshotSource.checkScreenRecordingPermission,
+        fetchContent: () async throws -> T
+    ) async throws -> (content: T, permissionGranted: Bool) {
+        let preflightGranted = preflightCheck()
+
+        do {
+            let content = try await fetchContent()
+            // On newer macOS versions we've observed CGPreflightScreenCaptureAccess()
+            // occasionally report false while access is actually granted.
+            if !preflightGranted {
+                Self.logger.info("CGPreflight reported false but ScreenCaptureKit access succeeded; treating permission as granted")
+            }
+            return (content, true)
+        } catch {
+            if preflightGranted {
+                throw error
+            }
+            throw ScreenRecordingAccessError.permissionDenied(underlying: error)
         }
     }
 
@@ -178,20 +211,15 @@ final class ScreenshotSource: ContentSource {
         }
 
         do {
-            // Check for screen recording permission on each refresh.
-            hasScreenRecordingPermission = Self.checkScreenRecordingPermission()
-
-            guard hasScreenRecordingPermission == true else {
-                Self.logger.warning("Screen recording permission not granted")
-                cachedItems = [createPermissionRequiredItem()]
-                return
+            // Verify permission using preflight + ScreenCaptureKit probing.
+            let contentResult = try await withVerifiedScreenRecordingPermission {
+                try await SCShareableContent.excludingDesktopWindows(
+                    false,
+                    onScreenWindowsOnly: true
+                )
             }
-
-            // Get shareable content (windows and displays)
-            let content = try await SCShareableContent.excludingDesktopWindows(
-                false,
-                onScreenWindowsOnly: true
-            )
+            hasScreenRecordingPermission = contentResult.permissionGranted
+            let content = contentResult.content
 
             let now = Date()
             var newOrderedIds: [UUID] = []
@@ -282,6 +310,11 @@ final class ScreenshotSource: ContentSource {
             lastRefreshTime = now
             Self.logger.info("Refreshed screenshot source with \(self.cachedItems.count) items (filtered from \(content.windows.count) windows)")
 
+        } catch ScreenRecordingAccessError.permissionDenied(let error) {
+            Self.logger.warning("Screen recording permission not granted: \(error.localizedDescription)")
+            hasScreenRecordingPermission = false
+            cachedItems = [createPermissionRequiredItem()]
+            return
         } catch {
             Self.logger.error("Failed to get shareable content: \(error.localizedDescription)")
             // Reset permission cache on error (permissions may have been revoked)
