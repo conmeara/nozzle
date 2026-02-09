@@ -13,6 +13,21 @@ final class ScreenshotSource: ContentSource {
         case permissionDenied(underlying: Error)
     }
 
+    /// Returns true only for explicit ScreenCaptureKit permission-denied failures.
+    /// We intentionally avoid treating all preflight=false failures as permission
+    /// errors because transient ScreenCaptureKit failures can occur for other reasons.
+    private static func isPermissionDeniedError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        if nsError.domain == SCStreamErrorDomain,
+           nsError.code == SCStreamError.userDeclined.rawValue {
+            return true
+        }
+
+        // Fallback for older/localized surfaces where SCStreamError metadata may be lost.
+        let lowered = nsError.localizedDescription.lowercased()
+        return lowered.contains("declined") && lowered.contains("capture")
+    }
+
     /// Check screen recording permission WITHOUT triggering a prompt
     /// Uses CGPreflightScreenCaptureAccess which is safe to call repeatedly
     /// - Returns: true if permission is granted, false otherwise
@@ -167,13 +182,6 @@ final class ScreenshotSource: ContentSource {
     }
 
     func refreshIfNeeded() async {
-        // If permission was previously denied, force a new check immediately.
-        // This allows fast recovery after users grant permission in System Settings.
-        if hasScreenRecordingPermission == false {
-            await refresh()
-            return
-        }
-
         // Only refresh if data is stale (older than refreshInterval)
         let timeSinceLastRefresh = Date().timeIntervalSince(lastRefreshTime)
         if timeSinceLastRefresh > refreshInterval {
@@ -196,10 +204,21 @@ final class ScreenshotSource: ContentSource {
             }
             return (content, true)
         } catch {
+            if Self.isPermissionDeniedError(error) {
+                throw ScreenRecordingAccessError.permissionDenied(underlying: error)
+            }
+
             if preflightGranted {
                 throw error
             }
-            throw ScreenRecordingAccessError.permissionDenied(underlying: error)
+
+            // CGPreflight can report false even when access is not the actual failure.
+            // Preserve non-permission errors so the UI can surface the real cause.
+            let nsError = error as NSError
+            Self.logger.error(
+                "Preflight reported denied but fetch failed with non-permission error domain=\(nsError.domain, privacy: .public) code=\(nsError.code, privacy: .public)"
+            )
+            throw error
         }
     }
 
@@ -314,12 +333,14 @@ final class ScreenshotSource: ContentSource {
             Self.logger.warning("Screen recording permission not granted: \(error.localizedDescription)")
             hasScreenRecordingPermission = false
             cachedItems = [createPermissionRequiredItem()]
+            lastRefreshTime = Date()
             return
         } catch {
             Self.logger.error("Failed to get shareable content: \(error.localizedDescription)")
             // Reset permission cache on error (permissions may have been revoked)
             hasScreenRecordingPermission = nil
             cachedItems = [createErrorItem(error)]
+            lastRefreshTime = Date()
         }
     }
 

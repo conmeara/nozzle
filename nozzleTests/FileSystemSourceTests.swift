@@ -1,4 +1,5 @@
 import XCTest
+import ScreenCaptureKit
 @testable import nozzle
 
 final class FileSystemSourceTests: XCTestCase {
@@ -43,9 +44,32 @@ final class ScreenshotSourcePermissionTests: XCTestCase {
     }
 
     @MainActor
-    func testPermissionValidation_PreflightFalse_FetchFailsWrapsAsPermissionDenied() async {
+    func testPermissionValidation_PreflightFalse_UserDeclinedWrapsAsPermissionDenied() async {
         let source = ScreenshotSource()
+        let declinedError = NSError(
+            domain: SCStreamErrorDomain,
+            code: SCStreamError.userDeclined.rawValue,
+            userInfo: [NSLocalizedDescriptionKey: "The user declined TCCs for application, window, display capture"]
+        )
 
+        do {
+            _ = try await source.withVerifiedScreenRecordingPermission(
+                preflightCheck: { false },
+                fetchContent: { throw declinedError }
+            )
+            XCTFail("Expected permission denied error to be thrown")
+        } catch ScreenshotSource.ScreenRecordingAccessError.permissionDenied(let underlying) {
+            let nsError = underlying as NSError
+            XCTAssertEqual(nsError.domain, SCStreamErrorDomain)
+            XCTAssertEqual(nsError.code, SCStreamError.userDeclined.rawValue)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    @MainActor
+    func testPermissionValidation_PreflightFalse_NonPermissionErrorPreserved() async {
+        let source = ScreenshotSource()
         struct ProbeError: Error {}
 
         do {
@@ -53,11 +77,9 @@ final class ScreenshotSourcePermissionTests: XCTestCase {
                 preflightCheck: { false },
                 fetchContent: { throw ProbeError() }
             )
-            XCTFail("Expected permission denied error to be thrown")
-        } catch ScreenshotSource.ScreenRecordingAccessError.permissionDenied(let underlying) {
-            XCTAssertTrue(underlying is ProbeError)
+            XCTFail("Expected original fetch error to be thrown")
         } catch {
-            XCTFail("Unexpected error type: \(error)")
+            XCTAssertTrue(error is ProbeError)
         }
     }
 
