@@ -3,6 +3,7 @@ import Defaults
 @testable import nozzle
 
 // swiftlint:disable type_body_length
+@MainActor
 class ClipboardTests: XCTestCase {
   let clipboard = Clipboard.shared
   let pasteboard = NSPasteboard.general

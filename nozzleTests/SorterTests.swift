@@ -10,7 +10,6 @@ class SorterTests: XCTestCase {
   var item2: HistoryItem!
   var item3: HistoryItem!
 
-  @MainActor
   override func setUp() {
     super.setUp()
     item1 = historyItem(value: "foo", firstCopiedAt: -300, lastCopiedAt: -100, numberOfCopies: 3)
@@ -51,17 +50,14 @@ class SorterTests: XCTestCase {
     XCTAssertEqual(sorter.sort([item1, item2, item3], by: .lastCopiedAt), [item2, item1, item3])
   }
 
-  @MainActor
   private func historyItem(
     value: String,
     firstCopiedAt: Int,
     lastCopiedAt: Int,
     numberOfCopies: Int
   ) -> HistoryItem {
-    let contents = [HistoryItemContent(type: "", value: value.data(using: .utf8)!)]
     let item = HistoryItem()
-    Storage.shared.context.insert(item)
-    item.contents = contents
+    item.title = value
     item.firstCopiedAt = Date(timeIntervalSinceNow: TimeInterval(firstCopiedAt))
     item.lastCopiedAt = Date(timeIntervalSinceNow: TimeInterval(lastCopiedAt))
     item.numberOfCopies = numberOfCopies

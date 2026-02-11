@@ -1,10 +1,10 @@
 import Carbon
-import XCTest
+@preconcurrency import XCTest
 
 // swiftlint:disable file_length
 // swiftlint:disable type_body_length
 class nozzleUITests: XCTestCase {
-  let app = XCUIApplication()
+  var app: XCUIApplication!
   let pasteboard = NSPasteboard.general
 
   let copy1 = UUID().uuidString
@@ -46,6 +46,7 @@ class nozzleUITests: XCTestCase {
 
   override func setUp() {
     super.setUp()
+    app = XCUIApplication()
     app.launchArguments.append("enable-testing")
     app.launch()
 
@@ -117,6 +118,13 @@ class nozzleUITests: XCTestCase {
     assertPasteboardStringEquals(copy2)
   }
 
+  func testPasteWithCommandEnter() {
+    popUpWithMouse()
+    items[copy2].firstMatch.click()
+    app.typeKey(.enter, modifierFlags: [.command])
+    assertPasteboardStringEquals(copy2)
+  }
+
   func testCopyWithCommandShortcut() {
     popUpWithMouse()
     app.typeKey("2", modifierFlags: [.command])
@@ -130,6 +138,7 @@ class nozzleUITests: XCTestCase {
     assertPasteboardStringEquals(copy2)
   }
 
+  @MainActor
   func testCopyImage() {
     copyToClipboard(image2)
     copyToClipboard(image1)
@@ -242,6 +251,7 @@ class nozzleUITests: XCTestCase {
     assertNotExists(items[copy2])
   }
 
+  @MainActor
   func testClearAll() {
     popUpWithMouse()
     pin(copy2)
@@ -295,6 +305,7 @@ class nozzleUITests: XCTestCase {
     assertNotExists(items[copy2])
   }
 
+  @MainActor
   func testDisablesOnOptionClickingMenubarIcon() {
     XCUIElement.perform(withKeyModifiers: .option) {
       app.statusItems.firstMatch.click()
@@ -315,6 +326,7 @@ class nozzleUITests: XCTestCase {
     }
   }
 
+  @MainActor
   func testDisablesOnlyForNextCopyOnOptionShiftClickingMenubarIcon() {
     XCUIElement.perform(withKeyModifiers: [.option, .shift]) {
       app.statusItems.firstMatch.click()

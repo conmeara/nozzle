@@ -198,6 +198,26 @@ final class ContentManagerSelectionTests: XCTestCase {
         XCTAssertFalse(manager.isExample(textItem.id))
     }
 
+    func testMarkingUnselectedItemAsExampleAddsItToAggregatedSelection() async {
+        let manager = ContentManager.shared
+        manager.resetForTesting()
+        defer { manager.resetForTesting() }
+
+        let item = makeItem(title: "Example Candidate", sourceId: "stub", plainText: "Hello")
+        let source = StubSource(id: "stub", items: [item])
+        manager.registerSource(source)
+
+        XCTAssertFalse(manager.isSelected(item.id))
+        XCTAssertFalse(manager.isExample(item.id))
+
+        manager.toggleExample(item.id)
+
+        XCTAssertTrue(manager.isSelected(item.id))
+        XCTAssertTrue(manager.isExample(item.id))
+        XCTAssertEqual(manager.selectedContextItems.count, 0)
+        XCTAssertEqual(manager.selectedExampleItems.map(\.id), [item.id])
+    }
+
     func testCompositeKeyPreventsCollision() async {
         let manager = ContentManager.shared
         manager.resetForTesting()

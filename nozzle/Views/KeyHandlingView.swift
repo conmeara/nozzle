@@ -32,7 +32,9 @@ struct KeyHandlingView<Content: View>: View {
 
         // Handle Cmd+Z for undo (check before text field processing)
         if let event = NSApp.currentEvent {
-          let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock)
+          let modifierFlags = event.modifierFlags
+            .intersection(.deviceIndependentFlagsMask)
+            .subtracting([.capsLock, .numericPad, .function])
           let isZ = event.keyCode == UInt16(Sauce.shared.keyCode(for: .z))
 
           if modifierFlags == .command && isZ {
@@ -55,7 +57,9 @@ struct KeyHandlingView<Content: View>: View {
         // Check for plain Enter to immediately paste current item
         if let event = NSApp.currentEvent,
            (event.keyCode == UInt16(Key.return.QWERTYKeyCode) || event.keyCode == UInt16(Key.keypadEnter.QWERTYKeyCode)) {
-          let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock)
+          let modifierFlags = event.modifierFlags
+            .intersection(.deviceIndependentFlagsMask)
+            .subtracting([.capsLock, .numericPad, .function])
           
           if modifierFlags.isEmpty {
             // Check if dictation is active first
@@ -73,34 +77,7 @@ struct KeyHandlingView<Content: View>: View {
             }
             return .handled
           } else if modifierFlags == .command {
-            // Special handling for prompts tab - paste just the prompt content
-            if contentManager.activeSourceId == "prompts",
-               let focusedItem = contentManager.focusedContentItem,
-               let url = focusedItem.fileURL {
-              // Load and paste prompt content directly
-              if let text = TextFileFormatter.loadPlainText(from: url) {
-                appState.popup.close()
-                Clipboard.shared.copyString(text)
-                Clipboard.shared.paste()
-              }
-              return .handled
-            }
-            // Command-Enter - immediately paste current item (swapped behavior)
-            if let item = appState.history.selectedItem {
-              // Clipboard item
-              appState.popup.close()
-              Clipboard.shared.copy(item.item)
-              Clipboard.shared.paste()
-            } else if let focusedItem = contentManager.focusedContentItem {
-              // File source item - skip folders
-              appState.popup.close()
-              if let fileURL = focusedItem.fileURL, !focusedItem.isFolder {
-                let pasteboard = NSPasteboard.general
-                pasteboard.clearContents()
-                pasteboard.writeObjects([fileURL as NSURL])
-                Clipboard.shared.paste()
-              }
-            }
+            _ = appState.performSingleItemPaste()
             return .handled
           } else if modifierFlags == .shift {
             // Shift+Enter in prompt mode - let TextEditor handle naturally for newlines
@@ -112,7 +89,9 @@ struct KeyHandlingView<Content: View>: View {
         
         // Robustly handle Command+Delete to clear selections, chips, and input
         if let event = NSApp.currentEvent {
-          let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock)
+          let modifierFlags = event.modifierFlags
+            .intersection(.deviceIndependentFlagsMask)
+            .subtracting([.capsLock, .numericPad, .function])
           let isDelete = event.keyCode == UInt16(Key.delete.QWERTYKeyCode)
             || Sauce.shared.key(for: Int(event.keyCode)) == .delete
           if modifierFlags == .command && isDelete {

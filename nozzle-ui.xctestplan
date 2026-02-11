@@ -1,0 +1,34 @@
+{
+  "configurations" : [
+    {
+      "id" : "AF4E53A3-F52D-4A3E-B9EF-EF728B4C1AAA",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "commandLineArgumentEntries" : [
+      {
+        "argument" : "enable-testing"
+      }
+    ],
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:nozzle.xcodeproj",
+      "identifier" : "DAEE38421E3DBEB100DD2966",
+      "name" : "nozzle"
+    },
+    "testRepetitionMode" : "retryOnFailure"
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:nozzle.xcodeproj",
+        "identifier" : "DA0EE7B5204657830025FC60",
+        "name" : "nozzleUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

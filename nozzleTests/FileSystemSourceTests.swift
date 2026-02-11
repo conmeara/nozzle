@@ -68,6 +68,58 @@ final class ScreenshotSourcePermissionTests: XCTestCase {
     }
 
     @MainActor
+    func testPermissionValidation_PreflightTrue_UserDeclinedPreservesOriginalError() async {
+        let source = ScreenshotSource()
+        let declinedError = NSError(
+            domain: SCStreamErrorDomain,
+            code: SCStreamError.userDeclined.rawValue,
+            userInfo: [NSLocalizedDescriptionKey: "The user declined TCCs for application, window, display capture"]
+        )
+
+        do {
+            _ = try await source.withVerifiedScreenRecordingPermission(
+                preflightCheck: { true },
+                fetchContent: { throw declinedError }
+            )
+            XCTFail("Expected original fetch error to be thrown")
+        } catch ScreenshotSource.ScreenRecordingAccessError.permissionDenied {
+            XCTFail("Expected conflicting preflight/fetch results to preserve original error")
+        } catch {
+            let nsError = error as NSError
+            XCTAssertEqual(nsError.domain, SCStreamErrorDomain)
+            XCTAssertEqual(nsError.code, SCStreamError.userDeclined.rawValue)
+        }
+    }
+
+    @MainActor
+    func testPermissionValidation_PreflightFlipsToGranted_UserDeclinedPreservesOriginalError() async {
+        let source = ScreenshotSource()
+        let declinedError = NSError(
+            domain: SCStreamErrorDomain,
+            code: SCStreamError.userDeclined.rawValue,
+            userInfo: [NSLocalizedDescriptionKey: "The user declined TCCs for application, window, display capture"]
+        )
+        var preflightCallCount = 0
+
+        do {
+            _ = try await source.withVerifiedScreenRecordingPermission(
+                preflightCheck: {
+                    defer { preflightCallCount += 1 }
+                    return preflightCallCount > 0
+                },
+                fetchContent: { throw declinedError }
+            )
+            XCTFail("Expected original fetch error to be thrown")
+        } catch ScreenshotSource.ScreenRecordingAccessError.permissionDenied {
+            XCTFail("Expected postflight grant to preserve original error")
+        } catch {
+            let nsError = error as NSError
+            XCTAssertEqual(nsError.domain, SCStreamErrorDomain)
+            XCTAssertEqual(nsError.code, SCStreamError.userDeclined.rawValue)
+        }
+    }
+
+    @MainActor
     func testPermissionValidation_PreflightFalse_NonPermissionErrorPreserved() async {
         let source = ScreenshotSource()
         struct ProbeError: Error {}

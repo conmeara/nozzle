@@ -1098,6 +1098,13 @@ final class ContentManager {
             }
         } else {
             // Turning ON example
+            // Ensure examples always participate in the centralized selection model
+            // so they appear in Aggregated and combined operations.
+            let wasSelected = selectionStore.contains(key)
+            if !wasSelected {
+                selectionStore.insert(key)
+                syncClipboardSelection(id)
+            }
             selectionStore.addExample(key)
             if item.isFolder {
                 // Select and mark all textual descendants as examples (even if collapsed)

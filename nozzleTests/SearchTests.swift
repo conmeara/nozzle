@@ -2,6 +2,7 @@ import XCTest
 import Defaults
 @testable import nozzle
 
+@MainActor
 class SearchTests: XCTestCase {
   let savedSearchMode = Defaults[.searchMode]
   var items: [Search.Searchable]!

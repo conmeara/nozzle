@@ -148,7 +148,7 @@ struct ContentView: View {
           if let fileSource = contentManager.sources[newId] as? FileSystemSource {
             Task { await fileSource.refreshIfNeeded() }
           } else if let screenshotSource = contentManager.sources[newId] as? ScreenshotSource {
-            Task { await screenshotSource.refreshIfNeeded() }
+            Task { await screenshotSource.refreshIfNeeded(userInitiated: true) }
           }
           if newId != "aggregated" {
             if let tabIndex = allTabs.firstIndex(where: { $0.id == newId }) {
@@ -179,7 +179,7 @@ struct ContentView: View {
           if let fileSource = contentManager.sources[newId] as? FileSystemSource {
             Task { await fileSource.refreshIfNeeded() }
           } else if let screenshotSource = contentManager.sources[newId] as? ScreenshotSource {
-            Task { await screenshotSource.refreshIfNeeded() }
+            Task { await screenshotSource.refreshIfNeeded(userInitiated: true) }
           }
           if newId != "aggregated" {
             if let tabIndex = allTabs.firstIndex(where: { $0.id == newId }) {
@@ -258,6 +258,11 @@ struct ContentView: View {
               }
               // Note: We don't clear promptText when app closes
               // so it persists when user reopens the app
+            } else if scenePhase == .active,
+                      contentManager.activeSourceId == ScreenshotSource.sourceID,
+                      let screenshotSource = contentManager.sources[ScreenshotSource.sourceID] as? ScreenshotSource {
+              // Re-check screenshot access when returning from System Settings.
+              Task { await screenshotSource.refreshIfNeeded(userInitiated: true) }
             }
           }
           
@@ -442,7 +447,7 @@ struct ContentView: View {
                       }
                     } else if let screenshotSource = source as? ScreenshotSource {
                       Task {
-                        await screenshotSource.refreshIfNeeded()
+                        await screenshotSource.refreshIfNeeded(userInitiated: true)
                       }
                     }
                   },
@@ -662,6 +667,13 @@ struct ContentView: View {
                     screenshotSource.openScreenRecordingSettings()
                   }
                   .buttonStyle(.borderedProminent)
+                  .controlSize(.regular)
+
+                  Button("Refresh") {
+                    screenshotSource.invalidatePermissionCache()
+                    Task { await screenshotSource.refresh() }
+                  }
+                  .buttonStyle(.bordered)
                   .controlSize(.regular)
 
                   Text("Then return here and press ⌘R to refresh")
@@ -894,6 +906,14 @@ struct ContentView: View {
     .onChange(of: contentManager.activeSourceId) { _, newSourceId in
       // Sync selectedTab when activeSourceId changes (e.g., from "/" shortcut)
       selectedTab = newSourceId
+
+      // Lazily activate screenshot monitoring only after explicit tab selection.
+      if newSourceId == ScreenshotSource.sourceID,
+         let screenshotSource = contentManager.sources[ScreenshotSource.sourceID] as? ScreenshotSource,
+         !screenshotSource.isMonitoring {
+        screenshotSource.startMonitoring()
+      }
+
       // Ensure an active row is highlighted immediately in the new tab
       appState.isKeyboardNavigating = true
       appState.hoveredListItemId = nil

@@ -98,6 +98,13 @@ struct UnifiedInputFieldView: View {
               .onSubmit {
                 handleSubmit()
               }
+              .onKeyPress(keys: [.return]) { keyPress in
+                if keyPress.modifiers.contains(.command) {
+                  _ = appState.performSingleItemPaste()
+                  return .handled
+                }
+                return .ignored
+              }
               .onKeyPress(keys: [.escape]) { _ in
                 if dictationManager.isRecording {
                   Task {
@@ -180,8 +187,8 @@ struct UnifiedInputFieldView: View {
                     // Let TextEditor handle Shift+Enter naturally (creates newline)
                     return .ignored
                   } else if keyPress.modifiers.contains(.command) {
-                    // Command+Enter - submit (swapped behavior)
-                    handleSubmit()
+                    // Command+Enter - paste focused item directly
+                    _ = appState.performSingleItemPaste()
                     return .handled
                   } else {
                     // Plain Enter - perform combined paste (swapped behavior)

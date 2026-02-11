@@ -109,9 +109,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Register Prompts source
     registerPromptsSource()
 
-    // Register screenshot source (but don't start monitoring yet - will start after onboarding or delay)
-    let screenshotSource = ScreenshotSource()
-    contentManager.registerSource(screenshotSource)
+    // Register screenshot source (monitoring starts lazily when user opens the Screenshot tab)
+    contentManager.registerSource(ScreenshotSource())
 
     // Restore folder sources from bookmarks
     for url in Bookmarks.resolveAll() {
@@ -147,14 +146,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         OnboardingWindow.showIfNeeded()
       }
-
-      // Start screenshot monitoring after onboarding delay (user will grant permission in onboarding)
-      DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-        screenshotSource.startMonitoring()
-      }
-    } else {
-      // User has completed onboarding, start screenshot monitoring immediately
-      screenshotSource.startMonitoring()
     }
   }
 

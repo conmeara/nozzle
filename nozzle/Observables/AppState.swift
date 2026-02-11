@@ -457,6 +457,85 @@ class AppState {
       }
     }
   }
+
+  @discardableResult
+  @MainActor
+  func performSingleItemPaste() -> Bool {
+    // Prompts tab: paste prompt file contents directly.
+    if contentManager.activeSourceId == "prompts",
+       let focusedItem = contentManager.focusedContentItem,
+       let url = focusedItem.fileURL,
+       let text = TextFileFormatter.loadPlainText(from: url) {
+      popup.close()
+      Clipboard.shared.copyString(text)
+      Clipboard.shared.paste()
+      AppStoreReview.ask()
+      return true
+    }
+
+    // Clipboard tab: use History selection to preserve exact clipboard payload types.
+    if contentManager.activeSourceId == "clipboard" {
+      let selected = history.selectedItem ?? {
+        guard let focusedId = contentManager.focusedItemId else { return nil }
+        return history.items.first(where: { $0.id == focusedId })
+      }()
+
+      if let selected {
+        popup.close()
+        Clipboard.shared.copy(selected.item)
+        Clipboard.shared.paste()
+        AppStoreReview.ask()
+        return true
+      }
+    }
+
+    // Other tabs (including Aggregated): paste the currently focused item only.
+    guard let focusedItem = contentManager.focusedContentItem,
+          !focusedItem.isFolder else { return false }
+
+    popup.close()
+
+    // Clipboard item shown in another tab (e.g., Aggregated): preserve full clipboard payload.
+    if focusedItem.sourceType == .clipboard,
+       let historyItem = history.items.first(where: { $0.id == focusedItem.id }) {
+      Clipboard.shared.copy(historyItem.item)
+      Clipboard.shared.paste()
+      AppStoreReview.ask()
+      return true
+    }
+
+    if let fileURL = focusedItem.fileURL {
+      let pasteboard = NSPasteboard.general
+      pasteboard.clearContents()
+      pasteboard.writeObjects([fileURL as NSURL])
+      Clipboard.shared.paste()
+      AppStoreReview.ask()
+      return true
+    }
+
+    if let imageData = focusedItem.imageData,
+       let image = NSImage(data: imageData) {
+      let pasteboard = NSPasteboard.general
+      pasteboard.clearContents()
+      pasteboard.writeObjects([image])
+      Clipboard.shared.paste()
+      AppStoreReview.ask()
+      return true
+    }
+
+    if focusedItem.rtfData != nil || focusedItem.htmlData != nil || focusedItem.plainText != nil {
+      Clipboard.shared.copyFormattedText(
+        rtf: focusedItem.rtfData,
+        html: focusedItem.htmlData,
+        plain: focusedItem.plainText ?? ""
+      )
+      Clipboard.shared.paste()
+      AppStoreReview.ask()
+      return true
+    }
+
+    return false
+  }
   
   @MainActor
   func performCombinedPaste() {

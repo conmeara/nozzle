@@ -181,7 +181,27 @@ final class ScreenshotSource: ContentSource {
         isMonitoring = false
     }
 
-    func refreshIfNeeded() async {
+    func refreshIfNeeded(userInitiated: Bool = false) async {
+        // Keep screenshot probing strictly user-initiated. If monitoring has not
+        // been activated by selecting the Screenshot tab, skip all refreshes.
+        guard isMonitoring else { return }
+
+        // Explicit user actions (e.g., opening/reselecting Screenshot tab) should
+        // be able to recover from stale/incorrect permission state immediately.
+        if userInitiated {
+            await refresh()
+            return
+        }
+
+        // Avoid background probing from aggregated/non-screenshot views.
+        if ContentManager.shared.activeSourceId != id {
+            return
+        }
+
+        // After an explicit permission denial, avoid automatic retries that can
+        // repeatedly re-trigger system prompts. Users can retry with explicit refresh.
+        guard hasScreenRecordingPermission != false else { return }
+
         // Only refresh if data is stale (older than refreshInterval)
         let timeSinceLastRefresh = Date().timeIntervalSince(lastRefreshTime)
         if timeSinceLastRefresh > refreshInterval {
@@ -204,11 +224,22 @@ final class ScreenshotSource: ContentSource {
             }
             return (content, true)
         } catch {
+            let postflightGranted = preflightCheck()
+
             if Self.isPermissionDeniedError(error) {
+                // Conflicting signals (preflight says granted, fetch says declined) are
+                // treated as transient ScreenCaptureKit failures, not hard denial.
+                if preflightGranted || postflightGranted {
+                    let nsError = error as NSError
+                    Self.logger.error(
+                        "Permission-denied error conflicted with preflight granted domain=\(nsError.domain, privacy: .public) code=\(nsError.code, privacy: .public) preflightBefore=\(preflightGranted, privacy: .public) preflightAfter=\(postflightGranted, privacy: .public)"
+                    )
+                    throw error
+                }
                 throw ScreenRecordingAccessError.permissionDenied(underlying: error)
             }
 
-            if preflightGranted {
+            if preflightGranted || postflightGranted {
                 throw error
             }
 
