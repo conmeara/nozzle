@@ -526,6 +526,26 @@ AppDelegate.swift           # Source registration + injection
 <true/>
 ```
 
+## Permissions Troubleshooting Memory
+
+If permissions loop or appear enabled but Nozzle still fails, it is usually a stale TCC identity (DMG/old build).
+
+Use only `/Applications/nozzle.app` (`com.conmeara.nozzleai`, team `6TNDG45H72`), then run:
+
+```bash
+hdiutil detach "/Volumes/nozzle 3" 2>/dev/null || true
+tccutil reset All com.conmeara.nozzleai
+killall tccd || true
+```
+
+Re-launch Nozzle and re-enable:
+- Accessibility
+- Screen & System Audio Recording
+- Microphone
+- Speech Recognition
+
+Then open Screenshot tab and press `Refresh`.
+
 ## Selected Items Caching
 
 We optimized `ContentManager.selectedItems` to avoid repeated full scans/sorts and to keep the UI order stable.
