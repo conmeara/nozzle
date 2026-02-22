@@ -1,8 +1,8 @@
 <p align="center">
-  <img width="128px" src="designs/icons/app-icon-128.png" alt="nozzle logo" />
+  <img width="128px" src="designs/icons/app-icon-128.png" alt="Nozzle logo" />
 </p>
 
-<h1 align="center">nozzle</h1>
+<h1 align="center">Nozzle</h1>
 
 <p align="center">
   <strong>A powerful content aggregation tool for macOS</strong>
@@ -22,12 +22,12 @@
 
 ---
 
-nozzle is a lightweight, keyboard-driven content manager for macOS that combines clipboard history with file system monitoring in a unified interface. Select, search, and combine content from multiple sources with ease.
+Nozzle is a lightweight, keyboard-driven content manager for macOS that combines clipboard history with file system monitoring in a unified interface. Select, search, and combine content from multiple sources with ease.
 
 **Requires macOS 26.0 or later.**
 
 <p align="center">
-  <img src="designs/Onboarding/AppStore-Screenshot-2880x1800.png" alt="nozzle screenshot" width="720" />
+  <img src="designs/Onboarding/AppStore-Screenshot-2880x1800.png" alt="Nozzle screenshot" width="720" />
 </p>
 
 ## Features
@@ -54,7 +54,7 @@ Then open the app normally. Alternatively, right-click the app and select "Open"
 
 ## Quick Start
 
-1. **Open nozzle** — Press <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> or click the menu bar icon
+1. **Open Nozzle** — Press <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> or click the menu bar icon
 2. **Search** — Start typing to filter items
 3. **Select** — Press <kbd>Enter</kbd> to copy, <kbd>⌥</kbd><kbd>Enter</kbd> to paste
 4. **Multi-select** — Press <kbd>Tab</kbd> to toggle item selection
@@ -64,7 +64,7 @@ Then open the app normally. Alternatively, right-click the app and select "Open"
 
 | Action | Shortcut |
 |--------|----------|
-| Open nozzle | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> |
+| Open Nozzle | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd> |
 | Copy item | <kbd>Enter</kbd> |
 | Paste item | <kbd>⌥</kbd><kbd>Enter</kbd> |
 | Paste without formatting | <kbd>⌥</kbd><kbd>⇧</kbd><kbd>Enter</kbd> |
@@ -82,7 +82,7 @@ Then open the app normally. Alternatively, right-click the app and select "Open"
 
 **Why doesn't it paste automatically?**
 1. Enable "Paste automatically" in Preferences
-2. Add nozzle to System Settings → Privacy & Security → Accessibility
+2. Add Nozzle to System Settings → Privacy & Security → Accessibility
 
 ## Contributing
 
@@ -107,7 +107,7 @@ xcodebuild -project nozzle.xcodeproj -scheme nozzle test
 
 ## Acknowledgments
 
-nozzle is a fork of [Maccy](https://github.com/p0deje/Maccy) by [p0deje](https://github.com/p0deje). Thank you for creating such a solid foundation for clipboard management on macOS.
+Nozzle is a fork of [Maccy](https://github.com/p0deje/Maccy) by [p0deje](https://github.com/p0deje). Thank you for creating such a solid foundation for clipboard management on macOS.
 
 ## License
 
