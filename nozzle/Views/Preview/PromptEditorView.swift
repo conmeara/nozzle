@@ -103,6 +103,20 @@ struct PromptEditorView: View {
                         exitEditMode()
                         return .handled
                     }
+                    .onKeyPress { _ in
+                        // Handle enhancement undo before native text undo to avoid stale-range crashes.
+                        if let event = NSApp.currentEvent {
+                            let modifierFlags = event.modifierFlags
+                                .intersection(.deviceIndependentFlagsMask)
+                                .subtracting([.capsLock, .numericPad, .function])
+                            let isZ = event.charactersIgnoringModifiers?.lowercased() == "z"
+                            if modifierFlags == .command && isZ && appState.canUndoEditorEnhancement {
+                                appState.undoEnhancement()
+                                return .handled
+                            }
+                        }
+                        return .ignored
+                    }
                     .onChange(of: editorFocused) { _, focused in
                         if !focused {
                             // Save and exit edit mode when focus leaves editor
@@ -114,16 +128,6 @@ struct PromptEditorView: View {
                         // Update ContentManager with current editing text
                         contentManager.updatePromptEditorText(newText)
                         appState.handlePromptEditorTextChanged(newText)
-                    }
-                    .onKeyPress { keyPress in
-                        if keyPress.key == "z" &&
-                            keyPress.modifiers.contains(.command) &&
-                            !keyPress.modifiers.contains(.shift),
-                           appState.canUndoEnhancement {
-                            appState.undoEnhancement()
-                            return .handled
-                        }
-                        return .ignored
                     }
             } else {
                 // Read-only preview matching PlainTextPreview style

@@ -114,18 +114,6 @@ struct UnifiedInputFieldView: View {
                 }
                 return .ignored
               }
-              .onKeyPress { keyPress in
-                // Handle Cmd+Z for undo - first check enhancement, then general undo
-                if keyPress.key == "z" && keyPress.modifiers.contains(.command) && !keyPress.modifiers.contains(.shift) {
-                  if appState.canUndoEnhancement {
-                    appState.undoEnhancement()
-                    return .handled
-                  }
-                  // No enhancement to undo, let text field handle its own undo
-                  return .ignored
-                }
-                return .ignored
-              }
               .onChange(of: query) { oldValue, newValue in
                 handleQueryChange(oldValue: oldValue, newValue: newValue)
               }
@@ -210,15 +198,18 @@ struct UnifiedInputFieldView: View {
                   }
                   return .ignored
                 }
-                .onKeyPress { keyPress in
-                  // Handle Cmd+Z for undo - first check enhancement, then general undo
-                  if keyPress.key == "z" && keyPress.modifiers.contains(.command) && !keyPress.modifiers.contains(.shift) {
-                    if appState.canUndoEnhancement {
+                .onKeyPress { _ in
+                  // Keep enhancement undo deterministic and avoid native undo range mismatches
+                  // after programmatic prompt replacement.
+                  if let event = NSApp.currentEvent {
+                    let modifierFlags = event.modifierFlags
+                      .intersection(.deviceIndependentFlagsMask)
+                      .subtracting([.capsLock, .numericPad, .function])
+                    let isZ = event.charactersIgnoringModifiers?.lowercased() == "z"
+                    if modifierFlags == .command && isZ && appState.canUndoInputEnhancement {
                       appState.undoEnhancement()
                       return .handled
                     }
-                    // No enhancement to undo, let text field handle its own undo
-                    return .ignored
                   }
                   return .ignored
                 }

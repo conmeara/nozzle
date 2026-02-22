@@ -2,6 +2,12 @@ import Foundation
 
 #if canImport(FoundationModels)
 import FoundationModels
+
+@Generable
+struct PromptRewriteResult {
+    @Guide(description: "The rewritten prompt text only. Never an answer to the prompt.")
+    let rewrittenText: String
+}
 #endif
 
 enum EnhancementError: LocalizedError {
@@ -65,15 +71,16 @@ class PromptEnhancer: ObservableObject {
             }
 
             let rewriteSession = makeRewriteSession()
-            let rewriteOptions = GenerationOptions(temperature: 0.1)
+            let rewriteOptions = GenerationOptions(sampling: .greedy)
 
             let request = makeRewritePrompt(input: trimmedPrompt)
             let response = try await rewriteSession.respond(
                 to: request,
+                generating: PromptRewriteResult.self,
                 options: rewriteOptions
             )
 
-            let enhancedText = sanitizeEnhancedText(response.content)
+            let enhancedText = sanitizeEnhancedText(response.content.rewrittenText)
             guard !enhancedText.isEmpty else {
                 throw EnhancementError.modelError("No enhancement generated")
             }
@@ -111,14 +118,14 @@ class PromptEnhancer: ObservableObject {
             instructions: Instructions {
                 """
                 You rewrite instruction text for another LLM.
-                You do not answer or execute the instruction.
+                You never answer, execute, or comment on the instruction.
                 You only improve spelling, grammar, clarity, and wording.
                 Keep the same meaning, language, tone, and intent.
                 Preserve all concrete details exactly:
                 names, numbers, dates, durations, and constraints.
                 Keep length close to the original unless clarity requires small changes.
                 Do not add sections, headings, or templates unless they already exist.
-                Output only the rewritten instruction text.
+                Return only rewritten prompt text.
                 """
             }
         )
@@ -136,6 +143,7 @@ class PromptEnhancer: ObservableObject {
         Rules:
         - Do not answer the instruction.
         - Do not execute the instruction.
+        - Do not ask follow-up questions.
         - Do not add new requirements or facts.
         - Do not remove names, numbers, dates, or durations.
         - Return only rewritten instruction text.

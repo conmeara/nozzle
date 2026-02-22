@@ -35,13 +35,31 @@ struct KeyHandlingView<Content: View>: View {
           let modifierFlags = event.modifierFlags
             .intersection(.deviceIndependentFlagsMask)
             .subtracting([.capsLock, .numericPad, .function])
-          let isZ = event.keyCode == UInt16(Sauce.shared.keyCode(for: .z))
+          let isZCharacter = event.charactersIgnoringModifiers?.lowercased() == "z"
+          let isZKeycode = event.keyCode == UInt16(Sauce.shared.keyCode(for: .z))
+          let isZ = isZCharacter || isZKeycode
 
           if modifierFlags == .command && isZ {
+            if searchFocused {
+              if appState.canUndoInputEnhancement {
+                appState.undoEnhancement()
+                return .handled
+              }
+              return .ignored
+            }
+            if contentManager.isPromptEditorEditing {
+              if appState.canUndoEditorEnhancement {
+                appState.undoEnhancement()
+                return .handled
+              }
+              return .ignored
+            }
             if appState.canUndoEnhancement {
               appState.undoEnhancement()
               return .handled
             }
+            // Let focused text inputs keep native undo/redo behavior when there is
+            // no pending enhancement-specific undo state.
             // Check if we have a text field focused first - let text fields handle their own undo
             if !searchFocused && appState.undoManager.canUndo {
               appState.undoManager.undo()

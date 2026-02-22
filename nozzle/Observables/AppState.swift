@@ -47,6 +47,40 @@ class AppState {
   private var enhancementUndoState: PromptEnhancementUndoState?
   private var isApplyingEnhancementUndo = false
   
+  private func normalizedEnhancementText(_ text: String) -> String {
+    text
+      .replacingOccurrences(of: "\r\n", with: "\n")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  private func clearFocusedTextUndoStack() {
+    clearTextUndoStack(in: NSApp.keyWindow)
+    if NSApp.mainWindow !== NSApp.keyWindow {
+      clearTextUndoStack(in: NSApp.mainWindow)
+    }
+  }
+
+  private func clearTextUndoStack(in window: NSWindow?) {
+    guard let window else { return }
+    if let textView = window.firstResponder as? NSTextView {
+      textView.undoManager?.removeAllActions()
+      textView.breakUndoCoalescing()
+    }
+    if let contentView = window.contentView {
+      clearTextUndoStack(in: contentView)
+    }
+  }
+
+  private func clearTextUndoStack(in view: NSView) {
+    if let textView = view as? NSTextView {
+      textView.undoManager?.removeAllActions()
+      textView.breakUndoCoalescing()
+    }
+    for subview in view.subviews {
+      clearTextUndoStack(in: subview)
+    }
+  }
+  
   // Undo the last prompt enhancement
   func undoEnhancement() {
     guard let state = enhancementUndoState else { return }
@@ -64,6 +98,7 @@ class AppState {
       ContentManager.shared.updatePromptEditorText(state.originalText)
       NotificationCenter.default.post(name: .promptEditorTextUpdated, object: state.originalText)
     }
+    clearFocusedTextUndoStack()
   }
   
   // Check if undo is available
@@ -71,11 +106,19 @@ class AppState {
     return enhancementUndoState != nil
   }
 
+  var canUndoInputEnhancement: Bool {
+    enhancementUndoState?.target == .input
+  }
+
+  var canUndoEditorEnhancement: Bool {
+    enhancementUndoState?.target == .editor
+  }
+
   func handlePromptInputTextChanged(_ text: String) {
     guard let state = enhancementUndoState else { return }
     guard state.target == .input else { return }
     guard !isEnhancingPrompt && !isApplyingEnhancementUndo else { return }
-    if text != state.enhancedText {
+    if normalizedEnhancementText(text) != normalizedEnhancementText(state.enhancedText) {
       enhancementUndoState = nil
     }
   }
@@ -84,7 +127,7 @@ class AppState {
     guard let state = enhancementUndoState else { return }
     guard state.target == .editor else { return }
     guard !isEnhancingPrompt && !isApplyingEnhancementUndo else { return }
-    if text != state.enhancedText {
+    if normalizedEnhancementText(text) != normalizedEnhancementText(state.enhancedText) {
       enhancementUndoState = nil
     }
   }
@@ -862,13 +905,15 @@ class AppState {
           ContentManager.shared.updatePromptEditorText(enhanced)
           // Also trigger a refresh in the editor by posting a notification
           NotificationCenter.default.post(name: .promptEditorTextUpdated, object: enhanced)
+          clearFocusedTextUndoStack()
         } else {
           setEnhancementUndoState(
             target: .input,
-            originalText: promptText,
+            originalText: textToEnhance,
             enhancedText: enhanced
           )
           promptText = enhanced
+          clearFocusedTextUndoStack()
         }
       } catch {
         // Show alert for enhancement errors
