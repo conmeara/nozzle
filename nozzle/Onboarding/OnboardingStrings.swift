@@ -16,6 +16,7 @@ enum OnboardingStrings {
         "onboarding_shortcuts_subtitle",
         defaultValue: "Customize your keyboard shortcuts"
     )
+    static let demoTitle = localized("onboarding_demo_title", defaultValue: "Quick Demo")
     static let resourcesTitle = localized("onboarding_resources_title", defaultValue: "Resources")
     static let resourcesSubtitle = localized(
         "onboarding_resources_subtitle",

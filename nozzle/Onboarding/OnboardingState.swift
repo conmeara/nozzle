@@ -14,7 +14,8 @@ final class OnboardingState {
     enum Screen: Int, CaseIterable {
         case welcomeSetup = 0
         case shortcuts = 1
-        case getStarted = 2
+        case demo = 2
+        case getStarted = 3
 
         var title: String {
             switch self {
@@ -22,6 +23,8 @@ final class OnboardingState {
                 return OnboardingStrings.welcomeTitle
             case .shortcuts:
                 return OnboardingStrings.shortcutsTitle
+            case .demo:
+                return OnboardingStrings.demoTitle
             case .getStarted:
                 return OnboardingStrings.finishTitle
             }
@@ -32,6 +35,8 @@ final class OnboardingState {
             case .welcomeSetup:
                 return ""
             case .shortcuts:
+                return ""
+            case .demo:
                 return ""
             case .getStarted:
                 return ""
@@ -56,6 +61,8 @@ final class OnboardingState {
             // due to code signature differences from App Store version
             return true
         case .shortcuts:
+            return true
+        case .demo:
             return true
         case .getStarted:
             return false // No continue from finish

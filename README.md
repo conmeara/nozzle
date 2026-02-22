@@ -14,6 +14,10 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/conmeara/nozzle" alt="License"></a>
 </p>
 
+<p align="center">
+  <video src="nozzle/Onboarding/NozzleDemo.mp4" controls width="900"></video>
+</p>
+
 ---
 
 nozzle is a lightweight, keyboard-driven content manager for macOS that combines clipboard history with file system monitoring in a unified interface. Select, search, and combine content from multiple sources with ease.

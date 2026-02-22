@@ -60,6 +60,7 @@
 "onboarding_permissions_subtitle" = "Grant permissions for the best experience";
 "onboarding_shortcuts_title" = "Keyboard Shortcuts";
 "onboarding_shortcuts_subtitle" = "Customize your keyboard shortcuts";
+"onboarding_demo_title" = "Quick Demo";
 "onboarding_resources_title" = "Resources";
 "onboarding_resources_subtitle" = "Learn prompt engineering and get help";
 "onboarding_finish_title" = "Ready to go!";

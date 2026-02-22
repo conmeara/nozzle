@@ -148,6 +148,8 @@
 		F5E7A1B62F0D1A3C0033AA11 /* OnboardingStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E7A1B72F0D1A3C0033AA11 /* OnboardingStrings.swift */; };
 		F569FB302E6FBCE50076D784 /* OnboardingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB282E6FBCE50076D784 /* OnboardingWindow.swift */; };
 		F569FB312E6FBCE50076D784 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F569FB272E6FBCE50076D784 /* OnboardingView.swift */; };
+		F58A8B012F2F4A8B00A1D101 /* DemoVideoScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F58A8B022F2F4A8B00A1D101 /* DemoVideoScreen.swift */; };
+		F58A8B032F2F4A8B00A1D101 /* NozzleDemo.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = F58A8B042F2F4A8B00A1D101 /* NozzleDemo.mp4 */; };
 		F56CE2722E733999004E76C1 /* WelcomeSetupScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2712E733999004E76C1 /* WelcomeSetupScreen.swift */; };
 		F56CE2732E733999004E76C1 /* GetStartedScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2702E733999004E76C1 /* GetStartedScreen.swift */; };
 		F56CE2752E739C7D004E76C1 /* ShortcutsPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CE2742E739C7D004E76C1 /* ShortcutsPanelView.swift */; };
@@ -580,6 +582,8 @@
 		F5E7A1B72F0D1A3C0033AA11 /* OnboardingStrings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStrings.swift; sourceTree = "<group>"; };
 		F569FB272E6FBCE50076D784 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		F569FB282E6FBCE50076D784 /* OnboardingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindow.swift; sourceTree = "<group>"; };
+		F58A8B022F2F4A8B00A1D101 /* DemoVideoScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoVideoScreen.swift; sourceTree = "<group>"; };
+		F58A8B042F2F4A8B00A1D101 /* NozzleDemo.mp4 */ = {isa = PBXFileReference; lastKnownFileType = video.mp4; path = NozzleDemo.mp4; sourceTree = "<group>"; };
 		F56CE2702E733999004E76C1 /* GetStartedScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetStartedScreen.swift; sourceTree = "<group>"; };
 		F56CE2712E733999004E76C1 /* WelcomeSetupScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSetupScreen.swift; sourceTree = "<group>"; };
 		F56CE2742E739C7D004E76C1 /* ShortcutsPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsPanelView.swift; sourceTree = "<group>"; };
@@ -958,6 +962,7 @@
 		F569FB252E6FBCE50076D784 /* Screens */ = {
 			isa = PBXGroup;
 			children = (
+				F58A8B022F2F4A8B00A1D101 /* DemoVideoScreen.swift */,
 				F56CE2702E733999004E76C1 /* GetStartedScreen.swift */,
 				F56CE2712E733999004E76C1 /* WelcomeSetupScreen.swift */,
 				F569FB232E6FBCE50076D784 /* ShortcutsScreen.swift */,
@@ -974,6 +979,7 @@
 				F5E7A1B72F0D1A3C0033AA11 /* OnboardingStrings.swift */,
 				F569FB272E6FBCE50076D784 /* OnboardingView.swift */,
 				F569FB282E6FBCE50076D784 /* OnboardingWindow.swift */,
+				F58A8B042F2F4A8B00A1D101 /* NozzleDemo.mp4 */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -1215,6 +1221,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F58A8B032F2F4A8B00A1D101 /* NozzleDemo.mp4 in Resources */,
 				DA20FA762B082E0800056DD5 /* Write.caf in Resources */,
 				DA6373981E4AB9BB00263391 /* Assets.xcassets in Resources */,
 				DAA365D12C4C147400A394F8 /* PinsSettings.strings in Resources */,
@@ -1317,6 +1324,7 @@
 				F57274662E56722D003A9299 /* UniversalItemView.swift in Sources */,
 				DA13D7DC2C1A223E00FA9E23 /* HistoryItemAppEntity.swift in Sources */,
 				F5C180392E622C8B007ED483 /* DictationManager.swift in Sources */,
+				F58A8B012F2F4A8B00A1D101 /* DemoVideoScreen.swift in Sources */,
 				F56E49222E70EB9A003D6538 /* ScreenshotSourceHeuristics.swift in Sources */,
 				DA555F122CF155A8009608BD /* WrappingTextView.swift in Sources */,
 				F5758AFF2E5D176C00FC0F19 /* QuickLookPreview.swift in Sources */,
