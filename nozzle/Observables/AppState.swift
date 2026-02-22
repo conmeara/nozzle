@@ -23,12 +23,7 @@ class AppState {
   var isPromptMode: Bool = true  // Default to prompt mode
   var promptText: String = "" {
     didSet {
-      // Clear undo buffer if user manually edits after enhancement
-      if originalPromptBeforeEnhancement != nil &&
-         promptText != originalPromptBeforeEnhancement &&
-         !isEnhancingPrompt {
-        originalPromptBeforeEnhancement = nil
-      }
+      handlePromptInputTextChanged(promptText)
     }
   }
   var isSearchMode: Bool = false  // Track search mode separately
@@ -40,19 +35,70 @@ class AppState {
 
   // Prompt enhancement state
   var isEnhancingPrompt: Bool = false
-  var originalPromptBeforeEnhancement: String?
+  private enum PromptEnhancementTarget {
+    case input
+    case editor
+  }
+  private struct PromptEnhancementUndoState {
+    let target: PromptEnhancementTarget
+    let originalText: String
+    let enhancedText: String
+  }
+  private var enhancementUndoState: PromptEnhancementUndoState?
+  private var isApplyingEnhancementUndo = false
   
   // Undo the last prompt enhancement
   func undoEnhancement() {
-    if let original = originalPromptBeforeEnhancement {
-      promptText = original
-      originalPromptBeforeEnhancement = nil
+    guard let state = enhancementUndoState else { return }
+
+    isApplyingEnhancementUndo = true
+    defer {
+      isApplyingEnhancementUndo = false
+      enhancementUndoState = nil
+    }
+
+    switch state.target {
+    case .input:
+      promptText = state.originalText
+    case .editor:
+      ContentManager.shared.updatePromptEditorText(state.originalText)
+      NotificationCenter.default.post(name: .promptEditorTextUpdated, object: state.originalText)
     }
   }
   
   // Check if undo is available
   var canUndoEnhancement: Bool {
-    return originalPromptBeforeEnhancement != nil
+    return enhancementUndoState != nil
+  }
+
+  func handlePromptInputTextChanged(_ text: String) {
+    guard let state = enhancementUndoState else { return }
+    guard state.target == .input else { return }
+    guard !isEnhancingPrompt && !isApplyingEnhancementUndo else { return }
+    if text != state.enhancedText {
+      enhancementUndoState = nil
+    }
+  }
+
+  func handlePromptEditorTextChanged(_ text: String) {
+    guard let state = enhancementUndoState else { return }
+    guard state.target == .editor else { return }
+    guard !isEnhancingPrompt && !isApplyingEnhancementUndo else { return }
+    if text != state.enhancedText {
+      enhancementUndoState = nil
+    }
+  }
+
+  private func setEnhancementUndoState(
+    target: PromptEnhancementTarget,
+    originalText: String,
+    enhancedText: String
+  ) {
+    enhancementUndoState = PromptEnhancementUndoState(
+      target: target,
+      originalText: originalText,
+      enhancedText: enhancedText
+    )
   }
   
   // Prompt chips state
@@ -807,13 +853,21 @@ class AppState {
       do {
         let enhanced = try await PromptEnhancer.shared.enhance(textToEnhance)
         if isEnhancingEditor {
+          setEnhancementUndoState(
+            target: .editor,
+            originalText: textToEnhance,
+            enhancedText: enhanced
+          )
           // Update prompt editor text
           ContentManager.shared.updatePromptEditorText(enhanced)
           // Also trigger a refresh in the editor by posting a notification
           NotificationCenter.default.post(name: .promptEditorTextUpdated, object: enhanced)
         } else {
-          // Save original for undo support
-          originalPromptBeforeEnhancement = promptText
+          setEnhancementUndoState(
+            target: .input,
+            originalText: promptText,
+            enhancedText: enhanced
+          )
           promptText = enhanced
         }
       } catch {

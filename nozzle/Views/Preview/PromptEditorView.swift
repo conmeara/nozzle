@@ -50,6 +50,7 @@ struct PromptEditorView: View {
     @State private var ignoreChangesUntil: Date? = nil
     
     @Environment(ContentManager.self) private var contentManager
+    @Environment(AppState.self) private var appState
     
     var body: some View {
         VStack(spacing: 0) {
@@ -112,6 +113,17 @@ struct PromptEditorView: View {
                     .onChange(of: text) { _, newText in
                         // Update ContentManager with current editing text
                         contentManager.updatePromptEditorText(newText)
+                        appState.handlePromptEditorTextChanged(newText)
+                    }
+                    .onKeyPress { keyPress in
+                        if keyPress.key == "z" &&
+                            keyPress.modifiers.contains(.command) &&
+                            !keyPress.modifiers.contains(.shift),
+                           appState.canUndoEnhancement {
+                            appState.undoEnhancement()
+                            return .handled
+                        }
+                        return .ignored
                     }
             } else {
                 // Read-only preview matching PlainTextPreview style

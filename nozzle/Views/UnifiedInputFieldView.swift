@@ -273,9 +273,8 @@ struct UnifiedInputFieldView: View {
   
   @MainActor
   private func handleQueryChange(oldValue: String, newValue: String) {
-    // Clear enhancement undo buffer when user manually edits the text
-    if appState.originalPromptBeforeEnhancement != nil && newValue != appState.originalPromptBeforeEnhancement {
-      appState.originalPromptBeforeEnhancement = nil
+    if !isSearchMode {
+      appState.handlePromptInputTextChanged(newValue)
     }
   }
   

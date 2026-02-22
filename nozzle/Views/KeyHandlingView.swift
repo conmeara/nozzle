@@ -38,6 +38,10 @@ struct KeyHandlingView<Content: View>: View {
           let isZ = event.keyCode == UInt16(Sauce.shared.keyCode(for: .z))
 
           if modifierFlags == .command && isZ {
+            if appState.canUndoEnhancement {
+              appState.undoEnhancement()
+              return .handled
+            }
             // Check if we have a text field focused first - let text fields handle their own undo
             if !searchFocused && appState.undoManager.canUndo {
               appState.undoManager.undo()
