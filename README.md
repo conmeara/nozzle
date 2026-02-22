@@ -15,7 +15,9 @@
 </p>
 
 <p align="center">
-  <video src="nozzle/Onboarding/NozzleDemo.mp4" controls width="900"></video>
+  <a href="./nozzle/Onboarding/NozzleDemo.mp4">
+    <img src="nozzle/Onboarding/NozzleDemo-preview.gif" alt="Nozzle demo (click to watch full video)" width="900" />
+  </a>
 </p>
 
 ---
