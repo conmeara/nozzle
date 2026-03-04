@@ -31,17 +31,9 @@ final class ContentManager {
         Set(selectionStore.selected.map(\.itemId))
     }
 
-    private func selectItemIfPresent(_ id: UUID, removeExample: Bool = true) {
+    private func selectItemIfPresent(_ id: UUID) {
         guard let content = item(for: id) else { return }
         selectionStore.insert(content.key)
-        if removeExample {
-            selectionStore.removeExample(content.key)
-        }
-    }
-
-    private func key(for id: UUID) -> ContentKey? {
-        guard let content = item(for: id) else { return nil }
-        return content.key
     }
     
     // Preview focus tracking
@@ -90,26 +82,14 @@ final class ContentManager {
         }
         return _selectedCache
     }
-    
-    // Convenience: selected items split into context vs examples
-    var selectedContextItems: [ContentItem] {
+
+    // Preserve user selection order for combined operations (paste/copy) regardless of list resorting.
+    var selectedItemsInSelectionOrder: [ContentItem] {
+        _ = selectionVersion  // Establish dependency for SwiftUI observation
         let orderedKeys = selectionStore.orderedSelection
         guard !orderedKeys.isEmpty else { return [] }
         let map = Dictionary(uniqueKeysWithValues: selectedItems.map { ($0.key, $0) })
-        return orderedKeys.compactMap { key in
-            guard let item = map[key], !selectionStore.isExample(key) else { return nil }
-            return item
-        }
-    }
-    
-    var selectedExampleItems: [ContentItem] {
-        let orderedKeys = selectionStore.orderedSelection
-        guard !orderedKeys.isEmpty else { return [] }
-        let map = Dictionary(uniqueKeysWithValues: selectedItems.map { ($0.key, $0) })
-        return orderedKeys.compactMap { key in
-            guard let item = map[key], selectionStore.isExample(key) else { return nil }
-            return item
-        }
+        return orderedKeys.compactMap { map[$0] }
     }
     
     // Count of selected files only (excludes folders for badge display)
@@ -262,7 +242,6 @@ final class ContentManager {
             // No children selected - select everything
             removeDeselectionOverrides(inSubtreeOf: folderItem)
             selectionStore.insert(folderItem.key)
-            selectionStore.removeExample(folderItem.key)
             updateFolderDeselectionOverride(for: folderItem, deselected: false)
             if children.isEmpty {
                 // Collapsed folder - enumerate and select all descendant files via source
@@ -295,7 +274,6 @@ final class ContentManager {
         let children = visibleChildItems(of: folderItem)
 
         selectionStore.insert(folderItem.key)
-        selectionStore.removeExample(folderItem.key)
         updateFolderDeselectionOverride(for: folderItem, deselected: false)
 
         if children.isEmpty {
@@ -309,7 +287,6 @@ final class ContentManager {
                 selectFolderChildren(item.id)
             } else {
                 selectionStore.insert(item.key)
-                selectionStore.removeExample(item.key)
                 updateFolderDeselectionOverride(for: item, deselected: false)
             }
         }
@@ -613,7 +590,7 @@ final class ContentManager {
             }
         }
 
-        return HierarchyDescendantSnapshot(items: descendants)
+        return HierarchyDescendantSnapshot(items: sortedDescendants(descendants))
     }
 
     @MainActor
@@ -651,12 +628,12 @@ final class ContentManager {
 
         let processed: [HierarchyDescendantItem]
         if selecting {
-            processed = snapshot.items.filter { item in
+            processed = Self.sortedDescendants(snapshot.items.filter { item in
                 let path = item.isFolder ? Self.normalizedFolderPath(item.path) : item.path
                 return !hasDeselectionOverride(forPath: path)
-            }
+            })
         } else {
-            processed = snapshot.items
+            processed = Self.sortedDescendants(snapshot.items)
         }
 
         if selecting {
@@ -669,7 +646,6 @@ final class ContentManager {
                 }
 
                 selectionStore.insert(key)
-                selectionStore.removeExample(key)
                 _folderSelectionExclusions.removeValue(forKey: item.id)
                 if let resolved = resolvedById[item.id] {
                     _hiddenSelectedItems[item.id] = resolved
@@ -1038,20 +1014,9 @@ final class ContentManager {
         decorator.updateBase(originalItem)
     }
     
-    // Get cached decorators for selected context items (Aggregated shows only pasteable files)
-    var selectedContextDecorators: [UniversalItemDecorator] {
-        let displayItems = filteredForAggregatedDisplay(selectedContextItems)
-        return displayItems.compactMap { item in
-            // Ensure the source decorators are loaded first
-            _ = getDecorators(for: item.sourceId)
-            // Prefer cached decorator; fall back to ad-hoc for ephemeral items
-            return _decoratorCache[item.sourceId]?[item.id] ?? UniversalItemDecorator(item)
-        }
-    }
-    
-    // Get cached decorators for selected example items (Aggregated shows only pasteable files)
-    var selectedExampleDecorators: [UniversalItemDecorator] {
-        let displayItems = filteredForAggregatedDisplay(selectedExampleItems)
+    // Get cached decorators for selected items (Aggregated shows only pasteable files)
+    var selectedDecorators: [UniversalItemDecorator] {
+        let displayItems = filteredForAggregatedDisplay(selectedItems)
         return displayItems.compactMap { item in
             // Ensure the source decorators are loaded first
             _ = getDecorators(for: item.sourceId)
@@ -1069,64 +1034,6 @@ final class ContentManager {
     // Search
     func searchAcrossAllSources(query: String) -> [ContentItem] {
         sources.values.flatMap { $0.search(query: query) }
-    }
-    
-    // MARK: - Example state
-    func isExample(_ id: UUID) -> Bool {
-        _ = selectionVersion  // Establish dependency for SwiftUI observation
-        guard let key = key(for: id) else { return false }
-        return selectionStore.isExample(key)
-    }
-
-    func toggleExample(_ id: UUID) {
-        // Allow toggling example state for any textual items (no need to be selected as context)
-        guard isTextualItem(id) else { return }
-        guard let item = item(for: id) else { return }
-        let key = item.key
-
-        if selectionStore.isExample(key) {
-            // Turning OFF example: clear on folder and its descendants
-            selectionStore.removeExample(key)
-            if item.isFolder {
-                let childIDs = descendantTextItemIDs(for: item)
-                for cid in childIDs {
-                    let childKey = ContentKey(sourceId: item.sourceId, itemId: cid)
-                    selectionStore.removeExample(childKey)
-                    _hiddenSelectedItems.removeValue(forKey: cid)
-                    _pendingHiddenFetch.remove(cid)
-                }
-            }
-        } else {
-            // Turning ON example
-            // Ensure examples always participate in the centralized selection model
-            // so they appear in Aggregated and combined operations.
-            let wasSelected = selectionStore.contains(key)
-            if !wasSelected {
-                selectionStore.insert(key)
-                syncClipboardSelection(id)
-            }
-            selectionStore.addExample(key)
-            if item.isFolder {
-                // Select and mark all textual descendants as examples (even if collapsed)
-                let childIDs = descendantTextItemIDs(for: item)
-                if !childIDs.isEmpty {
-                    let keys = childIDs.map { ContentKey(sourceId: item.sourceId, itemId: $0) }
-                    selectionStore.insertManyPreservingOrder(keys)
-                    for childKey in keys {
-                        selectionStore.addExample(childKey)
-                    }
-                    scheduleHiddenSelectionPrefetch(for: Set(childIDs))
-                }
-            }
-        }
-        markSelectedDirty()
-    }
-    
-    // Collect all textual descendant file UUIDs for a folder item by scanning the filesystem
-    private func descendantTextItemIDs(for folder: ContentItem) -> [UUID] {
-        guard folder.isFolder,
-              let source = sources[folder.sourceId] as? HierarchicalContentSource else { return [] }
-        return source.descendantSnapshot(for: folder.id).textItemIds
     }
 
     private func visibleChildItems(of folder: ContentItem) -> [ContentItem] {
@@ -1150,36 +1057,6 @@ final class ContentManager {
             index += 1
         }
         return results
-    }
-    func canToggleExample(_ id: UUID) -> Bool {
-        guard let item = item(for: id), selectionStore.contains(item.key) else { return false }
-        return isTextualItem(id)
-    }
-    
-    func isTextualItem(_ id: UUID) -> Bool {
-        guard let item = item(for: id) else { return false }
-        
-        if item.isFolder {
-            // Allow folder examples only if all descendant files are textual and there is at least one file
-            guard let source = sources[item.sourceId] as? HierarchicalContentSource else { return false }
-            let snapshot = source.descendantSnapshot(for: item.id)
-            guard !snapshot.isEmpty else { return false }
-            return snapshot.items.allSatisfy { $0.isText }
-        }
-        
-        // Disallow media or non-text files as examples
-        if item.imageData != nil { return false }
-        if let _ = item.fileURL, !item.isText { return false }
-        
-        // Text files are allowed; general files only if UTType is text
-        if let _ = item.fileURL {
-            return item.isText
-        }
-        // Clipboard/memory items: require textual content
-        if item.plainText != nil { return true }
-        if item.rtfData != nil { return true }
-        if item.htmlData != nil { return true }
-        return false
     }
     
     // MARK: - Prompt Editor State Management
@@ -1218,77 +1095,65 @@ extension ContentManager {
     private func makeSelectedItems() -> [ContentItem] {
         let items = allItems
         guard !selectionStore.isEmpty else { return [] }
+        let orderedKeys = selectionStore.orderedSelection
+        guard !orderedKeys.isEmpty else { return [] }
 
-        // For folder sources, we need to handle collapsed folders with selected children
-        var hiddenSelectedItems: [ContentItem] = []
+        // Build a fast lookup keyed by source+id so cross-source UUID collisions remain stable.
+        var itemByKey = Dictionary(uniqueKeysWithValues: items.map { ($0.key, $0) })
 
-        let visibleIds = Set(items.map { $0.id })
-        let hiddenSelectedIds = selectedItemIds.subtracting(visibleIds)
+        // Pull selected hidden descendants from cache when folders are collapsed.
+        let missingSelectedIDs = Set(orderedKeys.compactMap { key in
+            itemByKey[key] == nil ? key.itemId : nil
+        })
 
-        if !hiddenSelectedIds.isEmpty {
-            let cachedHidden = hiddenSelectedIds.compactMap { _hiddenSelectedItems[$0] }
-            if !cachedHidden.isEmpty {
-                hiddenSelectedItems.append(contentsOf: cachedHidden.filter { !$0.isFolder })
+        if !missingSelectedIDs.isEmpty {
+            var cachedHiddenIDs: Set<UUID> = []
+            for id in missingSelectedIDs {
+                guard let hidden = _hiddenSelectedItems[id] else { continue }
+                if orderedKeys.contains(hidden.key) {
+                    itemByKey[hidden.key] = hidden
+                    cachedHiddenIDs.insert(id)
+                }
             }
 
-            let cachedIds = Set(cachedHidden.map { $0.id })
-            let missingHidden = hiddenSelectedIds.subtracting(cachedIds)
-            if !missingHidden.isEmpty {
-                scheduleHiddenSelectionPrefetch(for: missingHidden)
+            let unresolved = missingSelectedIDs.subtracting(cachedHiddenIDs)
+            if !unresolved.isEmpty {
+                scheduleHiddenSelectionPrefetch(for: unresolved)
             }
         }
 
-        // Combine visible and hidden selected items
-        let allItemsIncludingHidden = items + hiddenSelectedItems
-
-        // Index folders and children once to avoid repeated scans when building the result
+        // Keep parent context for selected descendants, without disturbing selection insertion order.
         var folderByPath: [String: ContentItem] = [:]
-        var childrenByParent: [String: [ContentItem]] = [:]
-        folderByPath.reserveCapacity(allItemsIncludingHidden.count)
-
-        for item in allItemsIncludingHidden {
-            if item.isFolder, let path = item.fileURL?.path {
+        folderByPath.reserveCapacity(items.count + _hiddenSelectedItems.count)
+        for item in items where item.isFolder {
+            if let path = item.fileURL?.path {
                 folderByPath[path] = item
             }
-            if let parentPath = item.parentPath {
-                childrenByParent[parentPath, default: []].append(item)
+        }
+        for item in _hiddenSelectedItems.values where item.isFolder {
+            if let path = item.fileURL?.path {
+                folderByPath[path] = item
             }
         }
 
-        // Determine which parent folders need to be included for display due to selected children
-        var neededParentIds: Set<UUID> = []
-        for item in allItemsIncludingHidden where selectionStore.contains(item.key) {
-            if let parentPath = item.parentPath,
-               let parent = folderByPath[parentPath] {
-                neededParentIds.insert(parent.id)
-            }
-        }
-
-        // Build result with hierarchical grouping: parent folders followed by their selected children
         var result: [ContentItem] = []
-        result.reserveCapacity(selectionStore.selected.count + neededParentIds.count)
-        var seen: Set<UUID> = []
+        result.reserveCapacity(orderedKeys.count)
+        var seen: Set<ContentKey> = []
 
-        for item in allItemsIncludingHidden {
-            if item.isFolder,
-               neededParentIds.contains(item.id),
-               !seen.contains(item.id) {
-                result.append(item)
-                seen.insert(item.id)
+        for key in orderedKeys {
+            guard let item = itemByKey[key] else { continue }
 
-                if let folderPath = item.fileURL?.path,
-                   let children = childrenByParent[folderPath] {
-                    for child in children where selectionStore.contains(child.key) && !seen.contains(child.id) {
-                        result.append(child)
-                        seen.insert(child.id)
-                    }
-                }
-                continue
+            if let parentPath = item.parentPath,
+               let parent = folderByPath[parentPath],
+               !selectionStore.contains(parent.key),
+               !seen.contains(parent.key) {
+                result.append(parent)
+                seen.insert(parent.key)
             }
 
-            if selectionStore.contains(item.key) && !seen.contains(item.id) {
+            if !seen.contains(key) {
                 result.append(item)
-                seen.insert(item.id)
+                seen.insert(key)
             }
         }
 
@@ -1356,6 +1221,18 @@ private extension ContentManager {
             return true
         }
         return false
+    }
+
+    nonisolated static func sortedDescendants(_ items: [HierarchyDescendantItem]) -> [HierarchyDescendantItem] {
+        items.sorted { lhs, rhs in
+            let lhsPath = lhs.isFolder ? normalizedFolderPath(lhs.path) : lhs.path
+            let rhsPath = rhs.isFolder ? normalizedFolderPath(rhs.path) : rhs.path
+            let cmp = lhsPath.localizedStandardCompare(rhsPath)
+            if cmp != .orderedSame {
+                return cmp == .orderedAscending
+            }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
     }
 }
 

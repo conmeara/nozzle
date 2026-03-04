@@ -25,10 +25,6 @@ struct FolderTreeItemView: View {
     }
     
     private var selectionState: (isSelected: Bool, symbol: String) {
-        // If marked as example, override UI to reflect example state
-        if contentManager.isExample(item.id) {
-            return (true, "pencil.circle.fill")
-        }
         let folderSelectionState = contentManager.getFolderSelectionState(item.id)
         switch folderSelectionState {
         case .none:
@@ -69,8 +65,8 @@ struct FolderTreeItemView: View {
                 shortcuts: [],
                 isSelected: selectionState.isSelected,
                 selectionSymbol: selectionState.symbol,
-                selectionSymbolColor: (contentManager.isExample(item.id) ? .yellow : .white),
-                selectionBackgroundColor: (contentManager.isExample(item.id) ? .yellow : nil)
+                selectionSymbolColor: .white,
+                selectionBackgroundColor: nil
             ) {
                 Text(verbatim: item.title)
                     .lineLimit(1)
@@ -93,27 +89,6 @@ struct FolderTreeItemView: View {
                     return
                 }
 
-                // Handle modifier keys before checking click location
-                if NSEvent.modifierFlags.contains(.option) {
-                    // Option-click: toggle between unselected and example (skip context state)
-                    let state = contentManager.getFolderSelectionState(item.id)
-                    if contentManager.isExample(item.id) {
-                        // Currently example → deselect completely
-                        contentManager.toggleExample(item.id)
-                        contentManager.deselectFolderChildren(item.id)
-                    } else if state != .none {
-                        // Currently context (has selections) → switch to example
-                        contentManager.toggleExample(item.id)
-                    } else {
-                        // Currently unselected → select children and mark as example
-                        contentManager.selectFolderChildren(item.id)
-                        contentManager.toggleExample(item.id)
-                    }
-                    appState.updateFooterItemVisibility()
-                    contentManager.focus(item.id)
-                    return
-                }
-
                 // Check if click is in the selection area (right 42 pixels)
                 let selectionAreaThreshold: CGFloat = 42
                 let frameWidth = itemFrameWidth > 0 ? itemFrameWidth : 300
@@ -126,10 +101,6 @@ struct FolderTreeItemView: View {
                     if state == .none {
                         contentManager.selectFolderChildren(item.id)
                     } else {
-                        // If folder has selections or examples, clear them
-                        if contentManager.isExample(item.id) {
-                            contentManager.toggleExample(item.id)
-                        }
                         contentManager.deselectFolderChildren(item.id)
                     }
                     appState.updateFooterItemVisibility()

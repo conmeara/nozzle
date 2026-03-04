@@ -431,7 +431,7 @@ class History { // swiftlint:disable:this type_body_length
       "Hello 👋",
       "Welcome to Nozzle.",
       "Items you copy will appear here.",
-      "Tab or click to set one as context.",
+      "Tab or click to select one.",
       "Type your instructions above.",
       "Add a saved prompt with ⌘P or ⊕.",
       "Press Enter to paste it all."

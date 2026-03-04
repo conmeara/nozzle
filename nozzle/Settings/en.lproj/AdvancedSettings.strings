@@ -10,4 +10,4 @@
 "ClearSystemClipboardTooltip" = "When enabled, clearing the history would also clear the current system clipboard.";
 "PasteTemplate" = "Paste Template";
 "PasteTemplateDescription" = "Template for combining multiple selected items and optional prompt text.";
-"PasteTemplateHelp" = "Use {prompt} for the prompt text and {items} for the selected items.\nExample: {prompt}\\nContext:\\n{items}";
+"PasteTemplateHelp" = "Use {prompt} for the prompt text and {items} for the selected items.\nExample: {prompt}\\n{items}";

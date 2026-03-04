@@ -168,7 +168,7 @@ struct KeyHandlingView<Content: View>: View {
             appState.isKeyboardNavigating = true
             let items: [ContentItem]
             if contentManager.activeSourceId == "aggregated" {
-              items = contentManager.selectedContextItems + contentManager.selectedExampleItems
+              items = contentManager.selectedItems
             } else {
               items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
             }
@@ -199,7 +199,7 @@ struct KeyHandlingView<Content: View>: View {
             appState.isKeyboardNavigating = true
             let items: [ContentItem]
             if contentManager.activeSourceId == "aggregated" {
-              items = contentManager.selectedContextItems + contentManager.selectedExampleItems
+              items = contentManager.selectedItems
             } else {
               items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
             }
@@ -223,7 +223,7 @@ struct KeyHandlingView<Content: View>: View {
             appState.isKeyboardNavigating = true
             let items: [ContentItem]
             if contentManager.activeSourceId == "aggregated" {
-              items = contentManager.selectedContextItems + contentManager.selectedExampleItems
+              items = contentManager.selectedItems
             } else {
               items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
             }
@@ -254,7 +254,7 @@ struct KeyHandlingView<Content: View>: View {
             appState.isKeyboardNavigating = true
             let items: [ContentItem]
             if contentManager.activeSourceId == "aggregated" {
-              items = contentManager.selectedContextItems + contentManager.selectedExampleItems
+              items = contentManager.selectedItems
             } else {
               items = contentManager.getItems(for: contentManager.activeSourceId).filter(\.isVisible)
             }

@@ -104,9 +104,9 @@ struct UniversalItemView: View {
                         attributedTitle: nil,
                         shortcuts: [],
                         isSelected: item.isSelected,
-                        selectionSymbol: (item.isExample ? "pencil.circle.fill" : "checkmark.circle.fill"),
+                        selectionSymbol: "checkmark.circle.fill",
                         selectionSymbolColor: .white,
-                        selectionBackgroundColor: (item.isExample ? .yellow : nil),
+                        selectionBackgroundColor: nil,
                         isPromptItem: item.base.sourceId == "prompts",
                         showTitleWithImage: item.base.sourceType == .screenshot,
                         onPlusButtonClick: { addPromptToInput() }
@@ -150,26 +150,6 @@ struct UniversalItemView: View {
                             return
                         }
 
-                        // Handle modifier keys before checking click location
-                        if NSEvent.modifierFlags.contains(.option) {
-                            // Option-click: toggle between unselected and example (skip context state)
-                            if contentManager.isExample(item.id) {
-                                // Currently example → deselect completely
-                                contentManager.toggleExample(item.id)
-                                contentManager.toggleSelection(item.id)
-                            } else if item.isSelected {
-                                // Currently context → switch to example
-                                contentManager.toggleExample(item.id)
-                            } else {
-                                // Currently unselected → select and mark as example
-                                contentManager.toggleSelection(item.id)
-                                contentManager.toggleExample(item.id)
-                            }
-                            appState.updateFooterItemVisibility()
-                            contentManager.focus(item.id)
-                            return
-                        }
-
                         if item.base.sourceId == "prompts", NSEvent.modifierFlags.contains(.command) {
                             // Command-click (Prompts only): rename
                             beginRename()
@@ -183,10 +163,7 @@ struct UniversalItemView: View {
                         let isSelectionAreaClick = location.x > (frameWidth - selectionAreaThreshold)
 
                         if isSelectionAreaClick {
-                            // Toggle selection on/off (also clears example state if deselecting)
-                            if item.isSelected && contentManager.isExample(item.id) {
-                                contentManager.toggleExample(item.id)
-                            }
+                            // Toggle selection on/off
                             contentManager.toggleSelection(item.id)
                             appState.updateFooterItemVisibility()
                             contentManager.focus(item.id)
@@ -278,20 +255,13 @@ struct UniversalItemView: View {
 
                 Divider()
 
-                // Put Context above Example
                 Button(contentManager.isSelected(item.id)
-                       ? NSLocalizedString("context_menu_remove_context", tableName: nil, value: "Remove as Context", comment: "")
-                       : NSLocalizedString("context_menu_mark_context", tableName: nil, value: "Mark as Context", comment: "")) {
+                       ? NSLocalizedString("context_menu_deselect", tableName: nil, value: "Deselect", comment: "")
+                       : NSLocalizedString("context_menu_select", tableName: nil, value: "Select", comment: "")) {
                     contentManager.toggleSelection(item.id)
                     appState.updateFooterItemVisibility()
                 }
                 .keyboardShortcut(.tab)
-
-                Button(contentManager.isExample(item.id)
-                       ? NSLocalizedString("context_menu_remove_example", tableName: nil, value: "Remove as Example", comment: "")
-                       : NSLocalizedString("context_menu_mark_example", tableName: nil, value: "Mark as Example", comment: "")) {
-                    contentManager.toggleExample(item.id)
-                }
 
                 Divider()
 

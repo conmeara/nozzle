@@ -4,17 +4,15 @@ import UniformTypeIdentifiers
 
 // New, non-actor utility responsible for building combined paste content off the main thread.
 enum CombinedContentBuilder {
-    /// Build combined plain-text content from context, examples, prompt, and chips.
+    /// Build combined plain-text content from selected items, prompt, and chips.
     /// Heavy disk I/O is performed off the main thread.
     static func build(
-        context: [ContentItem],
-        examples: [ContentItem],
+        items: [ContentItem],
         prompt: String,
         chips: [PromptChip]
     ) async -> String {
-        // Flatten items by expanding folders into textual file descendants
-        let flatContext = flattenToText(context)
-        let flatExamples = flattenToText(examples)
+        // Flatten selected items by expanding folders into textual file descendants
+        let flatItems = flattenToText(items)
 
         // Ordered pieces to assemble
         enum Piece {
@@ -26,27 +24,21 @@ enum CombinedContentBuilder {
         var pieces: [Piece] = []
 
         if !prompt.isEmpty {
-            pieces.append(.string(prompt + "\n"))
+            pieces.append(.string(prompt))
         }
 
-        if !chips.isEmpty {
-            for chip in chips {
-                pieces.append(.string("<prompt>\n"))
-                pieces.append(.chip(chip.url))
-                pieces.append(.string("\n</prompt>\n"))
+        for chip in chips {
+            if !pieces.isEmpty {
+                pieces.append(.string("\n\n"))
             }
+            pieces.append(.chip(chip.url))
         }
 
-        for item in flatContext {
-            pieces.append(.string("<context>\n"))
+        for item in flatItems {
+            if !pieces.isEmpty {
+                pieces.append(.string("\n\n"))
+            }
             pieces.append(.item(item))
-            pieces.append(.string("\n</context>\n"))
-        }
-
-        for item in flatExamples {
-            pieces.append(.string("<example>\n"))
-            pieces.append(.item(item))
-            pieces.append(.string("\n</example>\n"))
         }
 
         // Resolve plain text for .item and .chip pieces in parallel
@@ -167,7 +159,15 @@ enum CombinedContentBuilder {
                 }
             }
         }
-        return results
+        return results.sorted { lhs, rhs in
+            let lhsPath = lhs.fileURL?.path ?? lhs.title
+            let rhsPath = rhs.fileURL?.path ?? rhs.title
+            let cmp = lhsPath.localizedStandardCompare(rhsPath)
+            if cmp != .orderedSame {
+                return cmp == .orderedAscending
+            }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
     }
 
     /// Extract plain text from a chip file URL.

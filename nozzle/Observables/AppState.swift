@@ -628,11 +628,10 @@ class AppState {
   
   @MainActor
   func performCombinedPaste() {
-    // Use centralized selection from ContentManager, split into context and examples
-    let contextSelectedItems = contentManager.selectedContextItems
-    let exampleSelectedItems = contentManager.selectedExampleItems
+    // Preserve insertion order so combined output stays deterministic after list resorting.
+    let selectedItems = contentManager.selectedItemsInSelectionOrder
     let hasPrompt = !promptText.isEmpty
-    let hasSelectedItems = !(contextSelectedItems.isEmpty && exampleSelectedItems.isEmpty)
+    let hasSelectedItems = !selectedItems.isEmpty
     
     guard hasPrompt || hasSelectedItems else { return }
     
@@ -644,7 +643,7 @@ class AppState {
     
     // Capture clipboard content data early to avoid SwiftData context issues
     var clipboardContentCache: [UUID: [Clipboard.ClipboardContentData]] = [:]
-    for item in (contextSelectedItems + exampleSelectedItems) where item.sourceType == .clipboard {
+    for item in selectedItems where item.sourceType == .clipboard {
       if let historyDecorator = history.items.first(where: { $0.id == item.id }) {
         let contentData = historyDecorator.item.contents.map { content in
           Clipboard.ClipboardContentData(type: content.type, value: content.value)
@@ -654,7 +653,7 @@ class AppState {
     }
     
     // Enable multi-paste mode to prevent clipboard monitoring (only for clipboard items)
-    let hasClipboardItems = (contextSelectedItems + exampleSelectedItems).contains { $0.sourceType == .clipboard }
+    let hasClipboardItems = selectedItems.contains { $0.sourceType == .clipboard }
     if hasClipboardItems {
       Clipboard.shared.setMultiPasteMode(true)
     }
@@ -662,18 +661,14 @@ class AppState {
     // Close the popup immediately for better UX
     popup.close()
     
-    // Separate text items from media items, preserving context vs examples
-    let contextTextItems = contextSelectedItems.filter { !($0.imageData != nil || ($0.fileURL != nil && !$0.isText)) }
-    let exampleTextItems = exampleSelectedItems.filter { !($0.imageData != nil || ($0.fileURL != nil && !$0.isText)) }
-    let contextMediaItems = contextSelectedItems.filter { $0.imageData != nil || ($0.fileURL != nil && !$0.isText) }
-    let exampleMediaItems = exampleSelectedItems.filter { $0.imageData != nil || ($0.fileURL != nil && !$0.isText) }
+    // Separate text items from media items
+    let textItems = selectedItems.filter { !($0.imageData != nil || ($0.fileURL != nil && !$0.isText)) }
+    let mediaItems = selectedItems.filter { $0.imageData != nil || ($0.fileURL != nil && !$0.isText) }
     
     // Execute the paste operations
     executeCombinedPaste(
-      contextTextItems: contextTextItems,
-      exampleTextItems: exampleTextItems,
-      contextMediaItems: contextMediaItems,
-      exampleMediaItems: exampleMediaItems,
+      textItems: textItems,
+      mediaItems: mediaItems,
       promptText: currentPromptText,
       hasClipboardItems: hasClipboardItems,
       originalClipboardState: originalClipboardState,
@@ -683,24 +678,19 @@ class AppState {
   
   @MainActor
   private func executeCombinedPaste(
-    contextTextItems: [ContentItem],
-    exampleTextItems: [ContentItem],
-    contextMediaItems: [ContentItem],
-    exampleMediaItems: [ContentItem],
+    textItems: [ContentItem],
+    mediaItems: [ContentItem],
     promptText: String,
     hasClipboardItems: Bool,
     originalClipboardState: Clipboard.ClipboardSnapshot,
     clipboardContentCache: [UUID: [Clipboard.ClipboardContentData]]
   ) {
-    let allMedia = contextMediaItems + exampleMediaItems
-
     Task { @MainActor in
-      if !contextTextItems.isEmpty || !exampleTextItems.isEmpty || !promptText.isEmpty || !promptChips.isEmpty {
+      if !textItems.isEmpty || !promptText.isEmpty || !promptChips.isEmpty {
         let chips = self.promptChips
         let plain = await Task.detached(priority: nil) { () -> String in
           await CombinedContentBuilder.build(
-            context: contextTextItems,
-            examples: exampleTextItems,
+            items: textItems,
             prompt: promptText,
             chips: chips
           )
@@ -713,7 +703,7 @@ class AppState {
       }
 
       await self.pasteMediaItems(
-        allMedia,
+        mediaItems,
         index: 0,
         promptText: promptText,
         hasClipboardItems: hasClipboardItems,

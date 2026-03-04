@@ -201,10 +201,8 @@ final class OnboardingState {
         // Save automatic updates preference
         SoftwareUpdater.shared.automaticallyChecksForUpdates = automaticUpdatesEnabled
 
-        // Mark onboarding as completed
-        // Version 2 = nozzle v3.x onboarding with multi-source architecture
-        Defaults[.hasCompletedOnboarding] = true
-        Defaults[.onboardingVersion] = 2
+        // Mark onboarding as completed for the current onboarding version.
+        OnboardingWindow.markCompleted()
         
         // Close onboarding window
         OnboardingWindow.shared?.close()

@@ -45,10 +45,8 @@
 "context_menu_expand" = "Expand";
 "context_menu_select_all" = "Select All Contents";
 "context_menu_deselect_all" = "Deselect All Contents";
-"context_menu_mark_context" = "Mark as Context";
-"context_menu_remove_context" = "Remove as Context";
-"context_menu_mark_example" = "Mark as Example";
-"context_menu_remove_example" = "Remove as Example";
+"context_menu_select" = "Select";
+"context_menu_deselect" = "Deselect";
 "context_menu_show_shortcuts" = "Show Shortcuts Bar";
 "context_menu_hide_shortcuts" = "Hide Shortcuts Bar";
 "context_menu_remove_source" = "Remove from Sources";

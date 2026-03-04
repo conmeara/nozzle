@@ -14,7 +14,6 @@ public struct ContentCapabilities: OptionSet, Sendable {
     public static let textual     = Self(rawValue: 1 << 2)
     public static let image       = Self(rawValue: 1 << 3)
     public static let previewable = Self(rawValue: 1 << 4)
-    public static let exampleable = Self(rawValue: 1 << 5)
 }
 
 public enum PastePayload {
@@ -146,7 +145,7 @@ public extension ContentItem {
         }
 
         if isText || plainText != nil || rtfData != nil || htmlData != nil {
-            caps.formUnion([.textual, .exampleable])
+            caps.insert(.textual)
         }
 
         if imageData != nil || isImage {

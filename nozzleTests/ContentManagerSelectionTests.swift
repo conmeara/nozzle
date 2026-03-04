@@ -94,13 +94,13 @@ final class ContentManagerSelectionTests: XCTestCase {
         manager.toggleSelection(itemA.id)
         manager.toggleSelection(itemB.id)
 
-        XCTAssertEqual(manager.selectedContextItems.map(\.id), [itemA.id, itemB.id])
+        XCTAssertEqual(manager.selectedItems.map(\.id), [itemA.id, itemB.id])
 
         source.updateItems([itemB, itemA])
         manager.markItemsDirty()
         manager.markSelectedDirty()
 
-        XCTAssertEqual(manager.selectedContextItems.map(\.id), [itemA.id, itemB.id])
+        XCTAssertEqual(manager.selectedItems.map(\.id), [itemA.id, itemB.id])
     }
 
     func testDeselectionDoesNotReorder() async {
@@ -121,7 +121,7 @@ final class ContentManagerSelectionTests: XCTestCase {
         manager.toggleSelection(items[1].id) // deselect Beta
         manager.toggleSelection(items[3].id) // select Delta
 
-        XCTAssertEqual(manager.selectedContextItems.map(\.title), ["Alpha", "Gamma", "Delta"])
+        XCTAssertEqual(manager.selectedItems.map(\.title), ["Alpha", "Gamma", "Delta"])
     }
 
     func testCollapsedFolderSelectAppendsDeterministically() async throws {
@@ -166,58 +166,6 @@ final class ContentManagerSelectionTests: XCTestCase {
         XCTAssertEqual(orderedTitles, ["Docs", "a.txt", "b.txt", "c.txt"])
     }
 
-    func testExampleToggleUsesCapabilities() async {
-        let manager = ContentManager.shared
-        manager.resetForTesting()
-        defer { manager.resetForTesting() }
-
-        let textItem = makeItem(title: "Note", sourceId: "stub", plainText: "Hello")
-        let imageData = Data([0xFF])
-        let imageItem = ContentItem(
-            id: UUID(),
-            title: "Picture",
-            timestamp: Date(),
-            sourceType: .clipboard,
-            sourceId: "stub",
-            imageData: imageData,
-            plainText: nil
-        )
-
-        let source = StubSource(id: "stub", items: [textItem, imageItem])
-        manager.registerSource(source)
-
-        manager.toggleSelection(textItem.id)
-        manager.toggleSelection(imageItem.id)
-
-        manager.toggleExample(imageItem.id)
-        XCTAssertFalse(manager.isExample(imageItem.id))
-
-        manager.toggleExample(textItem.id)
-        XCTAssertTrue(manager.isExample(textItem.id))
-        manager.toggleExample(textItem.id)
-        XCTAssertFalse(manager.isExample(textItem.id))
-    }
-
-    func testMarkingUnselectedItemAsExampleAddsItToAggregatedSelection() async {
-        let manager = ContentManager.shared
-        manager.resetForTesting()
-        defer { manager.resetForTesting() }
-
-        let item = makeItem(title: "Example Candidate", sourceId: "stub", plainText: "Hello")
-        let source = StubSource(id: "stub", items: [item])
-        manager.registerSource(source)
-
-        XCTAssertFalse(manager.isSelected(item.id))
-        XCTAssertFalse(manager.isExample(item.id))
-
-        manager.toggleExample(item.id)
-
-        XCTAssertTrue(manager.isSelected(item.id))
-        XCTAssertTrue(manager.isExample(item.id))
-        XCTAssertEqual(manager.selectedContextItems.count, 0)
-        XCTAssertEqual(manager.selectedExampleItems.map(\.id), [item.id])
-    }
-
     func testCompositeKeyPreventsCollision() async {
         let manager = ContentManager.shared
         manager.resetForTesting()
@@ -235,10 +183,10 @@ final class ContentManagerSelectionTests: XCTestCase {
         manager.toggleSelection(firstItem.id)
         manager.toggleSelection(secondItem.id)
 
-        let titlesBySource = Dictionary(uniqueKeysWithValues: manager.selectedContextItems.map { ($0.sourceId, $0.title) })
+        let titlesBySource = Dictionary(uniqueKeysWithValues: manager.selectedItems.map { ($0.sourceId, $0.title) })
         XCTAssertEqual(titlesBySource["s1"], "Alpha")
         XCTAssertEqual(titlesBySource["s2"], "Alpha")
-        XCTAssertEqual(manager.selectedContextItems.count, 2)
+        XCTAssertEqual(manager.selectedItems.count, 2)
     }
 
     private func makeTemporaryDirectory() throws -> URL {

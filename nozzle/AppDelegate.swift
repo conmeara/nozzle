@@ -132,16 +132,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       ContentView()
     }
 
-    // Check if onboarding should be shown
-    // Show for: new users OR existing users who haven't seen v3 onboarding (version < 2)
-    let shouldShowOnboarding = !Defaults[.hasCompletedOnboarding] || Defaults[.onboardingVersion] < 2
-
-    if shouldShowOnboarding {
-      // Reset onboarding state for existing users upgrading to v3
-      if Defaults[.hasCompletedOnboarding] && Defaults[.onboardingVersion] < 2 {
-        Defaults[.hasCompletedOnboarding] = false
-      }
-
+    // Show onboarding for new users and users who have not seen the current onboarding version.
+    if OnboardingWindow.needsOnboarding {
       // Delay slightly to ensure app is fully initialized
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         OnboardingWindow.showIfNeeded()

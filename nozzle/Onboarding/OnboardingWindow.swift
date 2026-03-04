@@ -5,6 +5,16 @@ import Defaults
 @MainActor
 class OnboardingWindow: NSWindowController {
     static var shared: OnboardingWindow?
+    static let currentOnboardingVersion = 2
+
+    static var needsOnboarding: Bool {
+        !Defaults[.hasCompletedOnboarding] || Defaults[.onboardingVersion] < currentOnboardingVersion
+    }
+
+    static func markCompleted() {
+        Defaults[.hasCompletedOnboarding] = true
+        Defaults[.onboardingVersion] = currentOnboardingVersion
+    }
     
     override init(window: NSWindow?) {
         let window = NSWindow(
@@ -41,8 +51,8 @@ class OnboardingWindow: NSWindowController {
     }
     
     static func showIfNeeded() {
-        // Only show if onboarding hasn't been completed
-        guard !Defaults[.hasCompletedOnboarding] else { return }
+        // Show for new users and users who have not seen the current onboarding version.
+        guard needsOnboarding else { return }
         
         if shared == nil {
             shared = OnboardingWindow()
@@ -59,9 +69,6 @@ class OnboardingWindow: NSWindowController {
     }
     
     static func show() {
-        // Reset onboarding completion state when manually showing from settings
-        Defaults[.hasCompletedOnboarding] = false
-        
         if shared == nil {
             shared = OnboardingWindow()
         }
@@ -78,6 +85,10 @@ extension OnboardingWindow: NSWindowDelegate {
     }
 
     func windowWillClose(_ notification: Notification) {
+        // Treat closing onboarding as dismissal for this version so it does not reopen every launch.
+        if Self.needsOnboarding {
+            Self.markCompleted()
+        }
         OnboardingWindow.shared = nil
     }
 }

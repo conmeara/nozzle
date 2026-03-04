@@ -35,9 +35,6 @@ final class UniversalItemDecorator: ListItemDecorator {
     var isSelected: Bool {
         ContentManager.shared.isSelected(effectively: base)
     }
-    var isExample: Bool {
-        ContentManager.shared.isExample(id)
-    }
     var isVisible: Bool {
         didSet { base.isVisible = isVisible }
     }

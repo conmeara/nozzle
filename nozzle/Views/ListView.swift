@@ -8,17 +8,13 @@ struct ListViewConfiguration {
     let enableScrollTargeting: Bool
     let enableScenePhaseHandling: Bool
     let showSectionHeaders: Bool
-    let contextSectionTitle: String?
-    let examplesSectionTitle: String?
     
     static let clipboard = ListViewConfiguration(
         showPinnedSections: true,
         enablePopupResize: true,
         enableScrollTargeting: true,
         enableScenePhaseHandling: true,
-        showSectionHeaders: false,
-        contextSectionTitle: nil,
-        examplesSectionTitle: nil
+        showSectionHeaders: false
     )
     
     static let universal = ListViewConfiguration(
@@ -26,9 +22,7 @@ struct ListViewConfiguration {
         enablePopupResize: false,
         enableScrollTargeting: false,
         enableScenePhaseHandling: false,
-        showSectionHeaders: false,
-        contextSectionTitle: nil,
-        examplesSectionTitle: nil
+        showSectionHeaders: false
     )
     
     static let selectedItems = ListViewConfiguration(
@@ -36,9 +30,7 @@ struct ListViewConfiguration {
         enablePopupResize: false,
         enableScrollTargeting: false,
         enableScenePhaseHandling: false,
-        showSectionHeaders: true,
-        contextSectionTitle: "Context",
-        examplesSectionTitle: "Examples"
+        showSectionHeaders: false
     )
 }
 
@@ -49,8 +41,7 @@ struct ListView: View {
     // Data sources - at most one should be non-empty
     let historyItems: [HistoryItemDecorator]
     let universalItems: [UniversalItemDecorator]
-    let contextItems: [UniversalItemDecorator]
-    let exampleItems: [UniversalItemDecorator]
+    let selectedItems: [UniversalItemDecorator]
     
     // Bindings for clipboard-specific features
     let searchQuery: Binding<String>?
@@ -89,8 +80,7 @@ struct ListView: View {
         self.configuration = .clipboard
         self.historyItems = historyItems
         self.universalItems = []
-        self.contextItems = []
-        self.exampleItems = []
+        self.selectedItems = []
         self.searchQuery = searchQuery
         self.searchFocused = searchFocused
     }
@@ -100,19 +90,17 @@ struct ListView: View {
         self.configuration = .universal
         self.historyItems = []
         self.universalItems = universalItems
-        self.contextItems = []
-        self.exampleItems = []
+        self.selectedItems = []
         self.searchQuery = nil
         self.searchFocused = nil
     }
     
     // Convenience init for selected items
-    init(contextItems: [UniversalItemDecorator], exampleItems: [UniversalItemDecorator]) {
+    init(selectedItems: [UniversalItemDecorator]) {
         self.configuration = .selectedItems
         self.historyItems = []
         self.universalItems = []
-        self.contextItems = contextItems
-        self.exampleItems = exampleItems
+        self.selectedItems = selectedItems
         self.searchQuery = nil
         self.searchFocused = nil
     }
@@ -134,33 +122,10 @@ struct ListView: View {
                         }
                     }
                     
-                    // Selected items: Context section
-                    if configuration.showSectionHeaders && !contextItems.isEmpty {
-                        SectionHeader(title: configuration.contextSectionTitle ?? "Context")
-                        ForEach(contextItems) { item in
-                            createItemView(item)
-                        }
-                    }
-                    
-                    // Selected items: Divider between sections
-                    if configuration.showSectionHeaders && !contextItems.isEmpty && !exampleItems.isEmpty {
-                        Divider()
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 3)
-                    }
-                    
-                    // Selected items: Examples section
-                    if configuration.showSectionHeaders && !exampleItems.isEmpty {
-                        SectionHeader(title: configuration.examplesSectionTitle ?? "Examples")
-                        ForEach(exampleItems) { item in
-                            createItemView(item)
-                        }
-                    }
-                    
                     // Main content: unpinned clipboard items or universal items
                     if !configuration.showSectionHeaders {
                         let mainItems: [any ListItemDecorator] = configuration.showPinnedSections ? 
-                            unpinnedItems : universalItems
+                            unpinnedItems : (selectedItems.isEmpty ? universalItems : selectedItems)
                         
                         ForEach(Array(mainItems.enumerated()), id: \.element.id) { _, item in
                             createItemView(item)
@@ -269,21 +234,6 @@ struct ListView: View {
     }
 }
 
-/// Section header component for selected items view
-private struct SectionHeader: View {
-    let title: String
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.secondary)
-            Spacer()
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-    }
-}
-
 #Preview("Clipboard") {
     ListView(historyItems: [], searchQuery: .constant(""), searchFocused: FocusState<Bool>().projectedValue)
         .environment(AppState.shared)
@@ -298,6 +248,6 @@ private struct SectionHeader: View {
 }
 
 #Preview("Selected Items") {
-    ListView(contextItems: [], exampleItems: [])
+    ListView(selectedItems: [])
         .environment(ContentManager.shared)
 }

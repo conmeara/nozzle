@@ -560,10 +560,9 @@ struct ContentView: View {
                 .frame(minWidth: 300)
                 .layoutPriority(1)
               } else if contentManager.activeSourceId == "aggregated" {
-              // Aggregated view showing selected items from all sources, split into Context and Examples
-              let contextItems = contentManager.selectedContextDecorators
-              let exampleItems = contentManager.selectedExampleDecorators
-              if contextItems.isEmpty && exampleItems.isEmpty {
+              // Aggregated view showing selected items from all sources
+              let selectedItems = contentManager.selectedDecorators
+              if selectedItems.isEmpty {
                 VStack {
                   Spacer()
                   Text("No items selected")
@@ -595,7 +594,7 @@ struct ContentView: View {
                   }
                 }
               } else {
-                ListView(contextItems: contextItems, exampleItems: exampleItems)
+                ListView(selectedItems: selectedItems)
                   .contextMenu {
                     Button("Copy All") {
                       appState.performCombinedPaste()
@@ -610,25 +609,6 @@ struct ContentView: View {
                       .backspace,
                       modifiers: KeyboardShortcuts.Shortcut(name: .clearSelection)?.toEventModifiers() ?? [.command]
                     )
-                    
-                    Divider()
-                    
-                    // Put Context above Example
-                    if !exampleItems.isEmpty {
-                      Button("Convert All to Context") {
-                        for item in exampleItems {
-                          contentManager.toggleExample(item.id)
-                        }
-                      }
-                    }
-                    
-                    if !contextItems.isEmpty {
-                      Button("Convert All to Examples") {
-                        for item in contextItems {
-                          contentManager.toggleExample(item.id)
-                        }
-                      }
-                    }
 
                     Divider()
 
@@ -923,10 +903,8 @@ struct ContentView: View {
           contentManager.focus(first.id)
         }
       } else if newSourceId == "aggregated" {
-        // Selected Items view: focus first context item, else first example item
-        let ctx = contentManager.selectedContextItems
-        let ex = contentManager.selectedExampleItems
-        if let first = (ctx.first ?? ex.first) {
+        let selected = contentManager.selectedItems
+        if let first = selected.first {
           contentManager.focus(first.id)
         } else {
           contentManager.focus(nil)
